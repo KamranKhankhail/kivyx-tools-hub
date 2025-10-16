@@ -1,0 +1,98 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+html {
+  /* For Firefox */
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  /* For Chrome, Safari, Edge */
+  display: none;
+}
+
+body {
+  overflow-y: scroll; /* Keep scrolling enabled */
+  margin: 0;
+}
+
+/* REMOVED: AvertaCY Fonts */
+
+/* Aventra Fonts - Imported based on provided OTF files */
+@font-face {
+  font-family: "Aventra";
+  src: url("/fonts/Fontspring-DEMO-aventra-extralight.otf") format("opentype");
+  font-weight: 200; /* Assuming extralight maps to 200 */
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aventra";
+  src: url("/fonts/Fontspring-DEMO-aventra-light.otf") format("opentype");
+  font-weight: 300; /* Assuming light maps to 300 */
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aventra";
+  src: url("/fonts/Fontspring-DEMO-aventra-regular.otf") format("opentype");
+  font-weight: 400; /* Assuming regular maps to 400 */
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aventra";
+  src: url("/fonts/Fontspring-DEMO-aventra-bold.otf") format("opentype");
+  font-weight: 700; /* Assuming bold maps to 700 */
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aventra";
+  src: url("/fonts/Fontspring-DEMO-aventra-extrabold.otf") format("opentype");
+  font-weight: 800; /* Assuming extrabold maps to 800 */
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 0px;
+  /* font-family: var(--font-jaro), Arial, Helvetica, sans-serif; */
+}
+html {
+  scroll-behavior: smooth;
+}
+/* :root {
+  --background: #ffffff;
+  --foreground: #171717;
+} */
+
+/* @theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+} */
+
+body,
+* {
+  /* Prioritize specific Arabic fonts, then local fonts, then other Next.js fonts */
+  font-family: "Aventra", "Inter", "Jaro", Arial, Helvetica, sans-serif !important;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

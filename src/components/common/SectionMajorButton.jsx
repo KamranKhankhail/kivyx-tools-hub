@@ -27,7 +27,7 @@ export default function SectionMajorButton({
       const link = getDownloadLink();
       if (link) window.open(link, "_blank");
     } else if (children === "Explore More") {
-      router.push("/features"); // Navigate to the features page
+      router.push("/tools"); // Navigate to the features page
     }
     // Add other conditional actions here if needed for other children text
   };

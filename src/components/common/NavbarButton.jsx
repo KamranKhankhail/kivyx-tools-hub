@@ -27,7 +27,7 @@ export default function NavbarButton({
   return (
     <Button
       variant="contained"
-      onClick={handleDownload} // Attached the handleDownload function to onClick
+      // onClick={handleDownload} // Attached the handleDownload function to onClick
       sx={{
         minWidth: "auto",
         width: "auto",

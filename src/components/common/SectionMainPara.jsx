@@ -13,12 +13,12 @@ export default function SectionMainPara({
       variant="body2"
       sx={{
         fontSize: {
-          xl: "28px",
-          lg: "26px",
-          md: "24px",
-          sm: "22px",
-          xs: "20px",
-          mob: "18px",
+          xl: "24px",
+          lg: "22px",
+          md: "22px",
+          sm: "20px",
+          xs: "28px",
+          mob: "16px",
         },
         fontWeight: "300",
         lineHeight: {

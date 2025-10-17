@@ -156,9 +156,9 @@ export default function GetResultsSection() {
           variant="body2"
           sx={{
             fontSize: {
-              xl: "35px",
-              lg: "35px",
-              md: "35px",
+              xl: "30px",
+              lg: "28px",
+              md: "26px",
               sm: "22px",
               xs: "20px",
               mob: "18px",

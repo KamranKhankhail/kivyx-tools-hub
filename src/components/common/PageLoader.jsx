@@ -143,7 +143,7 @@ const PageLoader = () => {
               width: "16px",
               height: "16px",
               borderRadius: "50%",
-              backgroundColor: "#008081",
+              backgroundColor: "#09123a",
               animation: `${bounceY} 0.6s ease-in-out infinite`,
               animationDelay: `${i * 0.1}s`,
             }}

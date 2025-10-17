@@ -1889,6 +1889,7 @@ export default function page() {
           alignItems: { md: "start", lg: "start" },
           // pt: "40px",/
           bgcolor: "#ffffff",
+
           borderRadius: "20px",
           alignItems: "stretch",
         }}
@@ -1898,12 +1899,13 @@ export default function page() {
           item
           size={{ md: 8, sm: 8, xs: 12, mob: 12 }}
           sx={{
-            borderRight: { sm: "16px solid #f1f3f4", xs: "none" },
+            borderRight: { sm: "16px solid #1fd5e92a", xs: "none" },
             borderBottom: {
               sm: "none",
               xs: "16px solid #f1f3f4",
               mob: "16px solid #f1f3f4",
             },
+
             // borderRadius: "20px",
             p: { lg: "40px", md: "40px", sm: "40px", xs: "40px", mob: "16px" },
           }}

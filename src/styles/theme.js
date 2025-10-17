@@ -20,6 +20,7 @@ const theme = createTheme({
       main: "#09123A",
       secondMain: "#000000",
       thirdMain: "#DDFDFDED",
+      fourthMain: "#ffffff",
     },
     secondary: {
       main: "#dc004e",

@@ -65,48 +65,48 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata = {
-  title: {
-    default: "Kivyx Technologies",
-    template: "%s | Kivyx Technologies", // auto append brand name
-  },
-  description:
-    "Kivyx Technologies builds cutting-edge apps like Islam Encyclo, Vocabster, and WishSphere to empower productivity, learning, and spirituality.",
-  metadataBase: new URL("https://www.kivyx.com"), // your domain
-  icons: {
-    icon: "/favicon.ico",
-  },
-  openGraph: {
-    title: "Kivyx Technologies",
-    description:
-      "Kivyx Technologies builds cutting-edge apps like Islam Encyclo, Vocabster, and WishSphere.",
-    url: "https://www.kivyx.com",
-    siteName: "Kivyx Technologies",
-    images: [
-      {
-        url: "/og-image.jpg", // TODO: replace with real OG image
-        width: 1200,
-        height: 630,
-        alt: "Kivyx Technologies",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Kivyx Technologies",
-    description:
-      "Explore Islam Encyclo, Vocabster, WishSphere and other apps by Kivyx Technologies.",
-    images: ["/og-image.jpg"],
-  },
-};
+// export const metadata = {
+//   title: {
+//     default: "ToolsHub",
+//     template: "%s | ToolsHub By Kivyx Technologies", // auto append brand name
+//   },
+//   description:
+//     "Kivyx Technologies builds cutting-edge apps like Islam Encyclo, Vocabster, and WishSphere to empower productivity, learning, and spirituality.",
+//   metadataBase: new URL("https://www.kivyx.com"), // your domain
+//   icons: {
+//     icon: "/favicon.ico",
+//   },
+//   openGraph: {
+//     title: "Kivyx Technologies",
+//     description:
+//       "Kivyx Technologies builds cutting-edge apps like Islam Encyclo, Vocabster, and WishSphere.",
+//     url: "https://www.kivyx.com",
+//     siteName: "Kivyx Technologies",
+//     images: [
+//       {
+//         url: "/og-image.jpg", // TODO: replace with real OG image
+//         width: 1200,
+//         height: 630,
+//         alt: "Kivyx Technologies",
+//       },
+//     ],
+//     locale: "en_US",
+//     type: "website",
+//   },
+//   twitter: {
+//     card: "summary_large_image",
+//     title: "Kivyx Technologies",
+//     description:
+//       "Explore Islam Encyclo, Vocabster, WishSphere and other apps by Kivyx Technologies.",
+//     images: ["/og-image.jpg"],
+//   },
+// };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        {/* ✅ Organization JSON-LD for Google */}
+      {/* <head>
+       
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -130,7 +130,7 @@ export default function RootLayout({ children }) {
             }),
           }}
         />
-      </head>
+      </head> */}
       <body
         className={`${chakraPetch.className} ${inter.variable} ${jaro.variable} ${geistSans.variable} ${geistMono.variable} antialiased ${roboto.variable} ${bebasNeue.variable} ${mulish.variable} `} // Add notoNastaliqUrdu.variable
       >

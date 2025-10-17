@@ -17,6 +17,7 @@ import {
   useTheme,
   useMediaQuery,
   Fade,
+  Stack,
 } from "@mui/material";
 import {
   ContentCopy,
@@ -198,7 +199,7 @@ const PasswordGenerator = () => {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+
         position: "relative",
       }}
     >
@@ -217,7 +218,7 @@ const PasswordGenerator = () => {
             px: 2,
             py: 1,
             borderRadius: 1,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.013)",
           }}
         >
           <CheckCircle sx={{ mr: 1 }} />
@@ -230,11 +231,11 @@ const PasswordGenerator = () => {
         sx={{
           p: 3,
           borderRadius: 4,
-          maxWidth: 950,
-          width: "100%",
-          maxHeight: "95vh",
+          boxShadow: "0px 10px 50px 0px #00000040",
+          width: "80%",
           display: "flex",
           flexDirection: "column",
+          my: "50px",
         }}
       >
         <Box sx={{ textAlign: "center", mb: 2 }}>
@@ -287,246 +288,239 @@ const PasswordGenerator = () => {
           sx={{ mb: 2 }}
         />
 
-        <Grid container spacing={3} sx={{ flexGrow: 1, overflow: "auto" }}>
-          {/* Left Column - Configuration */}
-          <Grid item xs={12} md={6}>
-            <Box sx={{ pr: isSmallScreen ? 0 : 1 }}>
-              {/* Password Length */}
-              <Box sx={{ mb: 2 }}>
-                <Typography gutterBottom variant="body2" fontWeight="medium">
-                  Password Length: {length}
-                </Typography>
-                <Slider
-                  value={length}
-                  onChange={(e, newValue) => setLength(newValue)}
-                  min={6}
-                  max={32}
-                  valueLabelDisplay="auto"
-                  sx={{ color: "primary.main" }}
-                />
-              </Box>
-
-              {/* Character Options */}
-              <Typography variant="body2" gutterBottom fontWeight="medium">
-                Character Types:
+        <Stack direction="row" spacing={4}>
+          <Box sx={{ pr: isSmallScreen ? 0 : 1, flex: 1 }}>
+            {/* Password Length */}
+            <Box sx={{ mb: 2 }}>
+              <Typography gutterBottom variant="body2" fontWeight="medium">
+                Password Length: {length}
               </Typography>
-              <Grid container spacing={1} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={includeUppercase}
-                        onChange={(e) => setIncludeUppercase(e.target.checked)}
-                        color="primary"
-                        disabled={easyToSay}
-                      />
-                    }
-                    label="Uppercase"
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={includeLowercase}
-                        onChange={(e) => setIncludeLowercase(e.target.checked)}
-                        color="primary"
-                        disabled={easyToSay}
-                      />
-                    }
-                    label="Lowercase"
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={includeNumbers}
-                        onChange={(e) => setIncludeNumbers(e.target.checked)}
-                        color="primary"
-                        disabled={easyToSay}
-                      />
-                    }
-                    label="Numbers"
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={includeSymbols}
-                        onChange={(e) => setIncludeSymbols(e.target.checked)}
-                        color="primary"
-                        disabled={easyToSay}
-                      />
-                    }
-                    label="Symbols"
-                  />
-                </Grid>
-              </Grid>
-
-              {/* Advanced Options */}
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={excludeSimilar}
-                    onChange={(e) => setExcludeSimilar(e.target.checked)}
-                    color="primary"
-                    disabled={easyToRead || allCharacters}
-                  />
-                }
-                label="Exclude Similar Characters"
-                sx={{ mb: 1 }}
-              />
-
-              {/* New Checkboxes */}
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={easyToSay}
-                    onChange={(e) => setEasyToSay(e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Easy to Say (avoid numbers and symbols)"
-                sx={{ mb: 1, display: "block" }}
-              />
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={easyToRead}
-                    onChange={(e) => setEasyToRead(e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Easy to Read (avoid ambiguous characters)"
-                sx={{ mb: 1, display: "block" }}
-              />
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={allCharacters}
-                    onChange={(e) => setAllCharacters(e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="All Characters (include everything)"
-                sx={{ mb: 2, display: "block" }}
+              <Slider
+                value={length}
+                onChange={(e, newValue) => setLength(newValue)}
+                min={6}
+                max={32}
+                valueLabelDisplay="auto"
+                sx={{ color: "primary.main" }}
               />
             </Box>
-          </Grid>
 
-          {/* Right Column - Strength & Actions */}
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                pl: isSmallScreen ? 0 : 1,
-              }}
-            >
-              {/* Password Strength Indicator */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" gutterBottom fontWeight="medium">
-                  Password Strength:
-                </Typography>
-                <Box
-                  sx={{
-                    height: 10,
-                    backgroundColor: "#e0e0e0",
-                    borderRadius: 5,
-                    overflow: "hidden",
-                    mb: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      height: "100%",
-                      width: `${strength * 10}%`,
-                      backgroundColor: strengthColor,
-                      transition: "width 0.3s ease",
-                    }}
-                  />
-                </Box>
-                <Typography
-                  variant="body2"
-                  fontWeight="bold"
-                  color={strengthColor}
-                >
-                  {strengthLevel} ({strength}/10)
-                </Typography>
-              </Box>
+            {/* Character Options */}
+            <Typography variant="body2" gutterBottom fontWeight="medium">
+              Character Types:
+            </Typography>
+            <Grid container spacing={1} sx={{ mb: 2 }}>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={includeUppercase}
+                      onChange={(e) => setIncludeUppercase(e.target.checked)}
+                      color="primary"
+                      disabled={easyToSay}
+                    />
+                  }
+                  label="Uppercase"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={includeLowercase}
+                      onChange={(e) => setIncludeLowercase(e.target.checked)}
+                      color="primary"
+                      disabled={easyToSay}
+                    />
+                  }
+                  label="Lowercase"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={includeNumbers}
+                      onChange={(e) => setIncludeNumbers(e.target.checked)}
+                      color="primary"
+                      disabled={easyToSay}
+                    />
+                  }
+                  label="Numbers"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={includeSymbols}
+                      onChange={(e) => setIncludeSymbols(e.target.checked)}
+                      color="primary"
+                      disabled={easyToSay}
+                    />
+                  }
+                  label="Symbols"
+                />
+              </Grid>
+            </Grid>
 
-              {/* Action Buttons */}
-              <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={generatePassword}
-                  startIcon={<Refresh />}
-                  fullWidth
-                  size="small"
+            {/* Advanced Options */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={excludeSimilar}
+                  onChange={(e) => setExcludeSimilar(e.target.checked)}
                   color="primary"
-                >
-                  Generate
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={copyToClipboard}
-                  startIcon={<ContentCopy />}
-                  fullWidth
-                  size="small"
-                  color="primary"
-                >
-                  Copy
-                </Button>
-              </Box>
+                  disabled={easyToRead || allCharacters}
+                />
+              }
+              label="Exclude Similar Characters"
+              sx={{ mb: 1 }}
+            />
 
-              {/* Security Tips */}
+            {/* New Checkboxes */}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={easyToSay}
+                  onChange={(e) => setEasyToSay(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="Easy to Say (avoid numbers and symbols)"
+              sx={{ mb: 1, display: "block" }}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={easyToRead}
+                  onChange={(e) => setEasyToRead(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="Easy to Read (avoid ambiguous characters)"
+              sx={{ mb: 1, display: "block" }}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={allCharacters}
+                  onChange={(e) => setAllCharacters(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="All Characters (include everything)"
+              sx={{ mb: 2, display: "block" }}
+            />
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              pl: isSmallScreen ? 0 : 1,
+            }}
+          >
+            {/* Password Strength Indicator */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" gutterBottom fontWeight="medium">
+                Password Strength:
+              </Typography>
               <Box
                 sx={{
-                  p: 1.5,
-                  bgcolor: "grey.50",
-                  borderRadius: 2,
-                  flexGrow: 1,
-                  overflow: "auto",
+                  height: 10,
+                  backgroundColor: "#e0e0e0",
+                  borderRadius: 5,
+                  overflow: "hidden",
+                  mb: 1,
                 }}
               >
-                <Typography variant="body2" gutterBottom fontWeight="medium">
-                  <Security
-                    sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }}
-                  />
-                  Password Tips:
-                </Typography>
                 <Box
-                  component="ul"
                   sx={{
-                    pl: 2,
-                    m: 0,
-                    "& li": {
-                      mb: 0.5,
-                      fontSize: "0.75rem",
-                      lineHeight: 1.3,
-                    },
+                    height: "100%",
+                    width: `${strength * 10}%`,
+                    backgroundColor: strengthColor,
+                    transition: "width 0.3s ease",
                   }}
-                >
-                  <Typography component="li">
-                    Use at least 12 characters
-                  </Typography>
-                  <Typography component="li">
-                    Include different character types
-                  </Typography>
-                  <Typography component="li">Avoid dictionary words</Typography>
-                  <Typography component="li">
-                    Use unique passwords for each account
-                  </Typography>
-                </Box>
+                />
+              </Box>
+              <Typography
+                variant="body2"
+                fontWeight="bold"
+                color={strengthColor}
+              >
+                {strengthLevel} ({strength}/10)
+              </Typography>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <Button
+                variant="contained"
+                onClick={generatePassword}
+                startIcon={<Refresh />}
+                fullWidth
+                size="small"
+                color="primary"
+              >
+                Generate
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={copyToClipboard}
+                startIcon={<ContentCopy />}
+                fullWidth
+                size="small"
+                color="primary"
+              >
+                Copy
+              </Button>
+            </Box>
+
+            {/* Security Tips */}
+            <Box
+              sx={{
+                p: 1.5,
+                bgcolor: "grey.50",
+                borderRadius: 2,
+                flexGrow: 1,
+                overflow: "auto",
+              }}
+            >
+              <Typography variant="body2" gutterBottom fontWeight="medium">
+                <Security
+                  sx={{ fontSize: 16, verticalAlign: "middle", mr: 0.5 }}
+                />
+                Password Tips:
+              </Typography>
+              <Box
+                component="ul"
+                sx={{
+                  pl: 2,
+                  m: 0,
+                  "& li": {
+                    mb: 0.5,
+                    fontSize: "0.75rem",
+                    lineHeight: 1.3,
+                  },
+                }}
+              >
+                <Typography component="li">
+                  Use at least 12 characters
+                </Typography>
+                <Typography component="li">
+                  Include different character types
+                </Typography>
+                <Typography component="li">Avoid dictionary words</Typography>
+                <Typography component="li">
+                  Use unique passwords for each account
+                </Typography>
               </Box>
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Stack>
       </Paper>
     </Box>
   );

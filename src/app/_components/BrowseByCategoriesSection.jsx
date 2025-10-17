@@ -56,11 +56,13 @@ export default function BrowseByCategoriesSection() {
         alignItems: "center",
       }}
     >
-      <SectionMainHeading>Browse by Categories</SectionMainHeading>
-      <SectionMainPara pt="10px">
-        Easily navigate Tools Hub with well structured categories designed to
-        guide you straight to the tool you need
-      </SectionMainPara>
+      <Box sx={{ px: "30px" }}>
+        <SectionMainHeading>Browse by Categories</SectionMainHeading>
+        <SectionMainPara pt="10px">
+          Easily navigate Tools Hub with well structured categories designed to
+          guide you straight to the tool you need
+        </SectionMainPara>
+      </Box>
       <Stack
         direction="row"
         gap={8}
@@ -72,14 +74,27 @@ export default function BrowseByCategoriesSection() {
             sx={{
               background:
                 "linear-gradient(180deg, rgba(175, 236, 255, 0.157059) 0%, rgba(204, 230, 230, 0.186) 50%, rgba(128, 192, 192, 0.2) 100%)",
-              borderRadius: "60px",
-              padding: "30px",
+              borderRadius: {
+                lg: "40px",
+                md: "40px",
+                sm: "40px",
+                xs: "30px",
+                mob: "20px",
+              },
+              padding: {
+                lg: "30px",
+                md: "30px",
+                sm: "30px",
+                xs: "28px",
+                mob: "26px",
+              },
               border: "0.5px solid #09123A",
 
               alignItems: "start",
               gap: "10px",
               py: "60px",
               px: "70px",
+              mx: "10px",
             }}
           >
             <Typography

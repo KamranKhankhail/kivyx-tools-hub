@@ -18,39 +18,32 @@ body {
 
 /* REMOVED: AvertaCY Fonts */
 
-/* Aventra Fonts - Imported based on provided OTF files */
+/* Averta Cyrillic Fonts - Imported based on provided OTF files */
 @font-face {
-  font-family: "Aventra";
-  src: url("/fonts/Fontspring-DEMO-aventra-extralight.otf") format("opentype");
-  font-weight: 200; /* Assuming extralight maps to 200 */
+  font-family: "Averta Cyrillic";
+  src: url("/fonts/Averta-Cyrillic-Thin.otf") format("opentype");
+  font-weight: 200; /* Thin */
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Aventra";
-  src: url("/fonts/Fontspring-DEMO-aventra-light.otf") format("opentype");
-  font-weight: 300; /* Assuming light maps to 300 */
+  font-family: "Averta Cyrillic";
+  src: url("/fonts/Averta-Cyrillic-Regular.otf") format("opentype");
+  font-weight: 400; /* Regular */
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Aventra";
-  src: url("/fonts/Fontspring-DEMO-aventra-regular.otf") format("opentype");
-  font-weight: 400; /* Assuming regular maps to 400 */
+  font-family: "Averta Cyrillic";
+  src: url("/fonts/Averta-Cyrillic-SemiBold.otf") format("opentype");
+  font-weight: 600; /* SemiBold */
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Aventra";
-  src: url("/fonts/Fontspring-DEMO-aventra-bold.otf") format("opentype");
-  font-weight: 700; /* Assuming bold maps to 700 */
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Aventra";
-  src: url("/fonts/Fontspring-DEMO-aventra-extrabold.otf") format("opentype");
-  font-weight: 800; /* Assuming extrabold maps to 800 */
+  font-family: "Averta Cyrillic";
+  src: url("/fonts/Averta-Cyrillic-Bold.otf") format("opentype");
+  font-weight: 700; /* Bold */
   font-style: normal;
   font-display: swap;
 }
@@ -86,7 +79,7 @@ html {
 body,
 * {
   /* Prioritize specific Arabic fonts, then local fonts, then other Next.js fonts */
-  font-family: "Aventra", "Inter", "Jaro", Arial, Helvetica, sans-serif !important;
+  font-family: "Averta Cyrillic", "Inter", "Jaro", Arial, Helvetica, sans-serif !important;
 }
 @keyframes spin {
   to {

@@ -18,7 +18,7 @@ export default function NotFoundClient() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "70vh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -26,7 +26,8 @@ export default function NotFoundClient() {
         textAlign: "center",
         px: 3,
         gap: "8px",
-        bgcolor: "#f9fafb",
+        background:
+          "radial-gradient(425.23% 208% at -81.08% -22.7%, rgba(255, 255, 255, 0.870588) 0%, rgba(175, 236, 255, 0.785294) 65.51%, rgba(204, 230, 230, 0.93) 100%)",
       }}
     >
       {/* Friendly Emoji */}

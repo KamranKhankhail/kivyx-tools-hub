@@ -113,7 +113,8 @@ export default function ToolshubFaqsSection() {
                   variant="body2"
                   sx={{
                     fontSize: {
-                      lg: "26px",
+                      xl: "22px",
+                      lg: "24px",
                       md: "24px",
                       sm: "22px",
                       xs: "22px",
@@ -149,12 +150,12 @@ export default function ToolshubFaqsSection() {
                   variant="body2"
                   sx={{
                     fontSize: {
-                      xl: "24px",
-                      lg: "22px",
+                      xl: "22px",
+                      lg: "20px",
                       md: "20px",
                       sm: "20px",
-                      xs: "18px",
-                      mob: "18px",
+                      xs: "16px",
+                      mob: "16px",
                     },
                     fontWeight: "300",
                     lineHeight: {

@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import React from "react";
 import SectionMainHeading from "../../components/common/SectionMainHeading";
 import SectionMainPara from "../../components/common/SectionMainPara";
@@ -33,13 +33,16 @@ export default function WhytoolshubSection() {
         alignItems: "center", // Center content horizontally
       }}
     >
-      <SectionMainHeading color="#DDFDFDED">
-        Get Results in Just 3 Steps
-      </SectionMainHeading>
-      <SectionMainPara pt="10px" color="#ddfdfdb3">
-        We’ve designed our process to be effortless and efficient — no
-        confusion, no delays, just results.
-      </SectionMainPara>
+      <Box sx={{ px: "30px" }}>
+        <SectionMainHeading color="#DDFDFDED">
+          Why tools hub is different?
+        </SectionMainHeading>
+
+        <SectionMainPara pt="10px" color="#ddfdfdb3">
+          Because we focus on speed and simplicity, so you get results without
+          the usual hassle.
+        </SectionMainPara>
+      </Box>
       <Stack
         direction="column"
         gap={8}
@@ -51,14 +54,33 @@ export default function WhytoolshubSection() {
             sx={{
               background:
                 "linear-gradient(180deg, rgba(175, 236, 255, 0.157059) 0%, rgba(204, 230, 230, 0.186) 50%, rgba(128, 192, 192, 0.2) 100%)",
-              borderRadius: "30px",
-              padding: "40px",
+              borderRadius: {
+                lg: "40px",
+                md: "40px",
+                sm: "40px",
+                xs: "30px",
+                mob: "20px",
+              },
+              padding: {
+                lg: "40px",
+                md: "40px",
+                sm: "30px",
+                xs: "28px",
+                mob: "26px",
+              },
               px: "50px",
               pr: "100px",
               border: "0.5px solid #DDFDFDED",
-              width: "100%",
+              width: {
+                lg: "100%",
+                md: "100%",
+                sm: "100%",
+                xs: "100%",
+                mob: "auto",
+              },
               alignItems: "start",
               gap: "20px",
+              mx: "10px",
             }}
           >
             <Typography
@@ -66,12 +88,12 @@ export default function WhytoolshubSection() {
               variant="body2"
               sx={{
                 fontSize: {
-                  xl: "35px",
-                  lg: "25px",
-                  md: "52px",
-                  sm: "42px",
-                  xs: "32px",
-                  mob: "28px",
+                  xl: "30px",
+                  lg: "28px",
+                  md: "26px",
+                  sm: "22px",
+                  xs: "20px",
+                  mob: "18px",
                 },
                 fontWeight: "600",
                 lineHeight: { md: "130%", sm: "120%", xs: "100%", mob: "100%" },
@@ -91,12 +113,12 @@ export default function WhytoolshubSection() {
               variant="body2"
               sx={{
                 fontSize: {
-                  xl: "35px",
-                  lg: "25px",
-                  md: "52px",
-                  sm: "42px",
-                  xs: "32px",
-                  mob: "28px",
+                  xl: "30px",
+                  lg: "28px",
+                  md: "26px",
+                  sm: "22px",
+                  xs: "20px",
+                  mob: "18px",
                 },
                 fontWeight: "600",
                 lineHeight: { md: "130%", sm: "120%", xs: "100%", mob: "100%" },

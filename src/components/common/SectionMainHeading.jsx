@@ -20,10 +20,10 @@ export default function SectionMainHeading({
       variant="body2"
       sx={{
         fontSize: {
-          xl: "65px",
-          lg: "60px",
-          md: "52px",
-          sm: "42px",
+          xl: "55px",
+          lg: "45px",
+          md: "45px",
+          sm: "38px",
           xs: "32px",
           mob: "28px",
         },

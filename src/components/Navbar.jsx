@@ -401,7 +401,7 @@ export default function Navbar() {
         right: 0,
         zIndex: 20000,
         transition: "all 0.3s ease",
-        pt: isScrolled ? "28px" : "48px",
+        pt: isScrolled ? "2px" : "4px",
         px: { lg: "30px", md: "20px", sm: "16px", xs: "10px", mob: "10px" },
         bgcolor: "transparent",
         // backdropFilter: isScrolled ? "blur(6px)" : "none",
@@ -427,7 +427,7 @@ export default function Navbar() {
             disableGutters
             sx={{
               px: "32px",
-              py: "10px",
+              py: "6px",
               justifyContent: "space-between",
             }}
           >
@@ -453,7 +453,7 @@ export default function Navbar() {
               Islam Encyclo
             </Typography> */}
             <Box component={Link} href="/" sx={{ cursor: "pointer" }}>
-              <ToolsHubIcon />
+              <ToolsHubIcon width="147" />
             </Box>
 
             <TextField
@@ -489,9 +489,9 @@ export default function Navbar() {
                 },
                 "& .MuiInputBase-input": {
                   backgroundColor: "transparent",
-                  py: "20px",
+                  py: "14px",
                   px: "10px",
-                  fontSize: "22px",
+                  fontSize: "18px",
                   color: "#2424249C", // Text color
                 },
               }}

@@ -12,6 +12,7 @@ import { styled } from "@mui/material/styles";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip (as provided by user)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -69,7 +70,7 @@ const vCardTextFieldsData = [
     key: "number",
     title: "Number:",
     multiline: false,
-    placeholder: "your phone number",
+    placeholder: "Your Phone Number",
   },
   {
     key: "message",
@@ -177,31 +178,37 @@ export default function SmsScreen({ setValue }) {
                       flex: 1, // Ensure TextField takes available space
                       input: {
                         bgcolor: "#ffffff",
-                        color: "#61698b",
+                        color: theme.palette.primary.main,
                         fontSize: "14px",
                         boxSizing: "content-box",
                         px: "4px",
                         py: "10px",
-                        "&::placeholder": { color: "#61698b", opacity: 1 },
+                        "&::placeholder": {
+                          color: theme.palette.primary.main,
+                          opacity: 1,
+                        },
                       },
                       "& .MuiOutlinedInput-root": {
                         px: "8px",
                         borderRadius: "8px", // Changed to 8px for consistency
                         bgcolor: "#ffffff",
                         "& fieldset": {
-                          border: !!errors[field.key]
-                            ? "2px solid #e53935"
-                            : "2px solid #adf2fa", // Dynamic error border from VcardScreen
+                          borderWidth: "2px",
+                          borderColor: !!errors[field.key]
+                            ? theme.palette.ui.delete
+                            : theme.palette.secondary.secondMain,
                         },
                         "&:hover fieldset": {
-                          border: !!errors[field.key]
-                            ? "2px solid #e53935"
-                            : "1.5px solid #adf2fa", // Dynamic error border from VcardScreen
+                          borderWidth: "2px",
+                          borderColor: !!errors[field.key]
+                            ? theme.palette.ui.delete
+                            : theme.palette.secondary.secondMain,
                         },
                         "&.Mui-focused fieldset": {
-                          border: !!errors[field.key]
-                            ? "2px solid #e53935"
-                            : "1.5px solid #adf2fa", // Dynamic error border from VcardScreen
+                          borderWidth: "2px",
+                          borderColor: !!errors[field.key]
+                            ? theme.palette.ui.delete
+                            : theme.palette.secondary.secondMain,
                         },
                         "& textarea": {
                           height: "100% !important", // Consistent multiline height

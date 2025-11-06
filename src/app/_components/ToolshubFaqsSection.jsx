@@ -9,46 +9,39 @@ import FaqDownIcon from "../_components/icons/FaqDownIcon";
 import FaqLeftIcon from "../_components/icons/FaqLeftArrow";
 const FAQsCards = [
   {
-    q: "What is Islam Encyclo?",
-    a: "Islam Encyclo is a comprehensive Islamic guide that provides authentic information, step-by-step guidelines, and easy references for daily practices.",
+    q: "What is ToolsHub?",
+    a: "ToolsHub is an all-in-one platform offering 100+ online tools designed to simplify daily tasks, boost productivity, and save time — all in one place.",
   },
   {
-    q: "Does the app provide Wudu guidelines?",
-    a: "Yes, the app provides complete step-by-step Wudu guidelines with clear illustrations for both men and women.",
+    q: "Are all the tools free to use?",
+    a: "Yes, all tools available on ToolsHub are completely free to use, giving users access to premium-quality utilities without any cost.",
   },
   {
-    q: "Are the guidelines separate for men and women?",
-    a: "Yes, the app offers separate Islamic guidelines for men and women to ensure accuracy and clarity.",
+    q: "Do I need to create an account to use the tools?",
+    a: "No, you can instantly access and use all tools without signing up. Account features such as saving preferences will be added in future updates.",
   },
   {
-    q: "Which languages are available in Islam Encyclo?",
-    a: "The app is available in three languages: Arabic, English, and Urdu for easy accessibility.",
+    q: "What types of tools are available on ToolsHub?",
+    a: "ToolsHub includes a wide variety of utilities — from password and QR code generators to file converters, text utilities, image tools, and more.",
   },
   {
-    q: "Are the contents authentic?",
-    a: "Yes, all guidelines and references are taken from the Quran and authentic Hadith collections.",
+    q: "Is ToolsHub safe to use?",
+    a: "Yes, ToolsHub is designed with user privacy and data security in mind. No personal data is collected when you use our tools.",
   },
   {
-    q: "Can I use the app offline?",
-    a: "Yes, most of the content can be accessed offline once downloaded.",
+    q: "Will more tools be added in the future?",
+    a: "Yes, new tools and features are added regularly to expand the platform and make it even more useful for users across different needs.",
   },
   {
-    q: "Does the app include step-by-step Salah guidance?",
-    a: "Yes, the app provides complete Salah guidelines, including actions, recitations, and conditions.",
+    q: "Can I suggest a tool to be added?",
+    a: "Absolutely! We welcome feedback and suggestions. You can share your ideas through our contact page or feedback form.",
   },
   {
-    q: "Can children use this app?",
-    a: "Yes, the app is designed in a simple and interactive way, making it easy for children to understand Islamic practices.",
-  },
-  {
-    q: "Is the app free to use?",
-    a: "Yes, the basic features of Islam Encyclo are free. Premium features may be added in the future.",
-  },
-  {
-    q: "How often is the content updated?",
-    a: "The content is regularly updated to ensure accuracy, authenticity, and new additions to Islamic topics.",
+    q: "Is ToolsHub accessible on mobile devices?",
+    a: "Yes, ToolsHub is fully responsive and optimized for both mobile and desktop, allowing you to use all tools anywhere, anytime.",
   },
 ];
+
 export default function ToolshubFaqsSection() {
   const [openIndex, setOpenIndex] = useState(null);
 

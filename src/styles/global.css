@@ -1,5 +1,4 @@
-@import "tailwindcss/preflight";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
 html {
   /* For Firefox */
@@ -49,9 +48,9 @@ body {
 }
 
 * {
-  box-sizing: border-box;
+  /* box-sizing: border-box;
   margin: 0px;
-  padding: 0px;
+  padding: 0px; */
   /* font-family: var(--font-jaro), Arial, Helvetica, sans-serif; */
 }
 html {

@@ -389,6 +389,7 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { styled } from "@mui/material/styles"; // Import styled
+import theme from "@/styles/theme";
 
 // Styled tooltip (copied from UrlScreen.jsx with red background and gray arrow)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -723,29 +724,36 @@ export default function VcardScreen({ setValue }) {
                           flex: 1,
                           input: {
                             bgcolor: "#ffffff",
-                            color: "#61698b",
+                            color: theme.palette.primary.main,
                             fontSize: "14px",
                             px: "4px",
                             py: "10px",
+                            "&::placeholder": {
+                              color: theme.palette.primary.main,
+                              opacity: 1,
+                            },
                           },
                           "& .MuiOutlinedInput-root": {
                             px: "8px",
                             borderRadius: "8px",
                             bgcolor: "#ffffff",
                             "& fieldset": {
-                              border: !!error
-                                ? "2px solid #e53935"
-                                : "2px solid #adf2fa",
+                              borderWidth: "2px",
+                              borderColor: !!error
+                                ? theme.palette.ui.delete
+                                : theme.palette.secondary.secondMain,
                             },
                             "&:hover fieldset": {
-                              border: !!error
-                                ? "2px solid #e53935"
-                                : "1.5px solid #adf2fa",
+                              borderWidth: "2px",
+                              borderColor: !!error
+                                ? theme.palette.ui.delete
+                                : theme.palette.secondary.secondMain,
                             },
                             "&.Mui-focused fieldset": {
-                              border: !!error
-                                ? "2px solid #e53935"
-                                : "1.5px solid #adf2fa",
+                              borderWidth: "2px",
+                              borderColor: !!error
+                                ? theme.palette.ui.delete
+                                : theme.palette.secondary.secondMain,
                             },
                           },
                         }}
@@ -763,7 +771,8 @@ export default function VcardScreen({ setValue }) {
           sx={{
             mt: 4,
             p: 3,
-            border: "2px solid #adf2fa",
+            borderWidth: "2px",
+            borderColor: theme.palette.secondary.secondMain,
             borderRadius: "12px",
             bgcolor: "#ffffff",
             color: "#253164",

@@ -17,6 +17,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HelpOutlinedIcon from "@mui/icons-material/HelpOutlined";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CustomizedRadios from "./icons/CustomizedRadios";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip (as provided by user)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -180,13 +181,18 @@ export default function ImagesGalleryScreen({ setValue }) {
           <IconButton
             component="span"
             sx={{
-              bgcolor: "#adf2fa",
+              bgcolor: theme.palette.primary.main,
               borderRadius: "8px",
               p: 2,
-              "&:hover": { bgcolor: "#87dce6" },
+              "&:hover": { bgcolor: theme.palette.primary.main },
             }}
           >
-            <CloudUploadIcon sx={{ fontSize: "32px", color: "#253164" }} />
+            <CloudUploadIcon
+              sx={{
+                fontSize: "32px",
+                color: theme.palette.secondary.secondMain,
+              }}
+            />
           </IconButton>
         </label>
         <Typography variant="body2" sx={{ color: "#61698b" }}>
@@ -222,32 +228,39 @@ export default function ImagesGalleryScreen({ setValue }) {
                   flex: 1,
                   input: {
                     bgcolor: "#ffffff",
-                    color: "#61698b",
+                    color: theme.palette.primary.main,
                     fontSize: "14px",
                     px: "4px",
                     py: "10px",
+                    "&::placeholder": {
+                      color: theme.palette.primary.main,
+                      opacity: 1,
+                    },
                   },
                   "& .MuiOutlinedInput-root": {
                     px: "8px",
                     borderRadius: "8px",
                     bgcolor: "#ffffff",
                     "& fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors[i] && touchedImages[i]
-                          ? "2px solid #e53935"
-                          : "2px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                     "&:hover fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors[i] && touchedImages[i]
-                          ? "2px solid #e53935"
-                          : "1.5px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                     "&.Mui-focused fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors[i] && touchedImages[i]
-                          ? "2px solid #e53935"
-                          : "1.5px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                   },
                 }}
@@ -269,14 +282,15 @@ export default function ImagesGalleryScreen({ setValue }) {
           sx={{
             alignSelf: "flex-start",
             textTransform: "none",
-            bgcolor: "#adf2fa", // Light blue background
-            color: "#253164", // Dark text color
+            bgcolor: theme.palette.primary.main, // Light blue background
+            color: theme.palette.primary.fourthMain, // Dark text color
             borderRadius: "8px", // Consistent border radius
             px: "15px",
             py: "8px",
             boxShadow: "none", // Remove default button shadow
             "&:hover": {
-              bgcolor: "#87dce6", // Slightly darker on hover
+              bgcolor: theme.palette.primary.main, // Light blue background
+              color: theme.palette.primary.fourthMain, // Dark text color
               boxShadow: "none",
             },
           }}

@@ -85,7 +85,7 @@ export default function HeaderSection({ searchTerm, onSearchChange }) {
       sx={{
         justifyContent: "center",
         alignItems: "center",
-        pt: { lg: "60px", md: "60px", sm: "0px", xs: "0px", mob: "0px" },
+        // pt: { lg: "60px", md: "60px", sm: "0px", xs: "0px", mob: "0px" },
         px: { lg: "100px", md: "100px", sm: "30px", xs: "30px", mob: "30px" },
       }}
     >
@@ -94,8 +94,8 @@ export default function HeaderSection({ searchTerm, onSearchChange }) {
         placeholder="Search..."
         fullWidth
         sx={{
-          mb: "80px",
-          mt: "60px",
+          mb: "20px",
+          mt: "10px",
           minWidth: {
             lg: "60%",
             md: "60%",

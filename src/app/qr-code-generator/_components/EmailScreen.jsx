@@ -11,6 +11,7 @@ import { styled } from "@mui/material/styles";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip (as provided by user)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -132,95 +133,6 @@ export default function EmailScreen({ setValue }) {
   );
 }
 
-// ✅ Reusable FieldRow with updated styling
-// function FieldRow({ label, name, control, error, placeholder, multiline }) {
-//   return (
-//     <Box
-//       sx={{
-//         display: "flex",
-//         flexDirection: "row",
-//         gap: "20px",
-//         alignItems: "start",
-//       }}
-//     >
-//       <Typography
-//         variant="body2"
-//         sx={{
-//           fontWeight: "400",
-//           fontSize: "18px",
-//           lineHeight: "21.78px", // Added from VcardScreen
-//           color: "#253164",
-//           minWidth: "120px",
-//           pt: "6px", // Retained for multiline alignment
-//         }}
-//       >
-//         {label}
-//       </Typography>
-
-//       <Controller
-//         name={name}
-//         control={control}
-//         render={({ field }) => (
-//           <ErrorTooltip
-//             open={!!error}
-//             title={error?.message || ""}
-//             placement="top"
-//             arrow
-//           >
-//             <TextField
-//               {...field}
-//               placeholder={placeholder}
-//               multiline={multiline}
-//               rows={multiline ? 3 : 1}
-//               maxRows={multiline ? 6 : undefined}
-//               error={!!error}
-//               variant="outlined"
-//               fullWidth
-//               sx={{
-//                 flex: 1, // Ensure TextField takes available space
-//                 input: {
-//                   bgcolor: "#ffffff",
-//                   color: "#61698b",
-//                   fontSize: "14px",
-//                   px: "4px",
-//                   py: "10px",
-//                 },
-//                 "& .MuiOutlinedInput-root": {
-//                   px: "8px",
-//                   borderRadius: "8px", // Changed to 8px from 10px to match VcardScreen
-//                   bgcolor: "#ffffff",
-//                   "& fieldset": {
-//                     border: !!error ? "2px solid #e53935" : "2px solid #adf2fa", // Dynamic error border from VcardScreen
-//                   },
-//                   "&:hover fieldset": {
-//                     border: !!error
-//                       ? "2px solid #e53935"
-//                       : "1.5px solid #adf2fa", // Dynamic error border from VcardScreen
-//                   },
-//                   "&.Mui-focused fieldset": {
-//                     border: !!error
-//                       ? "2px solid #e53935"
-//                       : "1.5px solid #adf2fa", // Dynamic error border from VcardScreen
-//                   },
-//                   "& textarea": {
-//                     height: "100% !important", // Consistent multiline height
-//                     resize: "none",
-//                     overflowY: "scroll",
-//                     scrollbarWidth: "none",
-//                     msOverflowStyle: "none",
-//                     "&::-webkit-scrollbar": { display: "none" },
-//                   },
-//                 },
-//               }}
-//             />
-//           </ErrorTooltip>
-//         )}
-//       />
-//     </Box>
-//   );
-// }
-
-// ... existing code ...
 function FieldRow({ label, name, control, error, placeholder, multiline }) {
   return (
     <Box
@@ -280,27 +192,36 @@ function FieldRow({ label, name, control, error, placeholder, multiline }) {
                 flex: 1, // Ensure TextField takes available space
                 input: {
                   bgcolor: "#ffffff",
-                  color: "#61698b",
+                  color: theme.palette.primary.main,
                   fontSize: "14px",
                   px: "4px",
                   py: "10px",
+                  "&::placeholder": {
+                    color: theme.palette.primary.main,
+                    opacity: 1,
+                  },
                 },
                 "& .MuiOutlinedInput-root": {
                   px: "8px",
                   borderRadius: "8px", // Changed to 8px from 10px to match VcardScreen
                   bgcolor: "#ffffff",
                   "& fieldset": {
-                    border: !!error ? "2px solid #e53935" : "2px solid #adf2fa", // Dynamic error border from VcardScreen
+                    borderWidth: "2px",
+                    borderColor: !!error
+                      ? theme.palette.ui.delete
+                      : theme.palette.secondary.secondMain,
                   },
                   "&:hover fieldset": {
-                    border: !!error
-                      ? "2px solid #e53935"
-                      : "1.5px solid #adf2fa", // Dynamic error border from VcardScreen
+                    borderWidth: "2px",
+                    borderColor: !!error
+                      ? theme.palette.ui.delete
+                      : theme.palette.secondary.secondMain,
                   },
                   "&.Mui-focused fieldset": {
-                    border: !!error
-                      ? "2px solid #e53935"
-                      : "1.5px solid #adf2fa", // Dynamic error border from VcardScreen
+                    borderWidth: "2px",
+                    borderColor: !!error
+                      ? theme.palette.ui.delete
+                      : theme.palette.secondary.secondMain,
                   },
                   "& textarea": {
                     height: "100% !important", // Consistent multiline height

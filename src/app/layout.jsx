@@ -10,10 +10,12 @@ import {
 } from "next/font/google";
 import "@/styles/global.css";
 import ThemeRegistry from "../styles/ThemeRegistry";
-import Navbar from "../components/Navbar";
+
 import NavigationWrapper from "../components/common/NavigationWrapper";
 import PageLoader from "../components/common/PageLoader";
+import NavbarWrapper from "@/components/common/NavbarWrapper";
 import { Stack } from "@mui/material";
+import "@/styles/global.css";
 
 const chakraPetch = Chakra_Petch({
   subsets: ["latin"],
@@ -65,48 +67,47 @@ const inter = Inter({
   display: "swap",
 });
 
-// export const metadata = {
-//   title: {
-//     default: "ToolsHub",
-//     template: "%s | ToolsHub By Kivyx Technologies", // auto append brand name
-//   },
-//   description:
-//     "Kivyx Technologies builds cutting-edge apps like Islam Encyclo, Vocabster, and WishSphere to empower productivity, learning, and spirituality.",
-//   metadataBase: new URL("https://www.kivyx.com"), // your domain
-//   icons: {
-//     icon: "/favicon.ico",
-//   },
-//   openGraph: {
-//     title: "Kivyx Technologies",
-//     description:
-//       "Kivyx Technologies builds cutting-edge apps like Islam Encyclo, Vocabster, and WishSphere.",
-//     url: "https://www.kivyx.com",
-//     siteName: "Kivyx Technologies",
-//     images: [
-//       {
-//         url: "/og-image.jpg", // TODO: replace with real OG image
-//         width: 1200,
-//         height: 630,
-//         alt: "Kivyx Technologies",
-//       },
-//     ],
-//     locale: "en_US",
-//     type: "website",
-//   },
-//   twitter: {
-//     card: "summary_large_image",
-//     title: "Kivyx Technologies",
-//     description:
-//       "Explore Islam Encyclo, Vocabster, WishSphere and other apps by Kivyx Technologies.",
-//     images: ["/og-image.jpg"],
-//   },
-// };
+export const metadata = {
+  title: {
+    default: "ToolsHub",
+    template: "%s | ToolsHub by Kivyx Technologies",
+  },
+  description:
+    "ToolsHub by Kivyx Technologies offers 100+ online utilities to simplify daily tasks, boost productivity, and save time — all in one place.",
+  metadataBase: new URL("https://toolshub.kivyx.com"),
+  icons: {
+    icon: "/favicon.svg",
+  },
+  openGraph: {
+    title: "ToolsHub by Kivyx Technologies",
+    description:
+      "Access 100+ free online tools to streamline your workflow, create efficiently, and get more done — powered by Kivyx Technologies.",
+    url: "https://www.toolshub.kivyx.com",
+    siteName: "ToolsHub",
+    images: [
+      {
+        url: "/images/toolshub-og.jpg", // Replace with your real OG image
+        width: 1200,
+        height: 630,
+        alt: "ToolsHub by Kivyx Technologies",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ToolsHub by Kivyx Technologies",
+    description:
+      "100+ online tools to simplify tasks, boost productivity, and save time — all in one place.",
+    images: ["/images/toolshub-og.jpg"],
+  },
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      {/* <head>
-       
+      <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -130,7 +131,7 @@ export default function RootLayout({ children }) {
             }),
           }}
         />
-      </head> */}
+      </head>
       <body
         className={`${chakraPetch.className} ${inter.variable} ${jaro.variable} ${geistSans.variable} ${geistMono.variable} antialiased ${roboto.variable} ${bebasNeue.variable} ${mulish.variable} `} // Add notoNastaliqUrdu.variable
       >
@@ -144,10 +145,7 @@ export default function RootLayout({ children }) {
                   "radial-gradient(425.23% 208% at -81.08% -22.7%, rgba(255, 255, 255, 0.870588) 0%, rgba(175, 236, 255, 0.785294) 65.51%, rgba(204, 230, 230, 0.93) 100%)",
               }}
             >
-              <Stack sx={{ pt: "180px", overflow: "hidden" }}>
-                <Navbar />
-              </Stack>
-
+              <NavbarWrapper />
               {children}
             </Stack>
           </NavigationWrapper>

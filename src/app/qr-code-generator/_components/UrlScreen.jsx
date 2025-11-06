@@ -107,6 +107,7 @@
 import { Box, Stack, TextField, Tooltip, tooltipClasses } from "@mui/material";
 import React, { useState } from "react";
 import { styled } from "@mui/material/styles";
+import theme from "@/styles/theme";
 
 // Styled tooltip (copied from SmsScreen.jsx) with gray arrow
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -203,7 +204,7 @@ export default function UrlScreen({ value, setValue }) {
                   top: "20px",
                   left: "20px",
                   pointerEvents: "none",
-                  color: "#9e9e9e",
+                  color: theme.palette.primary.main,
                 }}
               >
                 <Box sx={{ fontSize: "24px", fontWeight: 800, pb: "10px" }}>
@@ -226,13 +227,22 @@ export default function UrlScreen({ value, setValue }) {
               color: "#61698b",
               height: "100%",
               "& fieldset": {
-                border: !!error ? "2px solid #e53935" : "2px solid #adf2fa",
+                borderWidth: "2px",
+                borderColor: !!error
+                  ? theme.palette.ui.delete
+                  : theme.palette.secondary.secondMain,
               },
               "&:hover fieldset": {
-                border: !!error ? "2px solid #e53935" : "1.5px solid #adf2fa",
+                borderWidth: "2px",
+                borderColor: !!error
+                  ? theme.palette.ui.delete
+                  : theme.palette.secondary.secondMain,
               },
               "&.Mui-focused fieldset": {
-                border: !!error ? "2px solid #e53935" : "1.5px solid #adf2fa",
+                borderWidth: "2px",
+                borderColor: !!error
+                  ? theme.palette.ui.delete
+                  : theme.palette.secondary.secondMain,
               },
               "& .MuiInputBase-input": {
                 fontSize: "24px",

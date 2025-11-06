@@ -15,6 +15,7 @@ import { styled } from "@mui/material/styles";
 import CheckIcon from "@mui/icons-material/Check";
 import HelpOutlinedIcon from "@mui/icons-material/HelpOutlined";
 import CustomizedRadios from "./icons/CustomizedRadios";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -166,32 +167,37 @@ export default function WifiScreen({ setValue }) {
                   flex: { lg: 3, md: 3, sm: 3, xs: 3, mob: 3 },
                   input: {
                     bgcolor: "#ffffff",
-                    color: "#61698b",
+                    color: theme.palette.primary.main,
                     fontSize: "14px",
                     px: "4px",
                     py: "10px",
+                    "&::placeholder": {
+                      color: theme.palette.primary.main,
+                      opacity: 1,
+                    },
                   },
                   "& .MuiOutlinedInput-root": {
                     px: "8px",
                     borderRadius: "8px",
                     bgcolor: "#ffffff",
                     "& fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors.ssid && touchedSsid
-                          ? "2px solid #e53935"
-                          : "2px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                     "&:hover fieldset": {
-                      border:
+                      borderColor:
                         !!errors.ssid && touchedSsid
-                          ? "2px solid #e53935"
-                          : "1.5px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                     "&.Mui-focused fieldset": {
-                      border:
+                      borderColor:
                         !!errors.ssid && touchedSsid
-                          ? "2px solid #e53935"
-                          : "1.5px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                   },
                 }}
@@ -211,7 +217,8 @@ export default function WifiScreen({ setValue }) {
                         sx={{
                           width: 20,
                           height: 20,
-                          border: "3px solid #adf2fa",
+                          borderWidth: "3px",
+                          borderColor: theme.palette.secondary.secondMain,
                           borderRadius: "4px",
                           backgroundColor: "transparent",
                         }}
@@ -222,14 +229,20 @@ export default function WifiScreen({ setValue }) {
                         sx={{
                           width: 20,
                           height: 20,
-                          border: "3px solid #adf2fa",
+                          borderWidth: "3px",
+                          borderColor: theme.palette.secondary.secondMain,
                           borderRadius: "4px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
                       >
-                        <CheckIcon sx={{ fontSize: 16, color: "#adf2fa" }} />
+                        <CheckIcon
+                          sx={{
+                            fontSize: 16,
+                            color: theme.palette.primary.main,
+                          }}
+                        />
                       </Box>
                     }
                     sx={{
@@ -329,32 +342,39 @@ export default function WifiScreen({ setValue }) {
                   flex: 3,
                   input: {
                     bgcolor: "#ffffff",
-                    color: "#61698b",
+                    color: theme.palette.primary.main,
                     fontSize: "14px",
                     px: "4px",
                     py: "10px",
+                    "&::placeholder": {
+                      color: theme.palette.primary.main,
+                      opacity: 1,
+                    },
                   },
                   "& .MuiOutlinedInput-root": {
                     px: "8px",
                     borderRadius: "8px",
                     bgcolor: "#ffffff",
                     "& fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors.password && touchedPassword
-                          ? "2px solid #e53935"
-                          : "2px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                     "&:hover fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors.password && touchedPassword
-                          ? "2px solid #e53935"
-                          : "1.5px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                     "&.Mui-focused fieldset": {
-                      border:
+                      borderWidth: "2px",
+                      borderColor:
                         !!errors.password && touchedPassword
-                          ? "2px solid #e53935"
-                          : "1.5px solid #adf2fa", // Dynamic error border
+                          ? theme.palette.ui.delete
+                          : theme.palette.secondary.secondMain,
                     },
                   },
                 }}

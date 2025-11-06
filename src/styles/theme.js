@@ -3,12 +3,12 @@ import { createTheme } from "@mui/material/styles";
 const theme = createTheme({
   breakpoints: {
     values: {
-      mob: 0, // custom
+      mob: 0,
       xs: 640,
       sm: 768,
       md: 1000,
       lg: 1250,
-      xl: 1536, // you can keep xl as default or set your own
+      xl: 1536,
     },
   },
   palette: {
@@ -23,7 +23,16 @@ const theme = createTheme({
       fourthMain: "#ffffff",
     },
     secondary: {
-      main: "#dc004e",
+      main: "#e9fbfd",
+      secondMain: "#96b5c6",
+      thirdMain: "#61698b",
+    },
+    ui: {
+      delete: "#FF386A",
+      pageBackground:
+        "radial-gradient(425.23% 208% at -81.08% -22.7%, rgba(255, 255, 255, 0.870588) 0%, rgba(175, 236, 255, 0.785294) 65.51%, rgba(204, 230, 230, 0.93) 100%)",
+      cardBackground:
+        "linear-gradient(180deg, rgba(175, 236, 255, 0.157059) 0%, rgba(204, 230, 230, 0.186) 50%, rgba(128, 192, 192, 0.2) 100%)",
     },
   },
   typography: {

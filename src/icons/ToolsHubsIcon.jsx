@@ -6,11 +6,13 @@ export default function ToolsHubsIcon({
   hubBgColor = "#09123A",
   hubColor = "url(#paint0_linear_1588_6)",
   hubOpacity = "0.93",
+  width = "197px",
+  height = "58px",
 }) {
   return (
     <svg
-      width="197"
-      height="58"
+      width={width}
+      height={height}
       viewBox="0 0 197 58"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

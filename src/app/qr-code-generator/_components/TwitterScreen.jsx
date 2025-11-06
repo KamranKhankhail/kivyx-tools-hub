@@ -10,6 +10,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles"; // Import styled
 import CustomizedRadios from "./icons/CustomizedRadios";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip (as provided by user)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -231,33 +232,39 @@ export default function TwitterScreen({ setValue }) {
                 flex: 1,
                 input: {
                   bgcolor: "#ffffff",
-                  color: "#61698b",
+                  color: theme.palette.primary.main,
                   fontSize: "14px",
                   px: "4px",
                   py: "10px",
-                  "&::placeholder": { color: "#61698b", opacity: 1 },
+                  "&::placeholder": {
+                    color: theme.palette.primary.main,
+                    opacity: 1,
+                  },
                 },
                 "& .MuiOutlinedInput-root": {
                   px: "8px",
                   borderRadius: "8px",
                   bgcolor: "#ffffff",
                   "& fieldset": {
-                    border:
+                    borderWidth: "2px",
+                    borderColor:
                       !!errors.username && touched.username
-                        ? "2px solid #e53935"
-                        : "2px solid #adf2fa", // Dynamic error border
+                        ? theme.palette.ui.delete
+                        : theme.palette.secondary.secondMain,
                   },
                   "&:hover fieldset": {
-                    border:
+                    borderWidth: "2px",
+                    borderColor:
                       !!errors.username && touched.username
-                        ? "2px solid #e53935"
-                        : "1.5px solid #adf2fa", // Dynamic error border
+                        ? theme.palette.ui.delete
+                        : theme.palette.secondary.secondMain,
                   },
                   "&.Mui-focused fieldset": {
-                    border:
+                    borderWidth: "2px",
+                    borderColor:
                       !!errors.username && touched.username
-                        ? "2px solid #e53935"
-                        : "1.5px solid #adf2fa", // Dynamic error border
+                        ? theme.palette.ui.delete
+                        : theme.palette.secondary.secondMain,
                   },
                 },
               }}
@@ -327,33 +334,39 @@ export default function TwitterScreen({ setValue }) {
                 flex: 1,
                 input: {
                   bgcolor: "#ffffff",
-                  color: "#61698b",
+                  color: theme.palette.primary.main,
                   fontSize: "14px",
                   px: "4px",
                   py: "10px",
-                  "&::placeholder": { color: "#61698b", opacity: 1 },
+                  "&::placeholder": {
+                    color: theme.palette.primary.main,
+                    opacity: 1,
+                  },
                 },
                 "& .MuiOutlinedInput-root": {
                   px: "8px",
                   borderRadius: "8px",
                   bgcolor: "#ffffff",
                   "& fieldset": {
-                    border:
+                    borderWidth: "2px",
+                    borderColor:
                       !!errors.tweet && touched.tweet
-                        ? "2px solid #e53935"
-                        : "2px solid #adf2fa", // Dynamic error border
+                        ? theme.palette.ui.delete
+                        : theme.palette.secondary.secondMain,
                   },
                   "&:hover fieldset": {
-                    border:
+                    borderWidth: "2px",
+                    borderColor:
                       !!errors.tweet && touched.tweet
-                        ? "2px solid #e53935"
-                        : "1.5px solid #adf2fa", // Dynamic error border
+                        ? theme.palette.ui.delete
+                        : theme.palette.secondary.secondMain,
                   },
                   "&.Mui-focused fieldset": {
-                    border:
+                    borderWidth: "2px",
+                    borderColor:
                       !!errors.tweet && touched.tweet
-                        ? "2px solid #e53935"
-                        : "1.5px solid #adf2fa", // Dynamic error border
+                        ? theme.palette.ui.delete
+                        : theme.palette.secondary.secondMain,
                   },
                   "& textarea": {
                     height: "100% !important", // Consistent multiline height

@@ -239,7 +239,7 @@ const toolsThatDoMoreToolsData = [
     secondaryText:
       "Create strong, secure, and random passwords to keep your accounts safe",
     icon: PasswordGeneratorIcon,
-    href: "/password-generator",
+    href: "/tools/password-generator",
   },
   {
     primaryText: "QR Code Generator",
@@ -253,21 +253,21 @@ const toolsThatDoMoreToolsData = [
     secondaryText:
       "Build beautiful color combinations for your designs in one click",
     icon: ColorPaletteGeneratorIcon,
-    href: "",
+    href: "/tools/color-palette-generator",
   },
   {
-    primaryText: "JSON Formatter Validator",
+    primaryText: "Merge PDFs",
     secondaryText:
       "Format, validate, and beautify JSON data for easy debugging",
     icon: JsonFormatterValidatorIcon,
-    href: "",
+    href: "/tools/merge-pdfs",
   },
   {
-    primaryText: "Lorem Ipsum Generator",
+    primaryText: "Split PDFs",
     secondaryText:
       "Quickly generate dummy text for your designs, mockups, and layouts",
     icon: LoremIpsumGeneratorIcon,
-    href: "",
+    href: "/tools/split-pdfs",
   },
   {
     primaryText: "Unit Converter",
@@ -370,8 +370,8 @@ export default function ToolsThatDoSection({ searchTerm }) {
           color: theme.palette.primary.secondMain,
           textAlign: "center",
           zIndex: "5",
-          pb: "40px",
-          pt: "24px",
+
+          pt: "12px",
           px: "80px",
         }}
       >
@@ -381,12 +381,12 @@ export default function ToolsThatDoSection({ searchTerm }) {
       </Typography>
       <Stack
         direction="row"
-        gap={8}
+        gap={2}
         sx={{
           flexWrap: "wrap",
           px: "40px",
           justifyContent: "center",
-          pt: "50px",
+          pt: "20px",
         }}
       >
         {sortedTools.map((tool, i) => (

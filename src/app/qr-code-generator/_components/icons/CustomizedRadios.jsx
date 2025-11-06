@@ -5,16 +5,19 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
+import theme from "@/styles/theme";
 
 const BpIcon = styled("span")(() => ({
-  border: "2px solid #D9D9D9",
+  borderWidth: "2px",
+  borderColor: theme.palette.secondary.secondMain,
   borderRadius: "50%",
   width: 18,
   height: 18,
 }));
 
 const BpCheckedIcon = styled(BpIcon)({
-  border: "7px solid #74bdfe",
+  borderWidth: "7px",
+  borderColor: theme.palette.primary.main,
   "&::before": {
     display: "block",
     width: 18,

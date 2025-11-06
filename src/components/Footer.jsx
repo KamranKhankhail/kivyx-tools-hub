@@ -100,7 +100,7 @@ export default function Footer() {
         container
         py="10px"
         spacing={{ lg: 10, md: 6, sm: 5, xs: 5, mob: 7 }}
-        sx={{ pt: "20px" }}
+        sx={{ pt: "50px" }}
       >
         <Grid
           item
@@ -158,7 +158,7 @@ export default function Footer() {
             worldwide with accessible tools that enhance productivity and
             creativity.
           </Typography>
-          <Box sx={{ pt: "20px" }}>
+          {/* <Box sx={{ pt: "20px" }}>
             {" "}
             <Typography
               variant="body2"
@@ -230,7 +230,7 @@ export default function Footer() {
                 </Box>
               ))}
             </Stack>
-          </Box>
+          </Box> */}
         </Grid>
         <Grid
           item

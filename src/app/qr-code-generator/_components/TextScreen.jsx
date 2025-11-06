@@ -156,6 +156,7 @@ import { styled } from "@mui/material/styles";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip (as provided by user)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -263,7 +264,7 @@ export default function TextScreen({ setValue, value }) {
                       top: "20px",
                       left: "20px",
                       pointerEvents: "none",
-                      color: "#9e9e9e",
+                      color: theme.palette.primary.main,
                     }}
                   >
                     <Box sx={{ fontSize: "24px", fontWeight: 800, pb: "10px" }}>
@@ -284,22 +285,25 @@ export default function TextScreen({ setValue, value }) {
                   px: "8px",
                   borderRadius: "12px",
                   bgcolor: "#ffffff",
-                  color: "#61698b",
+                  color: theme.palette.primary.main,
                   height: "100%",
                   "& fieldset": {
-                    border: !!errors.text
-                      ? "2px solid #e53935"
-                      : "2px solid #adf2fa",
+                    borderWidth: "2px",
+                    borderColor: !!errors.text
+                      ? theme.palette.ui.delete
+                      : theme.palette.secondary.secondMain,
                   },
                   "&:hover fieldset": {
-                    border: !!errors.text
-                      ? "2px solid #e53935"
-                      : "1.5px solid #adf2fa",
+                    borderWidth: "2px",
+                    borderColor: !!errors.text
+                      ? theme.palette.ui.delete
+                      : theme.palette.secondary.secondMain,
                   },
                   "&.Mui-focused fieldset": {
-                    border: !!errors.text
-                      ? "2px solid #e53935"
-                      : "1.5px solid #adf2fa",
+                    borderWidth: "2px",
+                    borderColor: !!errors.text
+                      ? theme.palette.ui.delete
+                      : theme.palette.secondary.secondMain,
                   },
                   "& .MuiInputBase-input": {
                     fontSize: "24px", // Matches UrlScreen

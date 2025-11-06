@@ -12,6 +12,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles"; // Import styled
 import CustomizedRadios from "./icons/CustomizedRadios";
+import theme from "@/styles/theme";
 
 // ✅ Custom styled tooltip (as provided by user)
 const ErrorTooltip = styled(({ className, ...props }) => (
@@ -175,33 +176,39 @@ export default function PdfScreen({ setValue }) {
             flex: 1,
             input: {
               bgcolor: "#ffffff",
-              color: "#61698b",
+              color: theme.palette.primary.main,
               fontSize: "14px",
               px: "4px",
               py: "10px",
-              "&::placeholder": { color: "#61698b", opacity: 1 },
+              "&::placeholder": {
+                color: theme.palette.primary.main,
+                opacity: 1,
+              },
             },
             "& .MuiOutlinedInput-root": {
               px: "8px",
               borderRadius: "8px",
               bgcolor: "#ffffff",
               "& fieldset": {
-                border:
+                borderWidth: "2px",
+                borderColor:
                   !!errors[name] && touched[name]
-                    ? "2px solid #e53935"
-                    : "2px solid #adf2fa", // Dynamic error border
+                    ? theme.palette.ui.delete
+                    : theme.palette.secondary.secondMain,
               },
               "&:hover fieldset": {
-                border:
+                borderWidth: "2px",
+                borderColor:
                   !!errors[name] && touched[name]
-                    ? "2px solid #e53935"
-                    : "1.5px solid #adf2fa", // Dynamic error border
+                    ? theme.palette.ui.delete
+                    : theme.palette.secondary.secondMain,
               },
               "&.Mui-focused fieldset": {
-                border:
+                borderWidth: "2px",
+                borderColor:
                   !!errors[name] && touched[name]
-                    ? "2px solid #e53935"
-                    : "1.5px solid #adf2fa", // Dynamic error border
+                    ? theme.palette.ui.delete
+                    : theme.palette.secondary.secondMain,
               },
             },
           }}
@@ -251,11 +258,12 @@ export default function PdfScreen({ setValue }) {
             display: "flex",
             alignItems: "center",
             flex: 1,
-            // Dynamic border for error state
-            border:
+            borderWidth: "2px",
+            borderColor:
               !!errors[name] && touched[name]
-                ? "2px solid #e53935"
-                : "2px solid #adf2fa",
+                ? theme.palette.ui.delete
+                : theme.palette.secondary.secondMain,
+
             borderRadius: "8px", // Consistent border radius
             bgcolor: "#ffffff",
             px: "8px", // Consistent padding
@@ -278,9 +286,11 @@ export default function PdfScreen({ setValue }) {
             <IconButton
               component="span"
               sx={{
-                color: "#253164",
-                bgcolor: "#adf2fa",
-                "&:hover": { bgcolor: "#89e4ee" },
+                color: theme.palette.secondary.secondMain,
+                bgcolor: theme.palette.primary.main,
+                "&:hover": {
+                  bgcolor: theme.palette.primary.main,
+                },
               }}
             >
               <CloudUploadIcon />

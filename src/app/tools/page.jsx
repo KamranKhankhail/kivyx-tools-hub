@@ -296,7 +296,7 @@ export default function page() {
 
   return (
     <Stack sx={{ alignItems: "center" }}>
-      <Stack
+      {/* <Stack
         direction="row"
         sx={{
           alignItems: "center",
@@ -339,7 +339,7 @@ export default function page() {
             </Button>
           );
         })}
-      </Stack>
+      </Stack> */}
       <Stack
         direction="row"
         gap={8}

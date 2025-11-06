@@ -235,7 +235,7 @@ const PasswordGenerator = () => {
           width: "80%",
           display: "flex",
           flexDirection: "column",
-          my: "50px",
+          mb: "50px",
         }}
       >
         <Box sx={{ textAlign: "center", mb: 2 }}>

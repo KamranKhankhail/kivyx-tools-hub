@@ -1343,6 +1343,9 @@
 
 "use client";
 import theme from "@/styles/theme";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import RotateRightIcon from "@mui/icons-material/RotateRight";
+import { Box, Button, Stack, Tooltip } from "@mui/material";
 import React, {
   useState,
   useEffect,
@@ -1351,15 +1354,34 @@ import React, {
   useMemo,
 } from "react";
 
+// const theme = {
+//   palette: {
+//     primary: {
+//       main: "#1fd5e9",
+//       secondMain: "#0fa8ba",
+//       thirdMain: "#0d8a99",
+//       fourthMain: "#ffffff",
+//     },
+//     secondary: {
+//       main: "#f0fdff",
+//       secondMain: "#e0f7fa",
+//     },
+//     ui: {
+//       pageBackground: "#f5f5f5",
+//       delete: "#ef4444",
+//     },
+//   },
+// };
+
 const PDFSplitTool = () => {
   const [file, setFile] = useState(null);
   const [pages, setPages] = useState([]);
   const [pageThumbnails, setPageThumbnails] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [splitMode, setSplitMode] = useState("range"); // 'range' or 'extract'
-  const [rangeType, setRangeType] = useState("custom"); // 'custom' or 'fixed'
-  const [customRanges, setCustomRanges] = useState([{ start: "", end: "" }]);
+  const [splitMode, setSplitMode] = useState("range");
+  const [rangeType, setRangeType] = useState("custom");
+  const [customRanges, setCustomRanges] = useState([{ start: "1", end: "" }]);
   const [fixedRange, setFixedRange] = useState("2");
   const [selectedPages, setSelectedPages] = useState(new Set());
   const [mergeExtracted, setMergeExtracted] = useState(false);
@@ -1372,7 +1394,6 @@ const PDFSplitTool = () => {
   const previewContainerRef = useRef(null);
   const renderTaskRef = useRef(null);
 
-  // Load PDF.js
   const loadPdfJs = async () => {
     if (window.pdfjsLib) return;
     const script = document.createElement("script");
@@ -1390,7 +1411,6 @@ const PDFSplitTool = () => {
     });
   };
 
-  // Generate thumbnail for a page
   const generatePageThumbnail = async (pdfDoc, pageNum) => {
     try {
       const page = await pdfDoc.getPage(pageNum);
@@ -1406,7 +1426,6 @@ const PDFSplitTool = () => {
     }
   };
 
-  // Handle file upload
   const handleFileSelect = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
@@ -1420,7 +1439,7 @@ const PDFSplitTool = () => {
     setPages([]);
     setPageThumbnails({});
     setSelectedPages(new Set());
-    setCustomRanges([{ start: "", end: "" }]);
+    setCustomRanges([{ start: "1", end: "" }]);
     setDownloadUrls([]);
     setPageRotations({});
     try {
@@ -1431,7 +1450,6 @@ const PDFSplitTool = () => {
       const pageCount = pdfDoc.numPages;
       const pagesArray = Array.from({ length: pageCount }, (_, i) => i + 1);
 
-      // Generate thumbnails
       const thumbs = {};
       for (let i = 1; i <= pageCount; i++) {
         thumbs[i] = await generatePageThumbnail(pdfDoc, i);
@@ -1445,6 +1463,7 @@ const PDFSplitTool = () => {
       });
       setPages(pagesArray);
       setPageThumbnails(thumbs);
+      setCustomRanges([{ start: "1", end: pageCount.toString() }]);
     } catch (err) {
       console.error(err);
       setError("Failed to load PDF file");
@@ -1453,7 +1472,6 @@ const PDFSplitTool = () => {
     }
   };
 
-  // Rotation functions
   const rotatePage = (pageNum, direction) => {
     const current = pageRotations[pageNum] || 0;
     const delta = direction === "left" ? -90 : 90;
@@ -1475,7 +1493,6 @@ const PDFSplitTool = () => {
     setPageRotations({});
   };
 
-  // Preview functions
   const openPreview = (pageIndex) => {
     setPreviewPageIndex(pageIndex);
     setPreviewOpen(true);
@@ -1538,7 +1555,6 @@ const PDFSplitTool = () => {
     };
   }, [previewOpen, renderPdfPage]);
 
-  // Keyboard navigation
   useEffect(() => {
     const onKey = (e) => {
       if (!previewOpen) return;
@@ -1556,7 +1572,6 @@ const PDFSplitTool = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [previewOpen, handlePrevPage, handleNextPage]);
 
-  // Range management
   const addRange = () => {
     setCustomRanges([...customRanges, { start: "", end: "" }]);
   };
@@ -1572,7 +1587,6 @@ const PDFSplitTool = () => {
     setCustomRanges(newRanges);
   };
 
-  // Toggle page selection
   const togglePageSelection = (pageNum) => {
     const newSet = new Set(selectedPages);
     if (newSet.has(pageNum)) {
@@ -1591,7 +1605,6 @@ const PDFSplitTool = () => {
     setSelectedPages(new Set());
   };
 
-  // Process split
   const handleSplit = async () => {
     if (!file) return;
     setProcessing(true);
@@ -1744,7 +1757,6 @@ const PDFSplitTool = () => {
     }
   };
 
-  // Calculate preview info for split
   const getSplitPreview = () => {
     if (!file) return null;
     if (splitMode === "range") {
@@ -1765,6 +1777,47 @@ const PDFSplitTool = () => {
     }
   };
 
+  const getRangeCards = useMemo(() => {
+    if (!file || splitMode !== "range") return [];
+
+    if (rangeType === "custom") {
+      return customRanges
+        .map((range, idx) => {
+          const start = parseInt(range.start);
+          const end = parseInt(range.end);
+          if (
+            isNaN(start) ||
+            isNaN(end) ||
+            start < 1 ||
+            end > file.pageCount ||
+            start > end
+          ) {
+            return null;
+          }
+          return {
+            id: `range-${idx}`,
+            start,
+            end,
+            rangeIndex: idx,
+          };
+        })
+        .filter(Boolean);
+    } else {
+      const rangeSize = parseInt(fixedRange) || 2;
+      const cards = [];
+      for (let i = 0; i < file.pageCount; i += rangeSize) {
+        const start = i + 1;
+        const end = Math.min(i + rangeSize, file.pageCount);
+        cards.push({
+          id: `fixed-${i}`,
+          start,
+          end,
+        });
+      }
+      return cards;
+    }
+  }, [file, splitMode, rangeType, customRanges, fixedRange]);
+
   return (
     <div
       style={{
@@ -1774,7 +1827,10 @@ const PDFSplitTool = () => {
     >
       {/* Header */}
       <div className="w-full bg-white border-b border-gray-200 px-6 py-4 fixed z-[1000]">
-        <div className="flex justify-between items-center gap-4">
+        <Stack
+          direction="row"
+          sx={{ justifyContent: "space-between", gap: "20px" }}
+        >
           <div className="flex items-center gap-4">
             <div
               style={{
@@ -1787,82 +1843,197 @@ const PDFSplitTool = () => {
             </div>
             <h1
               className="text-2xl font-semibold"
-              style={{ color: theme.palette.primary.main }}
+              style={{ minWidth: "180px" }}
             >
               PDF Split Tool
             </h1>
           </div>
+
           {file && (
-            <div className="flex items-center gap-4">
-              {/* Rotation Controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => rotateAllPages("left")}
-                  style={{
-                    background: theme.palette.primary.main,
-                    color: "#fff",
-                  }}
-                  className="px-4 py-2 rounded-lg cursor-pointer hover:opacity-90"
-                  title="Rotate all left"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l-7-7 7-7m5 14v-7h-7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => rotateAllPages("right")}
-                  style={{
-                    background: theme.palette.primary.main,
-                    color: "#fff",
-                  }}
-                  className="px-4 py-2 rounded-lg cursor-pointer hover:opacity-90"
-                  title="Rotate all right"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 5l7 7-7 7m-5-14v7h7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={resetAllRotations}
-                  style={{ background: theme.palette.ui.delete, color: "#fff" }}
-                  className="px-4 py-2 rounded-lg cursor-pointer hover:opacity-90"
-                  title="Reset rotations"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                </button>
-              </div>
+            <Stack
+              direction="row"
+              sx={{
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              {/* Mode Buttons */}
+              <Stack direction="row" sx={{ alignItems: "center", gap: "20px" }}>
+                <div className="flex gap-4 justify-self-center">
+                  {(() => {
+                    const splitModeButtonsData = [
+                      {
+                        title: "Split by Range",
+                        tooltipText: "Split PDF using custom or fixed ranges",
+                        handler: () => {
+                          setSplitMode("range");
+                          setSelectedPages(new Set());
+                        },
+                      },
+                      {
+                        title: "Extract Pages",
+                        tooltipText: "Extract selected pages into new PDF(s)",
+                        handler: () => {
+                          setSplitMode("extract");
+                          setCustomRanges([
+                            { start: "1", end: file.pageCount.toString() },
+                          ]);
+                        },
+                      },
+                    ];
+
+                    return (
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        sx={{
+                          flexWrap: "wrap",
+                          gap: "10px",
+                          width: { xs: "100%", sm: "auto" },
+                          borderWidth: "4px",
+                          borderColor: theme.palette.primary.main,
+                          p: "4px",
+                          borderRadius: "30px",
+                        }}
+                      >
+                        {splitModeButtonsData.map((buttonData, index) => {
+                          const isActiveButton =
+                            (buttonData.title === "Split by Range" &&
+                              splitMode === "range") ||
+                            (buttonData.title === "Extract Pages" &&
+                              splitMode === "extract");
+
+                          return (
+                            <Tooltip
+                              key={index}
+                              title={buttonData.tooltipText}
+                              placement="top"
+                              arrow
+                              slotProps={{
+                                popper: {
+                                  modifiers: [
+                                    {
+                                      name: "zIndex",
+                                      enabled: true,
+                                      phase: "write",
+                                      fn: ({ state }) => {
+                                        state.styles.popper.zIndex = 9999;
+                                      },
+                                    },
+                                  ],
+                                },
+                                tooltip: {
+                                  sx: {
+                                    bgcolor: "#333",
+                                    color: "#fff",
+                                    fontSize: "14px",
+                                    px: 1.5,
+                                    py: 0.5,
+                                    borderRadius: "8px",
+                                  },
+                                },
+                                arrow: { sx: { color: "#333" } },
+                              }}
+                            >
+                              <Button
+                                variant="outlined"
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "row",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "3px",
+                                  borderRadius: "30px",
+                                  transition: "all 0.3s ease",
+                                  textTransform: "none",
+                                  fontSize: "16px",
+                                  py: "4px",
+                                  px: "0px",
+                                  minWidth: { xs: "100%", sm: "135px" },
+                                  flex: { xs: "none", sm: "1" },
+                                  minHeight: "48px",
+                                  bgcolor: isActiveButton
+                                    ? theme.palette.primary.main
+                                    : "transparent",
+                                  color: isActiveButton
+                                    ? "#ffffff"
+                                    : theme.palette.primary.secondMain,
+                                  border: "none",
+                                  "& .MuiButton-startIcon": {
+                                    marginRight: "2px",
+                                  },
+                                  boxShadow: "none",
+                                }}
+                                onClick={buttonData.handler}
+                              >
+                                {buttonData.title}
+                              </Button>
+                            </Tooltip>
+                          );
+                        })}
+                      </Stack>
+                    );
+                  })()}
+                </div>
+
+                {/* Rotation Controls */}
+                <div className="flex gap-4 flex-wrap justify-self-center">
+                  <div className="flex items-center gap-2">
+                    <Tooltip title="Rotate all left" placement="top">
+                      <button
+                        onClick={() => rotateAllPages("left")}
+                        style={{
+                          background: theme.palette.primary.main,
+                          color: "#fff",
+                        }}
+                        className="px-5 py-3 rounded-[6px] cursor-pointer"
+                      >
+                        <RotateLeftIcon />
+                      </button>
+                    </Tooltip>
+
+                    <Tooltip title="Rotate all right" placement="top">
+                      <button
+                        onClick={() => rotateAllPages("right")}
+                        style={{
+                          background: theme.palette.primary.main,
+                          color: "#fff",
+                        }}
+                        className="px-5 py-3 rounded-[6px] cursor-pointer"
+                      >
+                        <RotateRightIcon />
+                      </button>
+                    </Tooltip>
+
+                    <Tooltip title="Reset all rotations" placement="top">
+                      <button
+                        onClick={resetAllRotations}
+                        style={{
+                          background: theme.palette.ui.delete,
+                          color: "#fff",
+                        }}
+                        className="px-5 py-3 rounded-[6px] cursor-pointer"
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                      </button>
+                    </Tooltip>
+                  </div>
+                </div>
+              </Stack>
+
+              {/* Split button */}
               <button
                 onClick={handleSplit}
                 disabled={processing}
@@ -1872,13 +2043,12 @@ const PDFSplitTool = () => {
                 }}
                 className="px-8 py-3 rounded-xl text-lg font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
               >
-                {processing ? "Processing..." : "Split PDF"}
+                {processing ? "Processing..." : "Split PDF →"}
               </button>
-            </div>
+            </Stack>
           )}
-        </div>
+        </Stack>
 
-        {/* Download notification */}
         {downloadUrls.length > 0 && (
           <div
             style={{
@@ -1942,14 +2112,8 @@ const PDFSplitTool = () => {
         )}
       </div>
 
-      {/* Main Content */}
-      <div
-        className={`max-w-7xl mx-auto p-6 ${
-          downloadUrls.length > 0 ? "mt-32" : "mt-24"
-        }`}
-      >
+      <div className={`mx-4 ${downloadUrls.length > 0 ? "mt-32" : "mt-24"}`}>
         {!file ? (
-          /* Upload Section */
           <div
             style={{ background: "#fff" }}
             className="border-2 border-dashed rounded-3xl min-h-[80vh] flex flex-col items-center justify-center p-12"
@@ -1992,10 +2156,13 @@ const PDFSplitTool = () => {
             </div>
           </div>
         ) : (
-          /* Split Interface */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Panel - Options */}
-            <div className="lg:col-span-1">
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ width: "100%", display: "flex", pt: "20px" }}
+          >
+            {/* Left Panel */}
+            <Box sx={{ minWidth: "25%" }}>
               <div
                 style={{ background: "#fff" }}
                 className="rounded-2xl p-6 shadow-sm"
@@ -2007,53 +2174,10 @@ const PDFSplitTool = () => {
                   Split Options
                 </h2>
 
-                {/* Mode Selection */}
-                <div className="mb-6">
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => {
-                        setSplitMode("range");
-                        setSelectedPages(new Set());
-                      }}
-                      style={{
-                        background:
-                          splitMode === "range"
-                            ? theme.palette.primary.main
-                            : theme.palette.secondary.main,
-                        color:
-                          splitMode === "range"
-                            ? "#fff"
-                            : theme.palette.primary.main,
-                      }}
-                      className="flex-1 py-3 rounded-lg font-semibold cursor-pointer hover:opacity-90"
-                    >
-                      Split by Range
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSplitMode("extract");
-                        setCustomRanges([{ start: "", end: "" }]);
-                      }}
-                      style={{
-                        background:
-                          splitMode === "extract"
-                            ? theme.palette.primary.main
-                            : theme.palette.secondary.main,
-                        color:
-                          splitMode === "extract"
-                            ? "#fff"
-                            : theme.palette.primary.main,
-                      }}
-                      className="flex-1 py-3 rounded-lg font-semibold cursor-pointer hover:opacity-90"
-                    >
-                      Extract Pages
-                    </button>
-                  </div>
-                </div>
+                <div className="mb-6"></div>
 
                 {splitMode === "range" ? (
                   <>
-                    {/* Range Type */}
                     <div className="mb-6">
                       <div className="flex gap-2 mb-4">
                         <button
@@ -2097,142 +2221,83 @@ const PDFSplitTool = () => {
                           Define page ranges to split
                         </p>
 
-                        {/* iLovePDF-style Range Cards */}
-                        <div className="space-y-6 mb-4">
-                          {customRanges.map((range, idx) => {
-                            const start = parseInt(range.start) || 0;
-                            const end = parseInt(range.end) || 0;
-                            const validStart =
-                              start >= 1 && start <= file.pageCount;
-                            const validEnd =
-                              end >= 1 && end <= file.pageCount && end >= start;
-
-                            return (
-                              <div
-                                key={idx}
-                                style={{
-                                  background: theme.palette.secondary.main,
-                                  borderColor:
-                                    validStart && validEnd
-                                      ? theme.palette.primary.main
-                                      : "#ccc",
-                                }}
-                                className="border-2 rounded-xl p-4"
-                              >
-                                <div className="flex items-center justify-between mb-3">
-                                  <h4
-                                    className="font-semibold text-sm"
+                        <div className="space-y-4 mb-4">
+                          {customRanges.map((range, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                background: theme.palette.secondary.main,
+                                borderColor: theme.palette.primary.main,
+                              }}
+                              className="border-2 rounded-xl p-4"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <h4
+                                  className="font-semibold text-sm"
+                                  style={{
+                                    color: theme.palette.primary.main,
+                                  }}
+                                >
+                                  Split {idx + 1}
+                                </h4>
+                                {customRanges.length > 1 && (
+                                  <button
+                                    onClick={() => removeRange(idx)}
                                     style={{
-                                      color: theme.palette.primary.main,
+                                      background: theme.palette.ui.delete,
+                                      color: "#fff",
                                     }}
+                                    className="p-1.5 rounded hover:opacity-90"
                                   >
-                                    Split {idx + 1}
-                                  </h4>
-                                  {customRanges.length > 1 && (
-                                    <button
-                                      onClick={() => removeRange(idx)}
-                                      style={{
-                                        background: theme.palette.ui.delete,
-                                        color: "#fff",
-                                      }}
-                                      className="p-1.5 rounded hover:opacity-90"
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
                                     >
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 mb-3">
-                                  <input
-                                    type="number"
-                                    placeholder="From"
-                                    value={range.start}
-                                    onChange={(e) =>
-                                      updateRange(idx, "start", e.target.value)
-                                    }
-                                    min="1"
-                                    max={file.pageCount}
-                                    style={{
-                                      borderColor: theme.palette.primary.main,
-                                    }}
-                                    className="px-3 py-2 border rounded-lg text-sm"
-                                  />
-                                  <input
-                                    type="number"
-                                    placeholder="To"
-                                    value={range.end}
-                                    onChange={(e) =>
-                                      updateRange(idx, "end", e.target.value)
-                                    }
-                                    min="1"
-                                    max={file.pageCount}
-                                    style={{
-                                      borderColor: theme.palette.primary.main,
-                                    }}
-                                    className="px-3 py-2 border rounded-lg text-sm"
-                                  />
-                                </div>
-
-                                {/* Thumbnails */}
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div className="bg-white rounded-lg p-2 border">
-                                    {validStart && pageThumbnails[start] ? (
-                                      <img
-                                        src={pageThumbnails[start]}
-                                        alt={`Page ${start}`}
-                                        className="w-full h-32 object-contain"
-                                        style={{
-                                          transform: `rotate(${
-                                            pageRotations[start] || 0
-                                          }deg)`,
-                                        }}
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
                                       />
-                                    ) : (
-                                      <div className="h-32 flex items-center justify-center text-gray-400 text-xs">
-                                        {validStart ? "Loading..." : "Page"}
-                                      </div>
-                                    )}
-                                    <p className="text-center text-xs mt-1 font-medium">
-                                      Page {start || "?"}
-                                    </p>
-                                  </div>
-                                  <div className="bg-white rounded-lg p-2 border">
-                                    {validEnd && pageThumbnails[end] ? (
-                                      <img
-                                        src={pageThumbnails[end]}
-                                        alt={`Page ${end}`}
-                                        className="w-full h-32 object-contain"
-                                        style={{
-                                          transform: `rotate(${
-                                            pageRotations[end] || 0
-                                          }deg)`,
-                                        }}
-                                      />
-                                    ) : (
-                                      <div className="h-32 flex items-center justify-center text-gray-400 text-xs">
-                                        {validEnd ? "Loading..." : "Page"}
-                                      </div>
-                                    )}
-                                    <p className="text-center text-xs mt-1 font-medium">
-                                      Page {end || "?"}
-                                    </p>
-                                  </div>
-                                </div>
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
-                            );
-                          })}
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <input
+                                  type="number"
+                                  placeholder="From"
+                                  value={range.start}
+                                  onChange={(e) =>
+                                    updateRange(idx, "start", e.target.value)
+                                  }
+                                  min="1"
+                                  max={file.pageCount}
+                                  style={{
+                                    borderColor: theme.palette.primary.main,
+                                  }}
+                                  className="px-3 py-2 border rounded-lg text-sm"
+                                />
+                                <input
+                                  type="number"
+                                  placeholder="To"
+                                  value={range.end}
+                                  onChange={(e) =>
+                                    updateRange(idx, "end", e.target.value)
+                                  }
+                                  min="1"
+                                  max={file.pageCount}
+                                  style={{
+                                    borderColor: theme.palette.primary.main,
+                                  }}
+                                  className="px-3 py-2 border rounded-lg text-sm"
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
 
                         <button
@@ -2331,7 +2396,6 @@ const PDFSplitTool = () => {
                   </>
                 )}
 
-                {/* Preview Info */}
                 <div
                   style={{ background: theme.palette.secondary.main }}
                   className="mt-6 p-4 rounded-lg"
@@ -2344,7 +2408,6 @@ const PDFSplitTool = () => {
                   </p>
                 </div>
 
-                {/* File Info */}
                 <div
                   className="mt-6 p-4 border rounded-lg"
                   style={{ borderColor: theme.palette.primary.main }}
@@ -2360,10 +2423,10 @@ const PDFSplitTool = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </Box>
 
-            {/* Right Panel - Pages Grid */}
-            <div className="lg:col-span-2">
+            {/* Right Panel */}
+            <Box sx={{ width: "100%" }}>
               <div
                 style={{ background: "#fff" }}
                 className="rounded-2xl p-6 shadow-sm min-h-[80vh]"
@@ -2373,7 +2436,9 @@ const PDFSplitTool = () => {
                     style={{ color: theme.palette.primary.main }}
                     className="text-xl font-bold"
                   >
-                    Pages ({file.pageCount})
+                    {splitMode === "range"
+                      ? "Range Preview"
+                      : `Pages (${file.pageCount})`}
                   </h2>
                   {splitMode === "extract" && selectedPages.size > 0 && (
                     <button
@@ -2413,18 +2478,122 @@ const PDFSplitTool = () => {
                     </svg>
                     <p className="text-gray-600">Loading PDF...</p>
                   </div>
+                ) : splitMode === "range" ? (
+                  /* Range Cards View */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {getRangeCards.map((card, idx) => (
+                      <div
+                        key={card.id}
+                        style={{ background: theme.palette.secondary.main }}
+                        className={`rounded-lg transition-all hover:-translate-y-1 hover:shadow-lg ${
+                          getRangeCards.length % 2 !== 0 &&
+                          idx === getRangeCards.length - 1
+                            ? "sm:col-span-2"
+                            : ""
+                        }`}
+                      >
+                        <div className="relative">
+                          <div className="grid grid-cols-2 gap-5 p-4">
+                            {/* Start Page */}
+                            <div className="bg-white rounded-lg p-2 pt-4">
+                              {pageThumbnails[card.start] ? (
+                                <img
+                                  src={pageThumbnails[card.start]}
+                                  alt={`Page ${card.start}`}
+                                  className="w-full h-32 object-contain"
+                                  style={{
+                                    transform: `rotate(${
+                                      pageRotations[card.start] || 0
+                                    }deg)`,
+                                  }}
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center text-gray-400 text-xs">
+                                  Loading...
+                                </div>
+                              )}
+                              <p className="text-center text-xs my-4 font-medium">
+                                Page {card.start}
+                              </p>
+                            </div>
+                            {/* End Page */}
+                            <div className="bg-white rounded-lg p-2 pt-4">
+                              {pageThumbnails[card.end] ? (
+                                <img
+                                  src={pageThumbnails[card.end]}
+                                  alt={`Page ${card.end}`}
+                                  className="w-full h-32 object-contain"
+                                  style={{
+                                    transform: `rotate(${
+                                      pageRotations[card.end] || 0
+                                    }deg)`,
+                                  }}
+                                />
+                              ) : (
+                                <div className="h-32 flex items-center justify-center text-gray-400 text-xs">
+                                  Loading...
+                                </div>
+                              )}
+                              <p className="text-center text-xs my-4 font-medium">
+                                Page {card.end}
+                              </p>
+                            </div>
+                          </div>
+                          {rangeType === "custom" && (
+                            <button
+                              onClick={() => removeRange(card.rangeIndex)}
+                              style={{
+                                background: theme.palette.ui.delete,
+                                color: "#fff",
+                              }}
+                              className="absolute top-[-6px] right-[-6px] py-1.5 px-2 rounded-[4px] shadow cursor-pointer"
+                              title="Remove range"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        <div
+                          className="p-3 border-t  text-center"
+                          style={{
+                            borderColor: theme.palette.secondary.fourthMain,
+                          }}
+                        >
+                          <p
+                            className="text-sm font-medium p-2 rounded-lg"
+                            style={{
+                              background: theme.palette.primary.main,
+                              color: "#ffffff",
+                            }}
+                          >
+                            Pages ( {card.start} - {card.end} )
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  /* Extract Pages View */
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
                     {pages.map((pageNum, idx) => {
                       const isSelected = selectedPages.has(pageNum);
                       const rotation = pageRotations[pageNum] || 0;
                       return (
                         <div
                           key={pageNum}
-                          onClick={() =>
-                            splitMode === "extract" &&
-                            togglePageSelection(pageNum)
-                          }
+                          onClick={() => togglePageSelection(pageNum)}
                           style={{
                             background: theme.palette.secondary.main,
                             borderColor: isSelected
@@ -2432,147 +2601,125 @@ const PDFSplitTool = () => {
                               : "transparent",
                             borderWidth: isSelected ? "3px" : "1px",
                           }}
-                          className={`rounded-lg overflow-hidden transition-all hover:shadow-lg relative ${
-                            splitMode === "extract" ? "cursor-pointer" : ""
+                          className={`w-60 rounded-lg relative overflow-visible cursor-pointer ${
+                            isSelected
+                              ? "ring-6 ring-[#1fd5e947] border-none"
+                              : "border-none"
                           }`}
                         >
-                          <div className="relative">
+                          <div className="relative cursor-pointer">
                             <div
                               style={{
                                 background: theme.palette.secondary.main,
                               }}
-                              className="h-48 flex items-center justify-center relative"
+                              className="h-62 flex items-center justify-center relative rounded-lg "
                             >
                               {pageThumbnails[pageNum] ? (
                                 <img
                                   src={pageThumbnails[pageNum]}
                                   alt={`Page ${pageNum}`}
-                                  className="w-full h-full object-contain"
+                                  className="max-w-full max-h-full object-contain"
                                   style={{
                                     transform: `rotate(${rotation}deg)`,
                                   }}
                                 />
                               ) : (
-                                <span className="text-4xl text-gray-400">
+                                <span className="text-5xl text-gray-400">
                                   PDF
                                 </span>
                               )}
-                              {/* Page Number Badge */}
-                              <div
-                                style={{
-                                  background: theme.palette.primary.main,
-                                  color: "#fff",
-                                }}
-                                className="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold"
-                              >
-                                {pageNum}
-                              </div>
-                              {/* Rotation Controls */}
-                              <div className="absolute top-2 left-2 flex gap-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    rotatePage(pageNum, "left");
-                                  }}
-                                  style={{
-                                    background: theme.palette.primary.main,
-                                    color: "#fff",
-                                  }}
-                                  className="p-1.5 rounded shadow cursor-pointer hover:opacity-90"
-                                  title="Rotate left"
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 19l-7-7 7-7m5 14v-7h-7"
-                                    />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    rotatePage(pageNum, "right");
-                                  }}
-                                  style={{
-                                    background: theme.palette.primary.main,
-                                    color: "#fff",
-                                  }}
-                                  className="p-1.5 rounded shadow cursor-pointer hover:opacity-90"
-                                  title="Rotate right"
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 5l7 7-7 7m-5-14v7h7"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                              {/* Preview Button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openPreview(idx);
-                                }}
-                                style={{
-                                  background: "rgba(255, 255, 255, 0.9)",
-                                }}
-                                className="absolute bottom-2 right-2 p-2 rounded-full shadow cursor-pointer hover:opacity-90"
-                                title="Preview"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke={theme.palette.primary.main}
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                  />
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                </svg>
-                              </button>
-                              {/* Selection Checkmark */}
-                              {isSelected && (
-                                <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                                  <div
+                              {/* <div
+                              style={{
+                                background:
+                                  theme.palette.secondary.secondMain,
+                                color: theme.palette.primary.main,
+                              }}
+                              className="absolute top-0 right-[0] px-2 py-1 rounded text-xs font-semibold z-10"
+                            >
+                              {pageNum}
+                            </div> */}
+
+                              {/* Rotate buttons same as merge tool */}
+                              <div className="absolute top-[-10px] right-[-10px] flex gap-2 z-10">
+                                <Tooltip title="Rotate left">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      rotatePage(pageNum, "left");
+                                    }}
                                     style={{
                                       background: theme.palette.primary.main,
+                                      color: "#fff",
+                                    }}
+                                    className="w-7 h-7 rounded shadow cursor-pointer"
+                                  >
+                                    <RotateLeftIcon />
+                                  </button>
+                                </Tooltip>
+                                <Tooltip title="Rotate right">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      rotatePage(pageNum, "right");
+                                    }}
+                                    style={{
+                                      background: theme.palette.primary.main,
+                                      color: "#fff",
+                                    }}
+                                    className="w-7 h-7 rounded shadow cursor-pointer"
+                                  >
+                                    <RotateRightIcon />
+                                  </button>
+                                </Tooltip>
+
+                                <button
+                                  style={{
+                                    background:
+                                      theme.palette.secondary.secondMain,
+                                  }}
+                                  className="p-1.5 rounded shadow cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openPreview(idx);
+                                  }}
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke={theme.palette.primary.main}
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+
+                              {/* Tick overlay same as merge tool */}
+                              {isSelected && (
+                                <div className="absolute inset-0 flex items-center justify-center z-10">
+                                  <div
+                                    style={{
+                                      background:
+                                        theme.palette.secondary.secondMain,
+                                      color: theme.palette.primary.main,
                                     }}
                                     className="rounded-full p-2"
                                   >
                                     <svg
-                                      className="w-8 h-8 text-white"
+                                      className="w-10 h-10"
                                       fill="none"
-                                      stroke="currentColor"
+                                      stroke={theme.palette.primary.main}
                                       viewBox="0 0 24 24"
                                     >
                                       <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        strokeWidth={3}
+                                        strokeWidth={2}
                                         d="M5 13l4 4L19 7"
                                       />
                                     </svg>
@@ -2580,14 +2727,24 @@ const PDFSplitTool = () => {
                                 </div>
                               )}
                             </div>
-                          </div>
-                          <div
-                            style={{ background: theme.palette.secondary.main }}
-                            className="p-2 text-center"
-                          >
-                            <p className="text-xs text-gray-600 font-medium">
-                              Page {pageNum}
-                            </p>
+                            <div
+                              style={{
+                                background: theme.palette.secondary.main,
+                                borderColor: theme.palette.secondary.fourthMain,
+                              }}
+                              className="p-2 border-t"
+                            >
+                              <p
+                                className="text-xs truncate font-medium p-2 rounded-[8px] my-2"
+                                style={{
+                                  background: theme.palette.primary.main,
+                                  color: "#ffffff",
+                                  textAlign: "center",
+                                }}
+                              >
+                                Page {pageNum}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       );
@@ -2595,11 +2752,10 @@ const PDFSplitTool = () => {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+            </Box>
+          </Stack>
         )}
 
-        {/* Error Display */}
         {error && (
           <div
             style={{ background: "#fee2e2", borderColor: "#ef4444" }}

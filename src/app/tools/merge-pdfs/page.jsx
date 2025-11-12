@@ -2826,7 +2826,6 @@ const PDFMergeTool = () => {
           direction="row"
           sx={{ justifyContent: "space-between", gap: "20px" }}
         >
-          {" "}
           <div className="flex items-center gap-4">
             <Box component={Link} href="/" sx={{ cursor: "pointer" }}>
               <ToolsHubsIcon width="147" />
@@ -3334,7 +3333,7 @@ const PDFMergeTool = () => {
                                 }}
                                 className="w-7 h-7 rounded shadow cursor-pointer"
                               >
-                               <RotateLeftIcon/>
+                                <RotateLeftIcon />
                               </button>
                             </Tooltip>
                             <Tooltip title="Rotate right">
@@ -3349,7 +3348,7 @@ const PDFMergeTool = () => {
                                 }}
                                 className="w-7 h-7 rounded shadow cursor-pointer"
                               >
-                               <RotateRightIcon/>
+                                <RotateRightIcon />
                               </button>
                             </Tooltip>
                             <button

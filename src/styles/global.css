@@ -14,7 +14,15 @@ body {
   overflow-y: scroll; /* Keep scrolling enabled */
   margin: 0;
 }
+/* In your global CSS file */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
 
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 /* REMOVED: AvertaCY Fonts */
 
 /* Averta Cyrillic Fonts - Imported based on provided OTF files */

@@ -249,11 +249,11 @@ const toolsThatDoMoreToolsData = [
     href: "/qr-code-generator",
   },
   {
-    primaryText: "Color Palette Generator",
+    primaryText: "Nature Color Palette",
     secondaryText:
       "Build beautiful color combinations for your designs in one click",
     icon: ColorPaletteGeneratorIcon,
-    href: "/tools/color-palette-generator",
+    href: "/tools/nature-color-palette",
   },
   {
     primaryText: "Merge PDFs",

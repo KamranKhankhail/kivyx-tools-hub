@@ -1691,55 +1691,69 @@ const PDFSplitTool = () => {
                       >
                         <div className="relative">
                           <div className="grid grid-cols-2 gap-5 p-4">
-                            <div
-                              className="bg-white rounded-lg p-2 pt-4"
-                              style={{
-                                height: "226px",
-                                display: "flex",
-                                alignItems: "center",
-                              }}
-                            >
-                              {pageThumbnails[card.start] ? (
-                                <img
-                                  src={pageThumbnails[card.start]}
-                                  alt={`Page ${card.start}`}
-                                  className="w-full h-32 object-contain"
-                                  style={{
-                                    transform: `rotate(${
-                                      pageRotations[card.start] || 0
-                                    }deg)`,
-                                  }}
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center text-gray-400 text-xs">
-                                  Loading...
-                                </div>
-                              )}
-                              <p className="text-center text-xs my-4 font-medium">
+                            <div>
+                              {" "}
+                              <div
+                                className="bg-white rounded-lg p-2 pt-4"
+                                style={{
+                                  height: "236px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                {pageThumbnails[card.start] ? (
+                                  <img
+                                    src={pageThumbnails[card.start]}
+                                    alt={`Page ${card.start}`}
+                                    className="w-full h-32 object-contain"
+                                    style={{
+                                      transform: `rotate(${
+                                        pageRotations[card.start] || 0
+                                      }deg)`,
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center text-gray-400 text-xs">
+                                    Loading...
+                                  </div>
+                                )}
+                              </div>{" "}
+                              <p className="text-center text-xs mt-2 font-medium">
                                 Page {card.start}
                               </p>
                             </div>
-                            <div className="bg-white rounded-lg p-2 pt-4">
-                              {pageThumbnails[card.end] ? (
-                                <img
-                                  src={pageThumbnails[card.end]}
-                                  alt={`Page ${card.end}`}
-                                  className="w-full h-32 object-contain"
-                                  style={{
-                                    transform: `rotate(${
-                                      pageRotations[card.end] || 0
-                                    }deg)`,
-                                  }}
-                                />
-                              ) : (
-                                <div className="h-32 flex items-center justify-center text-gray-400 text-xs">
-                                  Loading...
-                                </div>
-                              )}
+
+                            <div>
+                              {" "}
+                              <div
+                                style={{
+                                  height: "236px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                                className="bg-white rounded-lg p-2 pt-4"
+                              >
+                                {pageThumbnails[card.end] ? (
+                                  <img
+                                    src={pageThumbnails[card.end]}
+                                    alt={`Page ${card.end}`}
+                                    className="w-full h-32 object-contain"
+                                    style={{
+                                      transform: `rotate(${
+                                        pageRotations[card.end] || 0
+                                      }deg)`,
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="h-32 flex items-center justify-center text-gray-400 text-xs">
+                                    Loading...
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-center text-xs pt-2 font-medium">
+                                Page {card.end}
+                              </p>
                             </div>
-                            <p className="text-center text-xs my-4 font-medium">
-                              Page {card.end}
-                            </p>
                           </div>
                           {rangeType === "custom" && (
                             <button

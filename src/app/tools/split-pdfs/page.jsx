@@ -1,8 +1,11 @@
 "use client";
+import ToolsHubsIcon from "@/icons/ToolsHubsIcon";
 import theme from "@/styles/theme";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import RotateRightIcon from "@mui/icons-material/RotateRight";
 import { Box, Button, Stack, Tooltip } from "@mui/material";
+import PdfFileIcon from "@/app/tools/split-pdfs/_components/icons/PdfFileIcon";
+import Link from "next/link";
 import React, {
   useState,
   useEffect,
@@ -796,15 +799,9 @@ const PDFSplitTool = () => {
           sx={{ justifyContent: "space-between", gap: "20px" }}
         >
           <div className="flex items-center gap-4">
-            <div
-              style={{
-                color: theme.palette.primary.main,
-                fontSize: "24px",
-                fontWeight: "bold",
-              }}
-            >
-              ToolsHub
-            </div>
+            <Box component={Link} href="/" sx={{ cursor: "pointer" }}>
+              <ToolsHubsIcon width="147" />
+            </Box>
             <h1
               className="text-2xl font-semibold"
               style={{ minWidth: "180px" }}
@@ -1154,25 +1151,14 @@ const PDFSplitTool = () => {
               </div>
             ) : (
               <>
-                <svg
-                  className="w-24 h-24 mb-6"
-                  fill="none"
-                  stroke={theme.palette.primary.main}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
+                <PdfFileIcon />
+
                 <label
                   style={{
                     background: theme.palette.primary.main,
                     color: "#fff",
                   }}
-                  className="px-10 py-4 rounded-xl cursor-pointer text-xl font-semibold mb-6 hover:opacity-90"
+                  className="px-10 mt-6 py-4 rounded-xl cursor-pointer text-xl font-semibold mb-6 hover:opacity-90"
                 >
                   Select PDF file
                   <input

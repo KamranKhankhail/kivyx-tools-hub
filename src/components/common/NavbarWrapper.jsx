@@ -13,6 +13,7 @@ const NavbarWrapper = () => {
     "/tools/split-pdfs",
     "/tools/compress-pdfs",
     "/tools/convert-pdf",
+    "/tools/universal-unit-converter",
   ];
 
   const shouldShowNavbar = !hiddenRoutes.includes(pathname);

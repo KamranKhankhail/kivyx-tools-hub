@@ -27,6 +27,7 @@ const theme = createTheme({
       secondMain: "#96b5c6",
       thirdMain: "#61698b",
       fourthMain: "#1fd5e9",
+      fifthMain: "#80c0c0",
     },
     ui: {
       delete: "#FF386A",

@@ -9,14 +9,18 @@ import {
   Chakra_Petch,
 } from "next/font/google";
 import "@/styles/global.css";
-import ThemeRegistry from "../styles/ThemeRegistry";
-
-import NavigationWrapper from "../components/common/NavigationWrapper";
-import PageLoader from "../components/common/PageLoader";
+import ThemeRegistry from "@/styles/ThemeRegistry";
+import NavigationWrapper from "@/components/common/NavigationWrapper";
+import PageLoader from "@/components/common/PageLoader";
 import NavbarWrapper from "@/components/common/NavbarWrapper";
 import { Stack } from "@mui/material";
 import "@/styles/global.css";
-
+import {
+  breadcrumbsToolshubHome,
+  faqSchemasToolshubHome,
+  speakableAEOToolshubHome,
+} from "@/app/toolshubSEO"; // Adjust path if needed
+import Head from "next/head";
 const chakraPetch = Chakra_Petch({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -66,72 +70,101 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+const TOOLSHUB_BASE_URL = "https://www.toolshub.kivyx.com";
+const KIVYX_MAIN_URL = "https://www.kivyx.com";
+const KIVYX_FAVICON_URL = "https://www.kivyx.com/favicon.ico";
 
 export const metadata = {
   title: {
-    default: "ToolsHub",
+    default: "ToolsHub | Your Essential Online Toolkit for Everyday Tasks",
     template: "%s | ToolsHub by Kivyx Technologies",
   },
   description:
-    "ToolsHub by Kivyx Technologies offers 100+ online utilities to simplify daily tasks, boost productivity, and save time — all in one place.",
-  metadataBase: new URL("https://toolshub.kivyx.com"),
-  icons: {
-    icon: "/favicon.svg",
-  },
+    "Discover ToolsHub, a comprehensive collection of free online tools designed to simplify your digital life. From productivity and creativity to essential utilities like password and QR code generators, merge/split PDFs, and unit converters. Fast, smart, and easy to use.",
+  keywords: [
+    "ToolsHub",
+    "online tools",
+    "free online tools",
+    "digital toolkit",
+    "productivity tools",
+    "utility tools",
+    "web tools",
+    "password generator",
+    "QR code generator",
+    "PDF tools",
+    "unit converter",
+    "color palette generator",
+    "online utilities",
+    "kivyx tools",
+  ],
   openGraph: {
-    title: "ToolsHub by Kivyx Technologies",
+    title: "ToolsHub | Your Essential Online Toolkit for Everyday Tasks",
     description:
-      "Access 100+ free online tools to streamline your workflow, create efficiently, and get more done — powered by Kivyx Technologies.",
-    url: "https://www.toolshub.kivyx.com",
-    siteName: "ToolsHub",
+      "Access a wide range of free online tools for daily digital needs including password generation, QR codes, PDF manipulation, unit conversion, and more. Simplify your workflow with ToolsHub.",
+    url: TOOLSHUB_BASE_URL,
+    siteName: "Kivyx Technologies ToolsHub",
     images: [
       {
-        url: "/images/toolshub-og.jpg", // Replace with your real OG image
+        url: `${TOOLSHUB_BASE_URL}/images/toolshub-banner.png`, // TODO: Replace with a compelling banner image for the ToolsHub homepage
         width: 1200,
         height: 630,
-        alt: "ToolsHub by Kivyx Technologies",
+        alt: "ToolsHub - Free Online Tools Collection",
       },
     ],
-    locale: "en_US",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "ToolsHub by Kivyx Technologies",
-    description:
-      "100+ online tools to simplify tasks, boost productivity, and save time — all in one place.",
-    images: ["/images/toolshub-og.jpg"],
   },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
+      <Head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Kivyx Technologies",
-              url: "https://www.kivyx.com",
-              logo: "https://www.kivyx.com/favicon.ico",
-              sameAs: [
-                "https://www.linkedin.com/company/kivyx-technologies/?originalSubdomain=pk",
-                "https://www.facebook.com/share/1GvYWNTVsC/",
-                "https://www.instagram.com/islamencycloofficial?igsh=c2oxMzN5YXd2Z3hh",
-              ],
-              contactPoint: {
-                "@type": "ContactPoint",
-                email: "support@kivyx.com", // TODO: replace
-                contactType: "customer support",
-                availableLanguage: ["English", "Urdu"],
+              "@type": "WebSite", // Use WebSite for a general collection/homepage
+              name: "ToolsHub by Kivyx Technologies",
+              url: TOOLSHUB_BASE_URL,
+              description:
+                "ToolsHub offers a comprehensive suite of free online tools for everyday digital tasks, enhancing productivity and simplifying workflows. Explore password, QR code, PDF, unit conversion, and color palette tools.",
+              publisher: {
+                "@type": "Organization",
+                name: "Kivyx Technologies",
+                url: KIVYX_MAIN_URL,
+                logo: {
+                  "@type": "ImageObject",
+                  url: KIVYX_FAVICON_URL,
+                },
+              },
+              potentialAction: {
+                "@type": "SearchAction",
+                target: `${TOOLSHUB_BASE_URL}/search?q={search_term_string}`,
+                "query-input": "required name=search_term_string",
               },
             }),
           }}
         />
-      </head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbsToolshubHome),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqSchemasToolshubHome),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(speakableAEOToolshubHome),
+          }}
+        />
+      </Head>
       <body
         className={`${chakraPetch.className} ${inter.variable} ${jaro.variable} ${geistSans.variable} ${geistMono.variable} antialiased ${roboto.variable} ${bebasNeue.variable} ${mulish.variable} `} // Add notoNastaliqUrdu.variable
       >

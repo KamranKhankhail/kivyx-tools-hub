@@ -11,27 +11,27 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import UrlScreen from "./_components/UrlScreen";
-import SmsScreen from "./_components/SmsScreen";
-import VcardScreen from "./_components/VcardScreen";
-import TextScreen from "./_components/TextScreen";
-import EmailScreen from "./_components/EmailScreen";
-import WifiScreen from "./_components/WifiScreen";
-import TwitterScreen from "./_components/TwitterScreen";
-import FacebookScreen from "./_components/FacebookScreen";
-import Mp3Screen from "./_components/Mp3Screen";
-import AppStoresScreen from "./_components/AppStoresScreen";
-import ImageGalleryScreen from "./_components/ImageGalleryScreen";
+import UrlScreen from "./UrlScreen";
+import SmsScreen from "./SmsScreen";
+import VcardScreen from "./VcardScreen";
+import TextScreen from "./TextScreen";
+import EmailScreen from "./EmailScreen";
+import WifiScreen from "./WifiScreen";
+import TwitterScreen from "./TwitterScreen";
+import FacebookScreen from "./FacebookScreen";
+import Mp3Screen from "./Mp3Screen";
+import AppStoresScreen from "./AppStoresScreen";
+import ImageGalleryScreen from "./ImageGalleryScreen";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { AppsOutageSharp } from "@mui/icons-material";
-import BitcoinScreen from "./_components/BitcoinScreen";
+import BitcoinScreen from "./BitcoinScreen";
 import QRCodeStyling from "qr-code-styling";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ClearIcon from "@mui/icons-material/Clear";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import DownloadIcon from "@mui/icons-material/Download";
-import PdfScreen from "./_components/PdfScreen";
+import PdfScreen from "./PdfScreen";
 import html2canvas from "html2canvas";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 // 🔹 data for left buttons
@@ -244,7 +244,7 @@ const frameData = {
   // Add more frame styles as needed
 };
 
-export default function page() {
+export default function QrCodeGeneratorClient() {
   const [activeComponentIndex, setActiveComponentIndex] = useState(0); // New state for active button index, default to URL (index 0)
   const [ActiveComponent, setActiveComponent] = useState(null);
 

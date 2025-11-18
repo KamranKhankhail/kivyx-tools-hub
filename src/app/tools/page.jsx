@@ -217,6 +217,8 @@ import LoremIpsumGeneratorIcon from "../_components/icons/LoremIpsumGeneratorIco
 import UnitConverterIcon from "../_components/icons/UnitConverterIcon";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import PdfMergeIcon from "../_components/icons/PdfMergeIcon";
+import PdfSplitIcon from "../_components/icons/PdfSplitIcon";
 
 const navItems = [
   { title: "Code", href: "/" },
@@ -232,46 +234,47 @@ const toolsThatDoMoreToolsData = [
   {
     primaryText: "Password Generator",
     secondaryText:
-      "Create strong, secure, and random passwords to keep your accounts safe",
+      "Create strong, secure, and random passwords to protect your accounts.",
     icon: PasswordGeneratorIcon,
-    href: "/password-generator",
+    href: "/tools/password-generator",
   },
   {
     primaryText: "QR Code Generator",
     secondaryText:
-      "Instantly create custom QR codes for links, text, or contact info",
+      "Generate custom QR codes for links, text, WiFi, and contact information.",
     icon: QrCodeGeneratorIcon,
-    href: "/qr-code-generator",
+    href: "tools/qr-code-generator",
   },
   {
-    primaryText: "Color Palette Generator",
+    primaryText: "Nature Color Palette",
     secondaryText:
-      "Build beautiful color combinations for your designs in one click",
+      "Choose beautiful color palettes inspired by nature for your designs.",
     icon: ColorPaletteGeneratorIcon,
-    href: "",
+    href: "/tools/nature-color-palette",
   },
   {
-    primaryText: "JSON Formatter Validator",
+    primaryText: "Merge PDFs",
     secondaryText:
-      "Format, validate, and beautify JSON data for easy debugging",
-    icon: JsonFormatterValidatorIcon,
-    href: "",
+      "Easily combine multiple PDF files into one clean, organized document.",
+    icon: PdfMergeIcon, // Replace with your actual icon name
+    href: "/tools/merge-pdfs",
   },
   {
-    primaryText: "Lorem Ipsum Generator",
+    primaryText: "Split PDFs",
     secondaryText:
-      "Quickly generate dummy text for your designs, mockups, and layouts",
-    icon: LoremIpsumGeneratorIcon,
-    href: "",
+      "Quickly split a PDF into separate pages or custom page ranges.",
+    icon: PdfSplitIcon, // Replace with your actual icon name
+    href: "/tools/split-pdfs",
   },
   {
     primaryText: "Unit Converter",
     secondaryText:
-      "Convert measurements like length, weight, and temperature instantly.",
+      "Convert units like length, weight, temperature, currency, and more.",
     icon: UnitConverterIcon,
-    href: "",
+    href: "/tools/universal-unit-converter",
   },
 ];
+
 export default function page() {
   const [acitveButton, setActiveButton] = useState(0);
   const searchParams = useSearchParams();
@@ -342,7 +345,7 @@ export default function page() {
       </Stack> */}
       <Stack
         direction="row"
-        gap={8}
+        gap={3}
         sx={{
           flexWrap: "wrap",
           px: "40px",

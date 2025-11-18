@@ -226,8 +226,8 @@ import theme from "../../styles/theme";
 import PasswordGeneratorIcon from "../_components/icons/PasswordGeneratorIcon";
 import QrCodeGeneratorIcon from "../_components/icons/QrCodeGeneratorIcon";
 import ColorPaletteGeneratorIcon from "../_components/icons/ColorPaletteGenerator";
-import JsonFormatterValidatorIcon from "../_components/icons/JsonFormatterValidatorIcon";
-import LoremIpsumGeneratorIcon from "../_components/icons/LoremIpsumGeneratorIcon";
+import PdfMergeIcon from "@/app/_components/icons/PdfMergeIcon";
+import PdfSplitIcon from "@/app/_components/icons/PdfSplitIcon";
 import UnitConverterIcon from "../_components/icons/UnitConverterIcon";
 import SectionMajorButton from "../../components/common/SectionMajorButton";
 import Link from "next/link";
@@ -237,46 +237,47 @@ const toolsThatDoMoreToolsData = [
   {
     primaryText: "Password Generator",
     secondaryText:
-      "Create strong, secure, and random passwords to keep your accounts safe",
+      "Create strong, secure, and random passwords to protect your accounts.",
     icon: PasswordGeneratorIcon,
     href: "/tools/password-generator",
   },
   {
     primaryText: "QR Code Generator",
     secondaryText:
-      "Instantly create custom QR codes for links, text, or contact info",
+      "Generate custom QR codes for links, text, WiFi, and contact information.",
     icon: QrCodeGeneratorIcon,
-    href: "/qr-code-generator",
+    href: "tools/qr-code-generator",
   },
   {
     primaryText: "Nature Color Palette",
     secondaryText:
-      "Build beautiful color combinations for your designs in one click",
+      "Choose beautiful color palettes inspired by nature for your designs.",
     icon: ColorPaletteGeneratorIcon,
     href: "/tools/nature-color-palette",
   },
   {
     primaryText: "Merge PDFs",
     secondaryText:
-      "Format, validate, and beautify JSON data for easy debugging",
-    icon: JsonFormatterValidatorIcon,
+      "Easily combine multiple PDF files into one clean, organized document.",
+    icon: PdfMergeIcon, // Replace with your actual icon name
     href: "/tools/merge-pdfs",
   },
   {
     primaryText: "Split PDFs",
     secondaryText:
-      "Quickly generate dummy text for your designs, mockups, and layouts",
-    icon: LoremIpsumGeneratorIcon,
+      "Quickly split a PDF into separate pages or custom page ranges.",
+    icon: PdfSplitIcon, // Replace with your actual icon name
     href: "/tools/split-pdfs",
   },
   {
     primaryText: "Unit Converter",
     secondaryText:
-      "Convert measurements like length, weight, and temperature instantly.",
+      "Convert units like length, weight, temperature, currency, and more.",
     icon: UnitConverterIcon,
     href: "/tools/universal-unit-converter",
   },
 ];
+
 export default function ToolsThatDoSection({ searchTerm }) {
   const [sortedTools, setSortedTools] = useState(toolsThatDoMoreToolsData);
   const searchParams = useSearchParams();

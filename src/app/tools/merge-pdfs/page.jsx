@@ -30,7 +30,7 @@ export const metadata = {
     description:
       "Effortlessly merge multiple PDF documents into a single, organized file with ToolsHub's free online PDF merger. Secure, fast, and user-friendly.",
     url: `${TOOLSHUB_BASE_URL}/tools/merge-pdfs`,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
         url: `${TOOLSHUB_BASE_URL}/images/merge-pdfs-banner.png`, // TODO: Replace with a specific banner for Merge PDFs

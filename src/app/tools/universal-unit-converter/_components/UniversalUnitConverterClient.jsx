@@ -1,5 +1,6 @@
 // "use client";
-// import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect, useCallback } from "react";
+
 // import {
 //   Search,
 //   ArrowRightLeft,
@@ -15,6 +16,10 @@
 // import ToolsHubsIcon from "@/icons/ToolsHubsIcon";
 // import theme from "@/styles/theme";
 // import ThemeRegistry from "@/styles/ThemeRegistry";
+
+// // API Configuration for Currency Converter
+// const EXCHANGE_RATE_API_KEY = "07b08cdc2c129775d2b8f0c0"; // Your provided API key
+// const EXCHANGE_RATE_API_BASE_URL = `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/`;
 
 // // Helper to parse time strings (HH:MM) into Date objects
 // const parseTime = (timeString) => {
@@ -263,8 +268,6 @@
 //     type: "unit",
 //   },
 //   Illuminance: {
-//     // Lux (lx) is lumens per square meter. Lumens (lm) is luminous flux.
-//     // They are not directly convertible without knowing the area or distance from light source.
 //     units: ["lx", "lm"],
 //     convert: () =>
 //       "Requires surface area for conversion or distance from source.",
@@ -423,9 +426,27 @@
 //   // C. Financial & Business Converters
 //   "Currency Converter": {
 //     type: "unit",
-//     api: true,
-//     units: ["USD", "EUR", "GBP", "JPY", "PKR", "CAD", "AUD", "INR"],
-//     convert: (value, from, to) => "Requires live API rates for conversion.",
+//     api: true, // Indicate that this converter requires API
+//     units: ["USD", "EUR", "GBP", "JPY", "PKR", "CAD", "AUD", "INR"], // Currencies to display
+//     convert: (value, from, to, allRates) => {
+//       if (!allRates || Object.keys(allRates).length === 0) {
+//         return "Loading rates...";
+//       }
+//       if (!allRates[from] || !allRates[to]) {
+//         return "Invalid currency or rates not available.";
+//       }
+
+//       // ExchangeRate-API.com's /latest/USD endpoint provides rates where each rate
+//       // is how many of that currency you get per 1 USD.
+//       // E.g., allRates['EUR'] is the value of 1 USD in EUR.
+//       // So, to convert 'value' from 'from' to 'to':
+//       // 1. Convert 'value' from 'from' to USD: value / allRates[from]
+//       // 2. Convert that USD value to 'to': (value / allRates[from]) * allRates[to]
+//       const valueInUSD = value / allRates[from];
+//       const convertedValue = valueInUSD * allRates[to];
+
+//       return convertedValue;
+//     },
 //   },
 //   "Loan / EMI Calculator": {
 //     type: "calculator",
@@ -647,11 +668,67 @@
 //     inputs: [
 //       { name: "Date", unit: "date" },
 //       { name: "Time", unit: "time" },
-//       { name: "From Time Zone", unit: "text" },
-//       { name: "To Time Zone", unit: "text" },
+//       { name: "From Time Zone", unit: "select", options: [] }, //
+//       { name: "To Time Zone", unit: "select", options: [] }, //
 //     ],
-//     calculate: () =>
-//       "Time zone conversion requires an external API or library for accuracy.",
+//     calculate: async (values) => {
+//       const date = values["Date"];
+//       const time = values["Time"];
+//       const fromTimeZone = values["From Time Zone"];
+//       const toTimeZone = values["To Time Zone"];
+
+//       if (!date || !time || !fromTimeZone || !toTimeZone) {
+//         return "Please fill all fields.";
+//       }
+
+//       try {
+//         // Fetch datetime in the "From" time zone
+//         const fromResponse = await fetch(
+//           `https://worldtimeapi.org/api/timezone/${fromTimeZone}`
+//         );
+//         const fromData = await fromResponse.json();
+
+//         if (fromData.error) {
+//           return `Error in From Time Zone: ${fromData.error}`;
+//         }
+
+//         // Combine user's date and time with the 'from' timezone's offset to create a UTC datetime string
+//         // This is a simplified approach. A full-fledged solution would involve a date library.
+//         const userDateTime = new Date(`${date}T${time}:00`); // Assuming input time is local to 'from' timezone
+//         const fromOffsetSeconds =
+//           fromData.raw_offset + (fromData.dst ? fromData.dst_offset : 0);
+//         const userDateTimeUTC = new Date(
+//           userDateTime.getTime() - fromOffsetSeconds * 1000
+//         );
+
+//         // Fetch datetime in the "To" time zone
+//         const toResponse = await fetch(
+//           `https://worldtimeapi.org/api/timezone/${toTimeZone}`
+//         );
+//         const toData = await toResponse.json();
+
+//         if (toData.error) {
+//           return `Error in To Time Zone: ${toData.error}`;
+//         }
+
+//         const toOffsetSeconds =
+//           toData.raw_offset + (toData.dst ? toData.dst_offset : 0);
+//         const convertedDateTime = new Date(
+//           userDateTimeUTC.getTime() + toOffsetSeconds * 1000
+//         );
+
+//         const convertedDate = convertedDateTime.toISOString().split("T")[0];
+//         const convertedTime = convertedDateTime
+//           .toTimeString()
+//           .split(" ")[0]
+//           .substring(0, 5);
+
+//         return `Converted Time: ${convertedDate} ${convertedTime} (${toTimeZone})`;
+//       } catch (error) {
+//         console.error("Time zone conversion error:", error);
+//         return "Error during conversion. Check timezones or network.";
+//       }
+//     },
 //   },
 //   "Work Hour Calculator": {
 //     type: "calculator",
@@ -789,9 +866,18 @@
 //           if (current === undefined) return NaN; // Should be caught by regex, but safety check
 
 //           if (next && current < next) {
-//             if (current >= next) return NaN; // e.g., IL (I should not precede L directly, only V or X) - more refined
-//             num += next - current;
-//             i++;
+//             // Further refine validation for subtractive pairs: only I can precede V or X, X can precede L or C, C can precede D or M.
+//             // And each can only do so once.
+//             if (
+//               (current === 1 && (next === 5 || next === 10)) || // IV, IX
+//               (current === 10 && (next === 50 || next === 100)) || // XL, XC
+//               (current === 100 && (next === 500 || next === 1000)) // CD, CM
+//             ) {
+//               num += next - current;
+//               i++;
+//             } else {
+//               return NaN; // Invalid subtractive combination (e.g., IL, IC, XD, XM)
+//             }
 //           } else {
 //             num += current;
 //           }
@@ -811,6 +897,12 @@
 //         return ""; // No valid input provided in either field
 //       }
 //     },
+//   },
+
+//   // NEW: Scientific Calculator
+//   "Scientific Calculator": {
+//     type: "calculator",
+//     inputs: [], // No explicit inputs, managed internally
 //   },
 // };
 
@@ -857,7 +949,7 @@
 //     "Inductance",
 //     "Electric Charge",
 //     "Magnetic Field Strength",
-//     "Illuminance",
+//     // "Illuminance",
 //     "Specific Heat Capacity",
 //     "Fuel Efficiency",
 //     "Fuel Consumption Cost Calculator",
@@ -883,7 +975,7 @@
 //   "Cooking & Food Converters": [
 //     "Cooking Volume",
 //     "Cooking Weight",
-//     "Ingredient-Specific Converter",
+//     // "Ingredient-Specific Converter",
 //     "Oven Temperature",
 //   ],
 //   "Transport & Automotive Converters": [
@@ -904,6 +996,7 @@
 //     "Number System Converter",
 //     "Text Case Converter",
 //     "Roman Numeral Converter",
+//     "Scientific Calculator", // NEW: Added Scientific Calculator
 //   ],
 // };
 
@@ -933,15 +1026,22 @@
 // };
 
 // // ===== CONVERSION ENGINE =====
-// const convertValue = (value, from, to, categoryName) => {
+// // Modified to accept exchangeRates for Currency Converter
+// const convertValue = (value, from, to, categoryName, exchangeRates) => {
 //   const converter = converters[categoryName];
 //   if (!converter || converter.type !== "unit") return NaN;
 
 //   if (converter.convert) {
-//     const result = converter.convert(value, from, to);
-//     // If the custom convert function returns a string (like "Requires..."), return it directly
-//     if (typeof result === "string") return result;
-//     return isNaN(result) ? "Invalid conversion" : result;
+//     // Pass exchangeRates specifically to the Currency Converter's convert function
+//     if (categoryName === "Currency Converter" && converter.api) {
+//       const result = converter.convert(value, from, to, exchangeRates); // Pass exchangeRates
+//       if (typeof result === "string") return result; // Loading/error message
+//       return isNaN(result) ? "Invalid conversion" : result;
+//     } else {
+//       const result = converter.convert(value, from, to);
+//       if (typeof result === "string") return result;
+//       return isNaN(result) ? "Invalid conversion" : result;
+//     }
 //   }
 
 //   const factors = converter.factors;
@@ -960,7 +1060,12 @@
 //   }
 
 //   if (currentConverter.calculate) {
-//     return currentConverter.calculate(values);
+//     // For Time Zone Converter, the calculate function is async.
+//     // We'll handle its call in useEffect and update state.
+//     // For other custom calculators, call directly.
+//     if (categoryName !== "Time Zone Converter") {
+//       return currentConverter.calculate(values);
+//     }
 //   }
 
 //   switch (categoryName) {
@@ -1076,7 +1181,7 @@
 //     case "Fuel Consumption Cost Calculator": {
 //       const distance = parseFloat(values.Distance);
 //       const fuelEfficiency = parseFloat(values["Fuel Efficiency"]);
-//       const fuelPrice = parseFloat(values["Fuel Price"]);
+//       const fuelPrice = parseFloat(values.FuelPrice);
 
 //       if (isNaN(distance) || isNaN(fuelEfficiency) || isNaN(fuelPrice))
 //         return "";
@@ -1552,8 +1657,7 @@
 //   }
 // };
 
-// // ===== MAIN COMPONENT =====
-// export default function ImprovedUnitConverter() {
+// export default function UniversalUnitConverterClient() {
 //   const [selectedCategory, setSelectedCategory] = useState("Length / Distance");
 //   const [value, setValue] = useState("1");
 //   const [fromUnit, setFromUnit] = useState("m");
@@ -1568,23 +1672,132 @@
 //   const [calculatorResult, setCalculatorResult] = useState(null);
 //   const [showCopyMessage, setShowCopyMessage] = useState(false); // State for copy message
 
+//   // New state for currency exchange rates
+//   const [exchangeRates, setExchangeRates] = useState({});
+//   const [ratesLoading, setRatesLoading] = useState(false); // Set to false initially, only load when needed
+//   const [ratesError, setRatesError] = useState(null);
+
+//   // New state for Time Zone Converter
+//   const [timezones, setTimezones] = useState([]);
+//   const [timeZoneLoading, setTimeZoneLoading] = useState(false);
+//   const [timeZoneError, setTimeZoneError] = useState(null);
+
+//   // New states for Scientific Calculator
+//   const [calcCurrentInput, setCalcCurrentInput] = useState("0"); // What's shown in the main display
+//   const [calcExpression, setCalcExpression] = useState(""); // The full expression
+//   const [calcResult, setCalcResult] = useState(null); // The result of the current expression
+//   const [lastButtonWasEquals, setLastButtonWasEquals] = useState(false); // To handle chaining operations
+//   const [trigMode, setTrigMode] = useState("rad"); // 'rad' or 'deg'
+//   const [inverseMode, setInverseMode] = useState(false); // true for Inv functions
+
 //   const currentConverter = converters[selectedCategory];
 
 //   const numValue = parseFloat(value) || 0;
 //   const mainResult =
 //     currentConverter.type === "unit"
-//       ? convertValue(numValue, fromUnit, toUnit, selectedCategory)
+//       ? convertValue(
+//           numValue,
+//           fromUnit,
+//           toUnit,
+//           selectedCategory,
+//           exchangeRates
+//         ) // Pass exchangeRates
 //       : null;
 
 //   const allResults =
 //     currentConverter.type === "unit"
 //       ? currentConverter.units.map((unit) => ({
 //           unit,
-//           value: convertValue(numValue, fromUnit, unit, selectedCategory),
+//           value: convertValue(
+//             numValue,
+//             fromUnit,
+//             unit,
+//             selectedCategory,
+//             exchangeRates // Pass exchangeRates here too
+//           ),
 //         }))
 //       : [];
 
-//   // Effect for updating calculator results
+//   // Helper to evaluate scientific expressions
+//   const evaluateScientificExpression = useCallback(
+//     (expression) => {
+//       try {
+//         if (!expression.trim()) return "";
+
+//         let cleanedExpression = expression;
+
+//         // --- Implicit Multiplication ---
+//         // Cases: Number followed by π, Number followed by function, ) followed by Number, π followed by (
+//         cleanedExpression = cleanedExpression
+//           .replace(/(\d+)(π)/g, "$1*$2") // e.g., 2π -> 2*π
+//           .replace(/(\d+)([a-zA-Z]+\()/g, "$1*$2") // e.g., 2sin( -> 2*sin(
+//           .replace(/(\))(\d+)/g, "$1*$2") // e.g., (2+3)5 -> (2+3)*5
+//           .replace(/(π)(\()/g, "$1*$2") // e.g., π(2) -> π*(2)
+//           .replace(
+//             /(\d+\.?\d*)\s*(?:e|E)\s*(\-?\d+)/g,
+//             (match, p1, p2) =>
+//               `${parseFloat(p1)}*Math.pow(10,${parseInt(p2, 10)})`
+//           ); // Handle scientific notation like 2e3
+
+//         // --- Function mapping and trig mode ---
+//         cleanedExpression = cleanedExpression
+//           .replace(/sin\(/g, `Math.${inverseMode ? "asin" : "sin"}(`)
+//           .replace(/cos\(/g, `Math.${inverseMode ? "acos" : "cos"}(`)
+//           .replace(/tan\(/g, `Math.${inverseMode ? "atan" : "tan"}(`)
+//           .replace(/log\(/g, `Math.${inverseMode ? "pow(10," : "log10"}(`) // log base 10
+//           .replace(/ln\(/g, `Math.${inverseMode ? "exp" : "log"}(`) // natural log (ln)
+//           .replace(/sqrt\(/g, "Math.sqrt(")
+//           .replace(/exp\(/g, "Math.exp(") // Explicit exp() for e^x
+//           .replace(/\^/g, "**")
+//           .replace(/π/g, "Math.PI");
+
+//         // Convert degrees to radians if trigMode is 'deg' for trigonometric functions
+//         if (trigMode === "deg") {
+//           cleanedExpression = cleanedExpression.replace(
+//             /(Math\.(?:sin|cos|tan)\([^)]*\))/g,
+//             (match) => {
+//               const arg = match.substring(
+//                 match.indexOf("(") + 1,
+//                 match.lastIndexOf(")")
+//               );
+//               // Temporarily evaluate the argument to convert it to radians
+//               // This is a simplified approach, a full parser would be more robust
+//               let argInRadians;
+//               try {
+//                 argInRadians = (eval(arg) * Math.PI) / 180;
+//               } catch {
+//                 return "Error"; // If argument itself is invalid
+//               }
+//               return match.replace(arg, argInRadians);
+//             }
+//           );
+//         }
+
+//         // Auto-close any open parenthesis
+//         const openParens = (cleanedExpression.match(/\(/g) || []).length;
+//         const closeParens = (cleanedExpression.match(/\)/g) || []).length;
+//         for (let i = 0; i < openParens - closeParens; i++) {
+//           cleanedExpression += ")";
+//         }
+
+//         // Attempt to evaluate
+//         // Using a Function constructor for safer evaluation than direct eval
+//         const result = Function(
+//           `"use strict"; return (${cleanedExpression})`
+//         )();
+
+//         if (isNaN(result) || !isFinite(result)) {
+//           return "Error";
+//         }
+//         return String(result);
+//       } catch (e) {
+//         return "Error";
+//       }
+//     },
+//     [trigMode, inverseMode]
+//   );
+
+//   // Effect for updating calculator results and fetching currency rates
 //   useEffect(() => {
 //     let intervalId;
 //     if (currentConverter && currentConverter.type === "calculator") {
@@ -1598,17 +1811,86 @@
 //         intervalId = setInterval(updateCountdown, 1000); // Update every second
 
 //         return () => clearInterval(intervalId); // Cleanup interval
-//       } else {
+//       } else if (selectedCategory === "Time Zone Converter") {
+//         // Handle Time Zone Converter as it has an async calculate function
+//         const updateTimeZoneConversion = async () => {
+//           setCalculatorResult("Calculating...");
+//           const result = await calculate(selectedCategory, calculatorValues);
+//           setCalculatorResult(result);
+//         };
+//         updateTimeZoneConversion();
+//       } else if (selectedCategory !== "Scientific Calculator") {
+//         // Only run for non-scientific calculators
 //         const result = calculate(selectedCategory, calculatorValues);
 //         setCalculatorResult(result);
 //       }
 //     } else {
 //       setCalculatorResult(null);
 //     }
+
+//     // Fetch currency rates when Currency Converter is selected
+//     if (selectedCategory === "Currency Converter") {
+//       const fetchRates = async () => {
+//         setRatesLoading(true);
+//         setRatesError(null);
+//         try {
+//           // Hardcode USD as the base for fetching, as per the example API call.
+//           // The API returns conversion rates *from* the base currency (USD) to others.
+//           const response = await fetch(`${EXCHANGE_RATE_API_BASE_URL}USD`);
+//           const data = await response.json();
+
+//           if (data.result === "success") {
+//             setExchangeRates(data.conversion_rates);
+//           } else {
+//             setRatesError(
+//               data["error-type"] || "Failed to fetch currency rates."
+//             );
+//             console.error("Error fetching currency rates:", data);
+//           }
+//         } catch (error) {
+//           setRatesError("Network error or failed to fetch rates.");
+//           console.error("Network error fetching currency rates:", error);
+//         } finally {
+//           setRatesLoading(false);
+//         }
+//       };
+//       fetchRates();
+//     }
+
+//     // Fetch time zones when Time Zone Converter is selected
+//     if (selectedCategory === "Time Zone Converter" && timezones.length === 0) {
+//       const fetchTimezones = async () => {
+//         setTimeZoneLoading(true);
+//         setTimeZoneError(null);
+//         try {
+//           const response = await fetch("https://worldtimeapi.org/api/timezone");
+//           const data = await response.json();
+//           if (response.ok) {
+//             setTimezones(data);
+//           } else {
+//             setTimeZoneError("Failed to fetch time zones.");
+//             console.error("Error fetching time zones:", data);
+//           }
+//         } catch (error) {
+//           setTimeZoneError("Network error or failed to fetch time zones.");
+//           console.error("Network error fetching time zones:", error);
+//         } finally {
+//           setTimeZoneLoading(false);
+//         }
+//       };
+//       fetchTimezones();
+//     }
+
 //     return () => {
 //       if (intervalId) clearInterval(intervalId);
 //     };
-//   }, [calculatorValues, selectedCategory]);
+//   }, [
+//     calculatorValues,
+//     selectedCategory,
+//     timezones.length,
+//     currentConverter,
+//     evaluateScientificExpression,
+//   ]); // Added evaluateScientificExpression
 
 //   const handleCategoryChange = (category) => {
 //     setSelectedCategory(category);
@@ -1619,20 +1901,64 @@
 //       setToUnit(converter.units[1] || converter.units[0]);
 //       setCalculatorValues({});
 //       setCalculatorResult(null);
+//       // Reset scientific calculator states
+//       setCalcCurrentInput("0");
+//       setCalcExpression("");
+//       setCalcResult(null);
+//       setLastButtonWasEquals(false);
+//       setTrigMode("rad");
+//       setInverseMode(false);
 //     } else {
-//       setValue("");
+//       setValue(""); // For calculators, value input is not generally used the same way
 //       setFromUnit("");
 //       setToUnit("");
+//       // Reset scientific calculator states
+//       setCalcCurrentInput("0");
+//       setCalcExpression("");
+//       setCalcResult(null);
+//       setLastButtonWasEquals(false);
+//       setTrigMode("rad");
+//       setInverseMode(false);
+
 //       // Initialize calculator inputs with empty strings for text/date/time or default for select
 //       const initialCalcValues = {};
-//       converter.inputs.forEach((input) => {
-//         if (input.unit === "select") {
-//           initialCalcValues[input.name] = input.options[0];
-//         } else {
-//           initialCalcValues[input.name] = "";
-//         }
-//       });
+//       // Only iterate if inputs exist (Scientific Calculator has no explicit inputs)
+//       if (converter.inputs) {
+//         converter.inputs.forEach((input) => {
+//           if (input.unit === "select") {
+//             initialCalcValues[input.name] = input.options[0];
+//           } else {
+//             initialCalcValues[input.name] = "";
+//           }
+//         });
+//       }
 //       setCalculatorValues(initialCalcValues);
+//       setCalculatorResult(null);
+//     }
+
+//     // Specific defaults for Currency Converter
+//     if (category === "Currency Converter") {
+//       setValue("1");
+//       setFromUnit("USD");
+//       setToUnit("PKR");
+//     }
+
+//     // Specific defaults for Time Zone Converter
+//     if (category === "Time Zone Converter") {
+//       // Set default values for date and time to current date and time
+//       const now = new Date();
+//       const year = now.getFullYear();
+//       const month = (now.getMonth() + 1).toString().padStart(2, "0");
+//       const day = now.getDate().toString().padStart(2, "0");
+//       const hours = now.getHours().toString().padStart(2, "0");
+//       const minutes = now.getMinutes().toString().padStart(2, "0");
+
+//       setCalculatorValues({
+//         Date: `${year}-${month}-${day}`,
+//         Time: `${hours}:${minutes}`,
+//         "From Time Zone": "Etc/UTC", // Default to UTC
+//         "To Time Zone": "America/New_York", // Default to a common timezone
+//       });
 //       setCalculatorResult(null);
 //     }
 //   };
@@ -1692,6 +2018,418 @@
 //       });
 //   };
 
+//   // Updated handleCalculatorButtonClick function with fixes
+//   const handleCalculatorButtonClick = useCallback(
+//     (buttonValue) => {
+//       const operators = ["+", "-", "*", "/", "^"];
+//       const scientificFunctions = [
+//         "sin(",
+//         "cos(",
+//         "tan(",
+//         "log(",
+//         "ln(",
+//         "sqrt(",
+//         "exp(",
+//         "asin(",
+//         "acos(",
+//         "atan(",
+//       ];
+//       const specialValues = ["π"];
+
+//       let newExpression = calcExpression;
+//       let newCurrentInput = calcCurrentInput;
+//       let newLastButtonWasEquals = false;
+
+//       // Helper function to count parenthesis
+//       const countParens = (str) => {
+//         const open = (str.match(/\(/g) || []).length;
+//         const close = (str.match(/\)/g) || []).length;
+//         return { open, close };
+//       };
+
+//       // Helper function to auto-close parenthesis
+//       const autoCloseParens = (expr) => {
+//         const { open, close } = countParens(expr);
+//         let result = expr;
+//         for (let i = 0; i < open - close; i++) {
+//           result += ")";
+//         }
+//         return result;
+//       };
+
+//       if (buttonValue === "C") {
+//         newCurrentInput = "0";
+//         newExpression = "";
+//         setCalcResult(null);
+//       } else if (buttonValue === "Bksp") {
+//         if (lastButtonWasEquals) {
+//           newCurrentInput = "0";
+//           newExpression = "";
+//           setCalcResult(null);
+//         } else if (newCurrentInput.length > 0 && newCurrentInput !== "0") {
+//           newCurrentInput = newCurrentInput.slice(0, -1);
+//           newExpression = newExpression.slice(0, -1);
+//           if (newCurrentInput === "") {
+//             newCurrentInput = "0";
+//           }
+//         } else if (newExpression.length > 0) {
+//           newExpression = newExpression.slice(0, -1);
+//         }
+//       } else if (buttonValue === "=") {
+//         newLastButtonWasEquals = true;
+//         try {
+//           // Auto-close any open parenthesis before evaluating
+//           let finalExpression = autoCloseParens(newExpression);
+//           const finalResult = evaluateScientificExpression(finalExpression);
+//           if (finalResult !== "Error") {
+//             newCurrentInput = formatNumber(parseFloat(finalResult));
+//             newExpression = finalResult;
+//             setCalcResult(null);
+//           } else {
+//             newCurrentInput = "Error";
+//             newExpression = "";
+//           }
+//         } catch (e) {
+//           newCurrentInput = "Error";
+//           newExpression = "";
+//         }
+//       } else if (buttonValue === "±") {
+//         if (newCurrentInput === "0" && newExpression === "") {
+//           newCurrentInput = "-0";
+//           newExpression = "-";
+//         } else if (newCurrentInput.startsWith("-")) {
+//           newCurrentInput = newCurrentInput.substring(1);
+//           newExpression = newExpression.replace(/^-/, "");
+//         } else {
+//           newCurrentInput = "-" + newCurrentInput;
+//           newExpression = "-" + newExpression;
+//         }
+//       } else if (buttonValue === "%") {
+//         try {
+//           // Apply % to the current input number
+//           const currentValue = parseFloat(newCurrentInput);
+//           if (!isNaN(currentValue)) {
+//             const percentValue = currentValue / 100;
+//             newCurrentInput = String(percentValue);
+//             // Replace the last number in the expression with its percentage value
+//             newExpression = newExpression.replace(
+//               /(\d+\.?\d*)$/,
+//               String(percentValue)
+//             );
+//           }
+//         } catch (e) {
+//           newCurrentInput = "Error";
+//           newExpression = "";
+//         }
+//       } else if (buttonValue === "1/x") {
+//         try {
+//           let valueToReciprocal = newCurrentInput;
+//           if (
+//             lastButtonWasEquals &&
+//             calcResult !== null &&
+//             calcResult !== "Error"
+//           ) {
+//             valueToReciprocal = String(calcResult);
+//           }
+
+//           const currentValue = parseFloat(valueToReciprocal);
+//           if (!isNaN(currentValue) && currentValue !== 0) {
+//             newCurrentInput = String(1 / currentValue);
+//             // If the expression ends with a number, replace that number with its reciprocal.
+//             // Otherwise, apply 1/ to the entire current expression (e.g., if it's a function).
+//             if (/\d$/.test(newExpression)) {
+//               newExpression = newExpression.replace(
+//                 /(\d+\.?\d*)$/,
+//                 `(1/${currentValue})`
+//               );
+//             } else {
+//               newExpression = `(1/${newExpression})`;
+//             }
+//           } else {
+//             newCurrentInput = "Error";
+//             newExpression = "";
+//           }
+//         } catch (e) {
+//           newCurrentInput = "Error";
+//           newExpression = "";
+//         }
+//       } else if (buttonValue === "x²") {
+//         try {
+//           const currentValue = parseFloat(newCurrentInput);
+//           if (!isNaN(currentValue)) {
+//             newCurrentInput = String(currentValue * currentValue);
+//             if (/\d$/.test(newExpression)) {
+//               newExpression = newExpression.replace(
+//                 /(\d+\.?\d*)$/,
+//                 `(${currentValue}**2)`
+//               );
+//             } else {
+//               newExpression = `(${newExpression}**2)`;
+//             }
+//           } else {
+//             newCurrentInput = "Error";
+//             newExpression = "";
+//           }
+//         } catch (e) {
+//           newCurrentInput = "Error";
+//           newExpression = "";
+//         }
+//       } else if (buttonValue === "√") {
+//         // If a number is currently displayed, multiply it by sqrt(
+//         if (
+//           calcCurrentInput !== "0" &&
+//           !isNaN(parseFloat(calcCurrentInput)) &&
+//           !operators.includes(calcExpression.slice(-1))
+//         ) {
+//           newExpression += "*sqrt(";
+//           newCurrentInput = "sqrt(";
+//         } else {
+//           newExpression += "sqrt(";
+//           newCurrentInput = "sqrt(";
+//         }
+//         newLastButtonWasEquals = false;
+//       } else if (buttonValue === "Rad") {
+//         setTrigMode("rad");
+//         return;
+//       } else if (buttonValue === "Deg") {
+//         setTrigMode("deg");
+//         return;
+//       } else if (buttonValue === "Inv") {
+//         setInverseMode((prev) => !prev);
+//         return;
+//       } else if (!isNaN(Number(buttonValue)) || buttonValue === ".") {
+//         if (lastButtonWasEquals) {
+//           newExpression = buttonValue;
+//           newCurrentInput = buttonValue;
+//         } else if (buttonValue === ".") {
+//           if (!newCurrentInput.includes(".")) {
+//             if (newCurrentInput === "0" || newCurrentInput === "") {
+//               newCurrentInput = "0.";
+//               newExpression += "0.";
+//             } else {
+//               newCurrentInput += ".";
+//               newExpression += ".";
+//             }
+//           }
+//         } else {
+//           // If the last character in the expression is a closing parenthesis or π,
+//           // and a number is pressed, it implies multiplication.
+//           const lastChar = newExpression.slice(-1);
+//           if (lastChar === ")" || lastChar === "π") {
+//             newExpression += "*" + buttonValue;
+//             newCurrentInput = buttonValue;
+//           } else if (newCurrentInput === "0" && newExpression === "0") {
+//             // If only "0" is present, replace it with the new digit
+//             newCurrentInput = buttonValue;
+//             newExpression = buttonValue;
+//           } else if (
+//             newCurrentInput === "0" &&
+//             newExpression.endsWith("0") &&
+//             operators.includes(newExpression.slice(-2, -1))
+//           ) {
+//             // Replace trailing "0" after an operator
+//             newCurrentInput = buttonValue;
+//             newExpression = newExpression.slice(0, -1) + buttonValue;
+//           } else if (
+//             scientificFunctions.some((fn) => newExpression.endsWith(fn))
+//           ) {
+//             // Inside a function call, just append the number
+//             newCurrentInput =
+//               newCurrentInput === "0"
+//                 ? buttonValue
+//                 : newCurrentInput + buttonValue;
+//             newExpression += buttonValue;
+//           } else if (newCurrentInput === "0") {
+//             newCurrentInput = buttonValue;
+//             // Only replace the last '0' if it's the beginning of a number or after an operator
+//             const lastNumRegex = /(\D|^)0$/; // Matches a 0 preceded by non-digit or start of string
+//             if (lastNumRegex.test(newExpression)) {
+//               newExpression = newExpression.replace(
+//                 lastNumRegex,
+//                 `$1${buttonValue}`
+//               );
+//             } else {
+//               newExpression += buttonValue;
+//             }
+//           } else {
+//             newCurrentInput += buttonValue;
+//             newExpression += buttonValue;
+//           }
+//         }
+//       } else if (operators.includes(buttonValue)) {
+//         // Auto-close open parenthesis before adding operator
+//         const { open, close } = countParens(newExpression);
+//         if (open > close) {
+//           newExpression = autoCloseParens(newExpression);
+//         }
+
+//         if (lastButtonWasEquals) {
+//           newExpression = calcExpression + buttonValue;
+//         } else if (
+//           newExpression.length > 0 &&
+//           operators.includes(newExpression.slice(-1))
+//         ) {
+//           // Replace last operator if an operator is already there
+//           newExpression = newExpression.slice(0, -1) + buttonValue;
+//         } else {
+//           newExpression += buttonValue;
+//         }
+//         newCurrentInput = "0";
+//         newLastButtonWasEquals = false;
+//       } else if (scientificFunctions.some((fn) => buttonValue.startsWith(fn))) {
+//         let functionCall = buttonValue;
+//         // If there's a current number input and it's not "0", assume implicit multiplication
+//         if (
+//           newCurrentInput !== "0" &&
+//           !isNaN(parseFloat(newCurrentInput)) &&
+//           !operators.includes(newExpression.slice(-1))
+//         ) {
+//           newExpression += "*" + functionCall;
+//         } else {
+//           newExpression += functionCall;
+//         }
+//         newCurrentInput = functionCall;
+//         newLastButtonWasEquals = false;
+//       } else if (buttonValue === "(" || buttonValue === ")") {
+//         // If a number or 'π' precedes an opening parenthesis, add multiplication.
+//         const lastChar = newExpression.slice(-1);
+//         if (
+//           buttonValue === "(" &&
+//           (/\d/.test(lastChar) || lastChar === "π" || lastChar === ")")
+//         ) {
+//           newExpression += "*" + buttonValue;
+//         } else {
+//           newExpression += buttonValue;
+//         }
+//         newCurrentInput = buttonValue;
+//         newLastButtonWasEquals = false;
+//       } else if (specialValues.includes(buttonValue)) {
+//         const lastChar = newExpression.slice(-1);
+//         // If a number precedes π, add multiplication.
+//         if (buttonValue === "π" && /\d/.test(lastChar)) {
+//           newExpression += "*Math.PI";
+//         } else {
+//           newExpression += buttonValue === "π" ? "Math.PI" : buttonValue;
+//         }
+//         newCurrentInput = "π"; // Display 'π' directly
+//         newLastButtonWasEquals = false;
+//       }
+
+//       setCalcExpression(newExpression);
+//       setCalcCurrentInput(newCurrentInput);
+//       setLastButtonWasEquals(newLastButtonWasEquals);
+
+//       // Real-time evaluation
+//       // Only attempt real-time evaluation if the expression doesn't end with an operator or an incomplete function
+//       if (
+//         newExpression &&
+//         newExpression !== "Error" &&
+//         !operators.includes(newExpression.slice(-1)) &&
+//         !scientificFunctions.some((fn) =>
+//           newExpression.endsWith(fn.slice(0, -1))
+//         ) && // Check for incomplete function names
+//         newExpression.slice(-1) !== "("
+//       ) {
+//         let evalExpression = newExpression;
+//         // Don't auto-close for real-time eval, let user see incomplete functions
+//         const realTimeEval = evaluateScientificExpression(evalExpression);
+//         if (realTimeEval !== "Error") {
+//           setCalcResult(formatNumber(parseFloat(realTimeEval)));
+//         } else {
+//           setCalcResult(null);
+//         }
+//       } else {
+//         setCalcResult(null);
+//       }
+//     },
+//     [
+//       calcCurrentInput,
+//       calcExpression,
+//       lastButtonWasEquals,
+//       evaluateScientificExpression,
+//       calcResult,
+//       trigMode,
+//       inverseMode,
+//     ]
+//   );
+
+//   // ... existing code ...
+
+//   // Handle keyboard input
+//   useEffect(() => {
+//     if (selectedCategory !== "Scientific Calculator") return;
+
+//     const handleKeyDown = (event) => {
+//       const key = event.key;
+//       const validKeys = [
+//         "0",
+//         "1",
+//         "2",
+//         "3",
+//         "4",
+//         "5",
+//         "6",
+//         "7",
+//         "8",
+//         "9",
+//         "+",
+//         "-",
+//         "*",
+//         "/",
+//         ".",
+//         "=",
+//         "Enter",
+//         "Backspace",
+//         "Escape",
+//         "(",
+//         ")",
+//         "p", // For Pi
+//         "s", // For sin/asin
+//         "c", // For cos/acos
+//         "t", // For tan/atan
+//         "l", // For log/ln
+//         "q", // For sqrt
+//         "^", // For x^y
+//       ];
+
+//       if (validKeys.includes(key)) {
+//         event.preventDefault(); // Prevent default browser actions
+//         if (key === "Enter") {
+//           handleCalculatorButtonClick("=");
+//         } else if (key === "Backspace") {
+//           handleCalculatorButtonClick("Bksp");
+//         } else if (key === "Escape") {
+//           handleCalculatorButtonClick("C");
+//         } else if (key === "p") {
+//           handleCalculatorButtonClick("π");
+//         } else if (key === "s") {
+//           handleCalculatorButtonClick("sin(");
+//         } else if (key === "c") {
+//           handleCalculatorButtonClick("cos(");
+//         } else if (key === "t") {
+//           handleCalculatorButtonClick("tan(");
+//         } else if (key === "l") {
+//           // This might need more sophisticated handling if 'l' is for both log and ln,
+//           // but for now, we'll map to 'ln(' as 'log' is usually 'log10'
+//           if (inverseMode) {
+//             handleCalculatorButtonClick("exp("); // e^x
+//           } else {
+//             handleCalculatorButtonClick("ln("); // ln
+//           }
+//         } else if (key === "q") {
+//           handleCalculatorButtonClick("sqrt(");
+//         } else {
+//           handleCalculatorButtonClick(key);
+//         }
+//       }
+//     };
+
+//     window.addEventListener("keydown", handleKeyDown);
+//     return () => {
+//       window.removeEventListener("keydown", handleKeyDown);
+//     };
+//   }, [selectedCategory, handleCalculatorButtonClick, inverseMode]);
+
 //   return (
 //     <div style={{ minHeight: "100vh", background: "#F5F7FA" }}>
 //       {/* Header - Your Color Scheme */}
@@ -1720,44 +2458,65 @@
 //             </Box>
 //             <h1
 //               style={{
-//                 fontSize: "24px",
-//                 fontWeight: "bold",
-//                 color: "#1E3A8A",
+//                 fontSize: "28px",
+//                 fontWeight: "1000",
+//                 color: theme.palette.primary.main,
 //                 margin: 0,
 //               }}
 //             >
 //               Universal Unit Converter
 //             </h1>
 //           </Stack>
-
-//           <div style={{ position: "relative", flex: "0 0 400px" }}>
-//             <Search
+//           <Box
+//             sx={{
+//               display: "flex",
+//               flexDirection: "row",
+//               gap: "30px",
+//               alignItems: "center",
+//             }}
+//           >
+//             {" "}
+//             <h2
 //               style={{
-//                 position: "absolute",
-//                 left: "12px",
-//                 top: "50%",
-//                 transform: "translateY(-50%)",
-//                 width: "20px",
-//                 height: "20px",
-//                 color: "#9CA3AF",
+//                 fontSize: "24px",
+//                 fontWeight: "bold",
+//                 color: theme.palette.primary.main,
 //               }}
-//             />
-//             <input
-//               type="text"
-//               placeholder='Try: "25 °C to °F" or "5 kg to lb"'
-//               value={searchQuery}
-//               onChange={(e) => setSearchQuery(e.target.value)}
-//               onKeyDown={(e) => e.key === "Enter" && handleSearch(searchQuery)}
-//               style={{
-//                 width: "100%",
-//                 padding: "10px 12px 10px 40px",
-//                 border: "2px solid #1E3A8A",
-//                 borderRadius: "12px",
-//                 outline: "none",
-//                 fontSize: "14px",
-//               }}
-//             />
-//           </div>
+//             >
+//               {selectedCategory}
+//             </h2>
+//             <div style={{ position: "relative", flex: "0 0 400px" }}>
+//               <Search
+//                 style={{
+//                   position: "absolute",
+//                   left: "12px",
+//                   top: "50%",
+//                   transform: "translateY(-50%)",
+//                   width: "20px",
+//                   height: "20px",
+//                   color: "#9CA3AF",
+//                 }}
+//               />
+//               <input
+//                 type="text"
+//                 placeholder='Try: "25 °C to °F" or "5 kg to lb"'
+//                 value={searchQuery}
+//                 onChange={(e) => setSearchQuery(e.target.value)}
+//                 onKeyDown={(e) =>
+//                   e.key === "Enter" && handleSearch(searchQuery)
+//                 }
+//                 className="border"
+//                 style={{
+//                   width: "100%",
+//                   padding: "10px 12px 10px 40px",
+//                   borderColor: theme.palette.primary.main,
+//                   borderRadius: "12px",
+//                   outline: "none",
+//                   fontSize: "14px",
+//                 }}
+//               />
+//             </div>
+//           </Box>
 //         </div>
 //       </div>
 
@@ -1790,74 +2549,106 @@
 //               },
 //             }}
 //           >
-//             {Object.entries(categoryGroups).map(([group, categories]) => (
-//               <div key={group} style={{ marginBottom: "8px" }}>
-//                 <button
-//                   onClick={() => toggleGroup(group)}
-//                   style={{
-//                     width: "100%",
-//                     padding: "12px",
-//                     background:
-//                       "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 70%, #80C0C0 100%)",
-//                     color: theme.palette.primary.fourthMain,
-//                     border: "none",
-//                     borderRadius: "12px",
-//                     fontWeight: "bold",
-//                     cursor: "pointer",
-//                     display: "flex",
-//                     justifyContent: "space-between",
-//                     alignItems: "center",
-//                     fontSize: "14px",
-//                   }}
-//                 >
-//                   {group}
-//                   {expandedGroups[group] ? (
-//                     <ChevronUp size={18} />
-//                   ) : (
-//                     <ChevronDown size={18} />
-//                   )}
-//                 </button>
-//                 {expandedGroups[group] && (
-//                   <div style={{ paddingTop: "8px" }}>
-//                     {categories.map((category) => (
-//                       <button
-//                         key={category}
-//                         onClick={() => handleCategoryChange(category)}
-//                         style={{
-//                           width: "100%",
-//                           padding: "10px 12px",
-//                           background:
-//                             selectedCategory === category
-//                               ? "#DBEAFE"
-//                               : "transparent",
-//                           color: theme.palette.primary.main,
+//             {Object.entries(categoryGroups)
+//               .filter(([group, categories]) => {
+//                 const lowerCaseQuery = searchQuery.toLowerCase();
+//                 if (group.toLowerCase().includes(lowerCaseQuery)) return true;
+//                 return categories.some((category) =>
+//                   category.toLowerCase().includes(lowerCaseQuery)
+//                 );
+//               })
+//               .map(([group, categories]) => (
+//                 <div key={group} style={{ marginBottom: "8px" }}>
+//                   <button
+//                     onClick={() => toggleGroup(group)}
+//                     style={{
+//                       width: "100%",
+//                       padding: "12px",
+//                       background:
+//                         "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 70%, #80C0C0 100%)",
+//                       color: theme.palette.primary.fourthMain,
+//                       border: "none",
+//                       borderRadius: "12px",
+//                       fontWeight: "bold",
+//                       cursor: "pointer",
+//                       display: "flex",
+//                       justifyContent: "space-between",
+//                       alignItems: "center",
+//                       fontSize: "14px",
+//                     }}
+//                   >
+//                     {group}
+//                     {expandedGroups[group] ||
+//                     (searchQuery.length > 0 && // Auto-expand if there's a search query
+//                       (group
+//                         .toLowerCase()
+//                         .includes(searchQuery.toLowerCase()) ||
+//                         categories.some((category) =>
+//                           category
+//                             .toLowerCase()
+//                             .includes(searchQuery.toLowerCase())
+//                         ))) ? (
+//                       <ChevronUp size={18} />
+//                     ) : (
+//                       <ChevronDown size={18} />
+//                     )}
+//                   </button>
+//                   {(expandedGroups[group] ||
+//                     (searchQuery.length > 0 && // Auto-expand if there's a search query
+//                       (group
+//                         .toLowerCase()
+//                         .includes(searchQuery.toLowerCase()) ||
+//                         categories.some((category) =>
+//                           category
+//                             .toLowerCase()
+//                             .includes(searchQuery.toLowerCase())
+//                         )))) && (
+//                     <div style={{ paddingTop: "8px" }}>
+//                       {categories
+//                         .filter((category) =>
+//                           category
+//                             .toLowerCase()
+//                             .includes(searchQuery.toLowerCase())
+//                         )
+//                         .map((category) => (
+//                           <button
+//                             key={category}
+//                             onClick={() => handleCategoryChange(category)}
+//                             style={{
+//                               width: "100%",
+//                               padding: "10px 12px",
+//                               background:
+//                                 selectedCategory === category
+//                                   ? "#DBEAFE"
+//                                   : "transparent",
+//                               color: theme.palette.primary.main,
 
-//                           border: "none",
-//                           borderRadius: "8px",
-//                           cursor: "pointer",
-//                           textAlign: "left",
-//                           marginBottom: "4px",
-//                           fontSize: "13px",
-//                           transition: "all 0.2s",
-//                         }}
-//                         onMouseEnter={(e) => {
-//                           if (selectedCategory !== category) {
-//                             e.target.style.background = "#DBEAFE";
-//                           }
-//                         }}
-//                         onMouseLeave={(e) => {
-//                           if (selectedCategory !== category) {
-//                             e.target.style.background = "transparent";
-//                           }
-//                         }}
-//                       >
-//                         {category}
-//                       </button>
-//                     ))}
-//                   </div>
-//                 )}
-//               </div>
-//             ))}
+//                               border: "none",
+//                               borderRadius: "8px",
+//                               cursor: "pointer",
+//                               textAlign: "left",
+//                               marginBottom: "4px",
+//                               fontSize: "13px",
+//                               transition: "all 0.2s",
+//                             }}
+//                             onMouseEnter={(e) => {
+//                               if (selectedCategory !== category) {
+//                                 e.target.style.background = "#DBEAFE";
+//                               }
+//                             }}
+//                             onMouseLeave={(e) => {
+//                               if (selectedCategory !== category) {
+//                                 e.target.style.background = "transparent";
+//                               }
+//                             }}
+//                           >
+//                             {category}
+//                           </button>
+//                         ))}
+//                     </div>
+//                   )}
+//                 </div>
+//               ))}
 //           </div>
 //         </div>
 
@@ -1869,20 +2660,10 @@
 //               borderRadius: "16px",
 //               padding: "14px 24px",
 //               marginBottom: "16px",
+//               width:
+//                 selectedCategory === "Scientific Calculator" ? "70%" : "100%",
 //             }}
 //           >
-//             <h2
-//               style={{
-//                 fontSize: "20px",
-//                 fontWeight: "bold",
-//                 color: theme.palette.primary.main,
-//                 marginBottom: "24px",
-//                 marginTop: 0,
-//               }}
-//             >
-//               {selectedCategory}
-//             </h2>
-
 //             {currentConverter.type === "unit" ? (
 //               <>
 //                 {/* Value Input */}
@@ -1952,193 +2733,218 @@
 //                     )}
 //                   </div>
 //                 </div>
-
-//                 {/* From Unit */}
-//                 <div style={{ marginBottom: "16px" }}>
-//                   <label
-//                     style={{
-//                       display: "block",
-//                       fontSize: "14px",
-//                       fontWeight: "500",
-//                       color: theme.palette.primary.main,
-//                       marginBottom: "8px",
-//                     }}
-//                   >
-//                     From
-//                   </label>
-//                   <select
-//                     value={fromUnit}
-//                     onChange={(e) => setFromUnit(e.target.value)}
-//                     className="border"
-//                     style={{
-//                       width: "100%",
-//                       padding: "12px",
-//                       borderColor: theme.palette.primary.main,
-//                       borderRadius: "12px",
-//                       fontSize: "16px",
-//                       outline: "none",
-//                       cursor: "pointer",
-//                     }}
-//                   >
-//                     {currentConverter.units.map((unit) => (
-//                       <option key={unit} value={unit}>
-//                         {unit}
-//                       </option>
-//                     ))}
-//                   </select>
-//                 </div>
-
-//                 {/* Swap Button */}
-//                 <div
-//                   style={{
-//                     display: "flex",
-//                     justifyContent: "center",
-//                     margin: "16px 0",
-//                   }}
+//                 <Stack
+//                   direction="row"
+//                   spacing={2}
+//                   sx={{ alignItems: "end", my: "25px" }}
 //                 >
-//                   <button
-//                     onClick={swapUnits}
+//                   {" "}
+//                   <div style={{ flex: 1 }}>
+//                     <label
+//                       style={{
+//                         display: "block",
+//                         fontSize: "14px",
+//                         fontWeight: "500",
+//                         color: theme.palette.primary.main,
+//                         marginBottom: "8px",
+//                       }}
+//                     >
+//                       From
+//                     </label>
+//                     <select
+//                       value={fromUnit}
+//                       onChange={(e) => setFromUnit(e.target.value)}
+//                       className="border"
+//                       style={{
+//                         width: "100%",
+//                         padding: "12px",
+//                         borderColor: theme.palette.primary.main,
+//                         borderRadius: "12px",
+//                         fontSize: "16px",
+//                         outline: "none",
+//                         cursor: "pointer",
+//                       }}
+//                     >
+//                       {currentConverter.units.map((unit) => (
+//                         <option key={unit} value={unit}>
+//                           {unit}
+//                         </option>
+//                       ))}
+//                     </select>
+//                   </div>
+//                   {/* Swap Button */}
+//                   <div
 //                     style={{
-//                       padding: "12px",
-//                       background: theme.palette.primary.main,
-//                       border: "none",
-//                       borderRadius: "50%",
-//                       cursor: "pointer",
 //                       display: "flex",
-//                       alignItems: "center",
 //                       justifyContent: "center",
-//                       transition: "all 0.2s",
 //                     }}
 //                   >
-//                     <ArrowRightLeft
-//                       size={20}
-//                       color={theme.palette.primary.fourthMain}
-//                     />
-//                   </button>
-//                 </div>
-
-//                 {/* To Unit */}
-//                 <div style={{ marginBottom: "24px" }}>
-//                   <label
-//                     style={{
-//                       display: "block",
-//                       fontSize: "14px",
-//                       fontWeight: "500",
-//                       color: theme.palette.primary.main,
-//                       marginBottom: "8px",
-//                     }}
-//                   >
-//                     To
-//                   </label>
-//                   <select
-//                     value={toUnit}
-//                     onChange={(e) => setToUnit(e.target.value)}
-//                     className="border"
-//                     style={{
-//                       width: "100%",
-//                       padding: "12px",
-//                       borderColor: theme.palette.primary.main,
-//                       borderRadius: "12px",
-//                       fontSize: "16px",
-//                       outline: "none",
-//                       cursor: "pointer",
-//                     }}
-//                   >
-//                     {currentConverter.units.map((unit) => (
-//                       <option key={unit} value={unit}>
-//                         {unit}
-//                       </option>
-//                     ))}
-//                   </select>
-//                 </div>
+//                     <button
+//                       onClick={swapUnits}
+//                       style={{
+//                         padding: "12px",
+//                         background: theme.palette.primary.main,
+//                         border: "none",
+//                         borderRadius: "50%",
+//                         cursor: "pointer",
+//                         display: "flex",
+//                         alignItems: "center",
+//                         justifyContent: "center",
+//                         transition: "all 0.2s",
+//                       }}
+//                     >
+//                       <ArrowRightLeft
+//                         size={20}
+//                         color={theme.palette.primary.fourthMain}
+//                       />
+//                     </button>
+//                   </div>
+//                   {/* To Unit */}
+//                   <div style={{ flex: 1 }}>
+//                     <label
+//                       style={{
+//                         display: "block",
+//                         fontSize: "14px",
+//                         fontWeight: "500",
+//                         color: theme.palette.primary.main,
+//                         marginBottom: "8px",
+//                       }}
+//                     >
+//                       To
+//                     </label>
+//                     <select
+//                       value={toUnit}
+//                       onChange={(e) => setToUnit(e.target.value)}
+//                       className="border"
+//                       style={{
+//                         width: "100%",
+//                         padding: "12px",
+//                         borderColor: theme.palette.primary.main,
+//                         borderRadius: "12px",
+//                         fontSize: "16px",
+//                         outline: "none",
+//                         cursor: "pointer",
+//                       }}
+//                     >
+//                       {currentConverter.units.map((unit) => (
+//                         <option key={unit} value={unit}>
+//                           {unit}
+//                         </option>
+//                       ))}
+//                     </select>
+//                   </div>
+//                 </Stack>
+//                 {/* From Unit */}
 //               </>
 //             ) : (
 //               <>
-//                 {/* Calculator Inputs */}
-//                 {currentConverter.inputs.map((input) =>
-//                   input.optional &&
-//                   input.dependsOn &&
-//                   calculatorValues[input.dependsOn] !==
-//                     input.dependsOnValue ? null : (
-//                     <div key={input.name} style={{ marginBottom: "20px" }}>
-//                       <label
-//                         style={{
-//                           display: "block",
-//                           fontSize: "14px",
-//                           fontWeight: "500",
-//                           color: theme.palette.primary.main,
-//                           marginBottom: "8px",
-//                         }}
-//                       >
-//                         {input.name}{" "}
-//                         {input.unit && input.unit !== "select"
-//                           ? `(${input.unit})`
-//                           : ""}
-//                       </label>
-//                       {input.unit === "select" ? (
-//                         <select
-//                           value={
-//                             calculatorValues[input.name] || input.options[0]
-//                           }
-//                           onChange={(e) =>
-//                             handleCalculatorInputChange(
-//                               input.name,
-//                               e.target.value
-//                             )
-//                           }
-//                           className="border"
+//                 {/* Calculator Inputs (excluding Scientific Calculator) */}
+//                 {selectedCategory !== "Scientific Calculator" &&
+//                   currentConverter.inputs.map((input) =>
+//                     input.optional &&
+//                     input.dependsOn &&
+//                     calculatorValues[input.dependsOn] !==
+//                       input.dependsOnValue ? null : (
+//                       <div key={input.name} style={{ marginBottom: "20px" }}>
+//                         <label
 //                           style={{
-//                             width: "100%",
-//                             padding: "12px 16px",
-//                             borderColor: theme.palette.primary.main,
-//                             borderRadius: "12px",
-//                             fontSize: "16px",
-//                             outline: "none",
+//                             display: "block",
+//                             fontSize: "14px",
+//                             fontWeight: "500",
+//                             color: theme.palette.primary.main,
+//                             marginBottom: "8px",
 //                           }}
 //                         >
-//                           {input.options.map((option) => (
-//                             <option key={option} value={option}>
-//                               {option}
-//                             </option>
-//                           ))}
-//                         </select>
-//                       ) : (
-//                         <input
-//                           type={
-//                             (input.unit && input.unit.includes("date")) ||
-//                             (input.unit && input.unit.includes("time"))
-//                               ? input.unit
-//                               : input.unit === "number"
-//                               ? "number"
-//                               : "text" // Explicitly set type to number for numerical inputs
-//                           }
-//                           value={calculatorValues[input.name] || ""}
-//                           onChange={(e) =>
-//                             handleCalculatorInputChange(
-//                               input.name,
-//                               e.target.value
-//                             )
-//                           }
-//                           className="border"
-//                           style={{
-//                             width: "100%",
-//                             padding: "12px 16px",
-//                             borderColor: theme.palette.primary.main,
-//                             borderRadius: "12px",
-//                             color: theme.palette.primary.main,
-//                             fontSize: "16px",
-//                             outline: "none",
-//                           }}
-//                           placeholder={`Enter ${input.name}`}
-//                         />
-//                       )}
-//                     </div>
-//                   )
-//                 )}
+//                           {input.name}{" "}
+//                           {input.unit && input.unit !== "select"
+//                             ? `(${input.unit})`
+//                             : ""}
+//                         </label>
+//                         {input.unit === "select" ? (
+//                           <select
+//                             value={
+//                               calculatorValues[input.name] || input.options[0]
+//                             }
+//                             onChange={(e) =>
+//                               handleCalculatorInputChange(
+//                                 input.name,
+//                                 e.target.value
+//                               )
+//                             }
+//                             className="border"
+//                             style={{
+//                               width: "100%",
+//                               padding: "12px 16px",
+//                               borderColor: theme.palette.primary.main,
+//                               borderRadius: "12px",
+//                               fontSize: "16px",
+//                               outline: "none",
+//                             }}
+//                           >
+//                             {/* Render timezones if available and for Time Zone Converter */}
+//                             {input.name === "From Time Zone" ||
+//                             input.name === "To Time Zone"
+//                               ? timeZoneLoading
+//                                 ? [
+//                                     <option key="loading" value="">
+//                                       Loading time zones...
+//                                     </option>,
+//                                   ]
+//                                 : timeZoneError
+//                                 ? [
+//                                     <option key="error" value="">
+//                                       Error loading time zones
+//                                     </option>,
+//                                   ]
+//                                 : timezones.map((tz) => (
+//                                     <option key={tz} value={tz}>
+//                                       {tz}
+//                                     </option>
+//                                   ))
+//                               : // Original options rendering for other select inputs
+//                                 input.options.map((option) => (
+//                                   <option key={option} value={option}>
+//                                     {option}
+//                                   </option>
+//                                 ))}
+//                           </select>
+//                         ) : (
+//                           <input
+//                             type={
+//                               (input.unit && input.unit.includes("date")) ||
+//                               (input.unit && input.unit.includes("time"))
+//                                 ? input.unit
+//                                 : input.unit === "number"
+//                                 ? "number"
+//                                 : "text" // Explicitly set type to number for numerical inputs
+//                             }
+//                             value={calculatorValues[input.name] || ""}
+//                             onChange={(e) =>
+//                               handleCalculatorInputChange(
+//                                 input.name,
+//                                 e.target.value
+//                               )
+//                             }
+//                             className="border"
+//                             style={{
+//                               width: "100%",
+//                               padding: "12px 16px",
+//                               borderColor: theme.palette.primary.main,
+//                               borderRadius: "12px",
+//                               color: theme.palette.primary.main,
+//                               fontSize: "16px",
+//                               outline: "none",
+//                             }}
+//                             placeholder={`Enter ${input.name}`}
+//                           />
+//                         )}
+//                       </div>
+//                     )
+//                   )}
 //               </>
 //             )}
 
-//             {/* Main Result - Your Color Scheme */}
+//             {/* Main Result / Calculator Display Area */}
 //             <div
 //               style={{
 //                 background: "#09123aea",
@@ -2146,14 +2952,21 @@
 //                 padding: "24px",
 //                 color: "#fff",
 //                 position: "relative",
-//                 cursor: "pointer", // Make it clickable to copy
+
+//                 cursor:
+//                   selectedCategory === "Scientific Calculator"
+//                     ? "default"
+//                     : "pointer", // No copy on click for calculator
 //               }}
 //               onClick={() => {
-//                 const textToCopy =
-//                   currentConverter.type === "unit"
-//                     ? `${formatNumber(mainResult)} ${toUnit}`
-//                     : String(calculatorResult).replace(/<[^>]*>?/gm, ""); // Remove HTML if present for calculator results
-//                 copyToClipboard(textToCopy);
+//                 if (selectedCategory !== "Scientific Calculator") {
+//                   // Only copy on click for non-calculator types
+//                   const textToCopy =
+//                     currentConverter.type === "unit"
+//                       ? `${formatNumber(mainResult)} ${toUnit}`
+//                       : String(calculatorResult).replace(/<[^>]*>?/gm, "");
+//                   copyToClipboard(textToCopy);
+//                 }
 //               }}
 //             >
 //               <div
@@ -2166,20 +2979,101 @@
 //               >
 //                 {currentConverter.type === "unit"
 //                   ? "Result"
+//                   : selectedCategory === "Scientific Calculator"
+//                   ? "Calculator Output"
 //                   : "Calculation Result"}
+//               </div>
+//               {selectedCategory === "Scientific Calculator" && (
+//                 <button
+//                   onClick={() => {
+//                     const textToCopy =
+//                       calcResult !== null && calcResult !== "Error"
+//                         ? String(calcResult)
+//                         : calcCurrentInput;
+//                     copyToClipboard(textToCopy);
+//                   }}
+//                   style={{
+//                     position: "absolute",
+//                     right: 10,
+//                     top: 10,
+//                     padding: "12px",
+//                     background:
+//                       "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
+//                     color: "#fff",
+//                     border: "none",
+//                     borderRadius: "12px",
+//                     fontSize: "16px",
+//                     fontWeight: "bold",
+//                     cursor: "pointer",
+//                     display: "flex",
+//                     alignItems: "center",
+//                     justifyContent: "center",
+//                     gap: "8px",
+//                     transition: "background-color 0.2s",
+//                   }}
+//                   onMouseEnter={(e) =>
+//                     (e.target.style.backgroundColor = "#3B82F6")
+//                   }
+//                   onMouseLeave={(e) =>
+//                     (e.target.style.backgroundColor = "#1E3A8A")
+//                   }
+//                 >
+//                   <Copy size={18} /> Copy Calculation
+//                 </button>
+//               )}
+//               <div
+//                 style={{
+//                   fontSize:
+//                     selectedCategory === "Scientific Calculator"
+//                       ? "1.2em"
+//                       : "36px", // Smaller font for expression
+//                   opacity:
+//                     selectedCategory === "Scientific Calculator" ? 0.7 : 0.9,
+//                   wordBreak: "break-all",
+//                   marginBottom:
+//                     selectedCategory === "Scientific Calculator"
+//                       ? "5px"
+//                       : "8px",
+//                 }}
+//               >
+//                 {selectedCategory === "Scientific Calculator"
+//                   ? calcExpression
+//                   : ""}
 //               </div>
 //               <div
 //                 style={{
-//                   fontSize: "36px",
+//                   fontSize:
+//                     selectedCategory === "Scientific Calculator"
+//                       ? "2.5em"
+//                       : "36px",
 //                   fontWeight: "bold",
-//                   marginBottom: "8px",
 //                   wordBreak: "break-all",
 //                 }}
 //               >
 //                 {currentConverter.type === "unit"
-//                   ? formatNumber(mainResult)
+//                   ? ratesLoading && selectedCategory === "Currency Converter"
+//                     ? "Loading rates..."
+//                     : ratesError && selectedCategory === "Currency Converter"
+//                     ? ratesError
+//                     : formatNumber(mainResult)
+//                   : selectedCategory === "Scientific Calculator"
+//                   ? calcResult !== null && calcResult !== "Error"
+//                     ? formatNumber(calcResult)
+//                     : formatNumber(calcCurrentInput)
 //                   : (() => {
 //                       const resultText = String(calculatorResult); // Ensure it's a string
+//                       if (
+//                         selectedCategory === "Time Zone Converter" &&
+//                         timeZoneLoading
+//                       ) {
+//                         return "Loading time zones...";
+//                       }
+//                       if (
+//                         selectedCategory === "Time Zone Converter" &&
+//                         timeZoneError
+//                       ) {
+//                         return timeZoneError;
+//                       }
 //                       if (resultText.includes("\n")) {
 //                         return resultText.split("\n").map((line, index) => {
 //                           const parts = line.split(":");
@@ -2226,7 +3120,11 @@
 //                   color: currentConverter.type === "unit" ? "#93C5FD" : "#fff", // Apply color to unit
 //                 }}
 //               >
-//                 {currentConverter.type === "unit" ? toUnit : ""}
+//                 {currentConverter.type === "unit" &&
+//                 !ratesLoading &&
+//                 !ratesError
+//                   ? toUnit
+//                   : ""}
 //               </div>
 //               {showCopyMessage && (
 //                 <div
@@ -2244,44 +3142,403 @@
 //                   Copied!
 //                 </div>
 //               )}
+//               {(currentConverter.type !== "unit" ||
+//                 (currentConverter.type === "unit" && mainResult)) &&
+//                 selectedCategory !== "Scientific Calculator" && (
+//                   <button
+//                     onClick={() => {
+//                       const textToCopy =
+//                         currentConverter.type === "unit"
+//                           ? `${formatNumber(mainResult)} ${toUnit}`
+//                           : String(calculatorResult).replace(/<[^>]*>?/gm, "");
+//                       copyToClipboard(textToCopy);
+//                     }}
+//                     style={{
+//                       position: "absolute",
+//                       top: 10,
+//                       right: 10,
+
+//                       padding: "12px",
+//                       background:
+//                         "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
+//                       color: "#fff",
+//                       border: "none",
+//                       borderRadius: "12px",
+//                       fontSize: "16px",
+//                       fontWeight: "bold",
+//                       cursor: "pointer",
+//                       display: "flex",
+//                       alignItems: "center",
+//                       justifyContent: "center",
+//                       gap: "8px",
+//                       transition: "background-color 0.2s",
+//                     }}
+//                     // onMouseEnter={(e) =>
+//                     //   (e.target.style.backgroundColor = "#3B82F6")
+//                     // }
+//                     // onMouseLeave={(e) =>
+//                     //   (e.target.style.backgroundColor = "#1E3A8A")
+//                     // }
+//                   >
+//                     <Copy size={18} /> Copy Result
+//                   </button>
+//                 )}
 //             </div>
-//             {(currentConverter.type !== "unit" ||
-//               (currentConverter.type === "unit" && mainResult)) && (
-//               <button
-//                 onClick={() => {
-//                   const textToCopy =
-//                     currentConverter.type === "unit"
-//                       ? `${formatNumber(mainResult)} ${toUnit}`
-//                       : String(calculatorResult).replace(/<[^>]*>?/gm, "");
-//                   copyToClipboard(textToCopy);
-//                 }}
+
+//             {/* Scientific Calculator Buttons */}
+//             {/* Scientific Calculator Buttons - Google Style */}
+//             {selectedCategory === "Scientific Calculator" && (
+//               <div
 //                 style={{
-//                   marginTop: "10px",
-//                   width: "100%",
-//                   padding: "12px",
-//                   background:
-//                     "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
-//                   color: "#fff",
-//                   border: "none",
-//                   borderRadius: "12px",
-//                   fontSize: "16px",
-//                   fontWeight: "bold",
-//                   cursor: "pointer",
 //                   display: "flex",
-//                   alignItems: "center",
-//                   justifyContent: "center",
-//                   gap: "8px",
-//                   transition: "background-color 0.2s",
+//                   flexDirection: "column",
+//                   gap: "12px",
+//                   marginTop: "16px",
 //                 }}
-//                 onMouseEnter={(e) =>
-//                   (e.target.style.backgroundColor = "#3B82F6")
-//                 }
-//                 onMouseLeave={(e) =>
-//                   (e.target.style.backgroundColor = "#1E3A8A")
-//                 }
 //               >
-//                 <Copy size={18} /> Copy Result
-//               </button>
+//                 {/* First Row: Rad, Deg, xl, (, ), %, AC */}
+//                 <div
+//                   style={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(7, 1fr)",
+//                     gap: "8px",
+//                   }}
+//                 >
+//                   {[
+//                     // { label: "Rad", value: "Rad", type: "mode" },
+//                     // { label: "Deg", value: "Deg", type: "mode" },
+//                     { label: "x²", value: "x²", type: "utility" },
+//                     { label: "x!", value: "!", type: "operator" }, // Factorial not implemented yet
+//                     { label: "(", value: "(", type: "paren" },
+//                     { label: ")", value: ")", type: "paren" },
+//                     { label: "AC", value: "AC", type: "clear" },
+//                     { label: "Bksp", value: "Bksp", type: "clear" },
+//                     { label: "÷", value: "/", type: "operator" },
+//                   ].map((btn) => (
+//                     <button
+//                       key={btn.value}
+//                       style={{
+//                         padding: "18px 8px",
+//                         fontSize: "16px",
+//                         borderRadius: "8px",
+//                         border: "none",
+//                         background: theme.palette.primary.main,
+//                         color: "#fff",
+//                         cursor: "pointer",
+//                         fontWeight: "500",
+//                         transition: "all 0.2s",
+//                       }}
+//                       onMouseEnter={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.secondary.secondMain),
+//                           (e.target.style.color = theme.palette.primary.main);
+//                       }}
+//                       onMouseLeave={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.primary.main),
+//                           (e.target.style.color =
+//                             theme.palette.primary.fourthMain);
+//                       }}
+//                       onClick={() => {
+//                         if (btn.value === "AC") {
+//                           handleCalculatorButtonClick("C");
+//                         } else if (btn.type === "mode") {
+//                           handleCalculatorButtonClick(btn.value);
+//                         } else if (btn.value === "!") {
+//                           // Factorial needs to be implemented
+//                         } else {
+//                           handleCalculatorButtonClick(btn.value);
+//                         }
+//                       }}
+//                     >
+//                       {btn.label}
+//                     </button>
+//                   ))}
+//                 </div>
+
+//                 {/* Second Row: Inv, sin, ln, 7, 8, 9, ÷ */}
+//                 <div
+//                   style={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(7, 1fr)",
+//                     gap: "8px",
+//                   }}
+//                 >
+//                   {[
+//                     // { label: "Inv", value: "Inv", type: "mode" },
+//                     { label: "%", value: "%", type: "operator" },
+//                     {
+//                       label: inverseMode ? "sin⁻¹" : "sin",
+//                       value: "sin(",
+//                       type: "function",
+//                     },
+//                     {
+//                       label: inverseMode ? "eˣ" : "ln",
+//                       value: inverseMode ? "exp(" : "ln(",
+//                       type: "function",
+//                     },
+//                     { label: "7", value: "7", type: "number" },
+//                     { label: "8", value: "8", type: "number" },
+//                     { label: "9", value: "9", type: "number" },
+//                     { label: "+", value: "+", type: "operator" },
+//                   ].map((btn) => (
+//                     <button
+//                       key={btn.value}
+//                       style={{
+//                         padding: "18px 8px",
+//                         fontSize: "16px",
+//                         borderRadius: "8px",
+//                         border: "none",
+//                         background: theme.palette.primary.main,
+//                         // btn.value === "/"
+//                         //   ? "#1E3A8A"
+//                         //   : btn.value === "Inv"
+//                         //   ? inverseMode
+//                         //     ? "#80C0C0"
+//                         //     : "#2D3E5F"
+//                         //   : ["7", "8", "9"].includes(btn.value)
+//                         //   ? "#3A4A5C"
+//                         //   : "#2D3E5F",
+//                         color: "#fff",
+//                         cursor: "pointer",
+//                         fontWeight: ["7", "8", "9"].includes(btn.value)
+//                           ? "normal"
+//                           : "500",
+//                         transition: "all 0.2s",
+//                       }}
+//                       onMouseEnter={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.secondary.secondMain),
+//                           (e.target.style.color = theme.palette.primary.main);
+//                       }}
+//                       onMouseLeave={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.primary.main),
+//                           (e.target.style.color =
+//                             theme.palette.primary.fourthMain);
+//                       }}
+//                       onClick={() => {
+//                         handleCalculatorButtonClick(btn.value);
+//                       }}
+//                     >
+//                       {btn.label}
+//                     </button>
+//                   ))}
+//                 </div>
+
+//                 {/* Third Row: π, cos, log, 4, 5, 6, × */}
+//                 <div
+//                   style={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(7, 1fr)",
+//                     gap: "8px",
+//                   }}
+//                 >
+//                   {[
+//                     { label: "π", value: "π", type: "value" },
+//                     {
+//                       label: inverseMode ? "cos⁻¹" : "cos",
+//                       value: "cos(",
+//                       type: "function",
+//                     },
+//                     {
+//                       label: inverseMode ? "10ˣ" : "log",
+//                       value: inverseMode ? "pow(10," : "log(",
+//                       type: "function",
+//                     },
+//                     { label: "4", value: "4", type: "number" },
+//                     { label: "5", value: "5", type: "number" },
+//                     { label: "6", value: "6", type: "number" },
+//                     { label: "×", value: "*", type: "operator" },
+//                   ].map((btn) => (
+//                     <button
+//                       key={btn.value}
+//                       style={{
+//                         padding: "18px 8px",
+//                         fontSize: "16px",
+//                         borderRadius: "8px",
+//                         border: "none",
+//                         // background: btn.value === "*" ? "#1E3A8A" : "#3A4A5C",
+//                         background: theme.palette.primary.main,
+//                         color: "#fff",
+//                         cursor: "pointer",
+//                         fontWeight: ["4", "5", "6"].includes(btn.value)
+//                           ? "normal"
+//                           : "500",
+//                         transition: "all 0.2s",
+//                       }}
+//                       onMouseEnter={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.secondary.secondMain),
+//                           (e.target.style.color = theme.palette.primary.main);
+//                       }}
+//                       onMouseLeave={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.primary.main),
+//                           (e.target.style.color =
+//                             theme.palette.primary.fourthMain);
+//                       }}
+//                       onClick={() => {
+//                         handleCalculatorButtonClick(btn.value);
+//                       }}
+//                     >
+//                       {btn.label}
+//                     </button>
+//                   ))}
+//                 </div>
+
+//                 {/* Fourth Row: e, tan, √, 1, 2, 3, − */}
+//                 <div
+//                   style={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(7, 1fr)",
+//                     gap: "8px",
+//                   }}
+//                 >
+//                   {[
+//                     { label: "e", value: "Math.E", type: "value" }, // Euler's number
+//                     {
+//                       label: inverseMode ? "tan⁻¹" : "tan",
+//                       value: "tan(",
+//                       type: "function",
+//                     },
+//                     { label: "√", value: "sqrt(", type: "function" },
+//                     { label: "1", value: "1", type: "number" },
+//                     { label: "2", value: "2", type: "number" },
+//                     { label: "3", value: "3", type: "number" },
+//                     { label: "−", value: "-", type: "operator" },
+//                   ].map((btn) => (
+//                     <button
+//                       key={btn.value}
+//                       style={{
+//                         padding: "18px 8px",
+//                         fontSize: "16px",
+//                         borderRadius: "8px",
+//                         border: "none",
+//                         background: theme.palette.primary.main,
+//                         // background: btn.value === "-" ? "#1E3A8A" : "#3A4A5C",
+//                         color: "#fff",
+//                         cursor: "pointer",
+//                         fontWeight: ["1", "2", "3"].includes(btn.value)
+//                           ? "normal"
+//                           : "500",
+//                         transition: "all 0.2s",
+//                       }}
+//                       onMouseEnter={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.secondary.secondMain),
+//                           (e.target.style.color = theme.palette.primary.main);
+//                       }}
+//                       onMouseLeave={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.primary.main),
+//                           (e.target.style.color =
+//                             theme.palette.primary.fourthMain);
+//                       }}
+//                       onClick={() => {
+//                         handleCalculatorButtonClick(btn.value);
+//                       }}
+//                     >
+//                       {btn.label}
+//                     </button>
+//                   ))}
+//                 </div>
+
+//                 {/* Fifth Row: Ans, EXP, x^y, 0, ., =, + */}
+//                 <div
+//                   style={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(7, 1fr)",
+//                     gap: "8px",
+//                   }}
+//                 >
+//                   {[
+//                     { label: "Ans", value: "Ans", type: "memory" }, // Answer recall
+//                     { label: "EXP", value: "exp(", type: "function" }, // e^x, same as inverse ln
+//                     { label: "xʸ", value: "^", type: "operator" },
+//                     { label: "0", value: "0", type: "number", span: 2 },
+//                     { label: ".", value: ".", type: "number" },
+//                     { label: "=", value: "=", type: "equals" },
+//                   ].map((btn) => (
+//                     <button
+//                       key={btn.value}
+//                       style={{
+//                         padding: "18px 8px",
+//                         fontSize: "16px",
+//                         borderRadius: "8px",
+//                         border: "none",
+//                         background: theme.palette.primary.main,
+//                         // btn.value === "=" || btn.value === "+"
+//                         //   ? "#1E3A8A"
+//                         //   : btn.value === "0"
+//                         //   ? "#3A4A5C"
+//                         //   : "#2D3E5F",
+//                         color: "#fff",
+//                         cursor: "pointer",
+//                         fontWeight:
+//                           btn.value === "0" || btn.value === "."
+//                             ? "normal"
+//                             : "500",
+//                         transition: "all 0.2s",
+//                         gridColumn: btn.span ? `span ${btn.span}` : "auto",
+//                       }}
+//                       onMouseEnter={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.secondary.secondMain),
+//                           (e.target.style.color = theme.palette.primary.main);
+//                       }}
+//                       onMouseLeave={(e) => {
+//                         (e.target.style.background =
+//                           theme.palette.primary.main),
+//                           (e.target.style.color =
+//                             theme.palette.primary.fourthMain);
+//                       }}
+//                       onClick={() => {
+//                         handleCalculatorButtonClick(btn.value);
+//                       }}
+//                     >
+//                       {btn.label}
+//                     </button>
+//                   ))}
+//                 </div>
+
+//                 {/* Advanced Row: 1/x, x², Bksp */}
+//                 {/* <div
+//                   style={{
+//                     display: "grid",
+//                     gridTemplateColumns: "repeat(3, 1fr)",
+//                     gap: "8px",
+//                   }}
+//                 >
+//                   {[
+//                     { label: "1/x", value: "1/x", type: "utility" },
+
+//                   ].map((btn) => (
+//                     <button
+//                       key={btn.value}
+//                       style={{
+//                         padding: "12px 8px",
+//                         fontSize: "0.9em",
+//                         borderRadius: "8px",
+//                         border: "none",
+//                         background:
+//                           btn.value === "Bksp" ? "#1E3A8A" : "#2D3E5F",
+//                         color: "#fff",
+//                         cursor: "pointer",
+//                         fontWeight: "500",
+//                         transition: "all 0.2s",
+//                       }}
+//                       onMouseEnter={(e) => (e.target.style.opacity = "0.9")}
+//                       onMouseLeave={(e) => (e.target.style.opacity = "1")}
+//                       onClick={() => {
+//                         handleCalculatorButtonClick(btn.value);
+//                       }}
+//                     >
+//                       {btn.label}
+//                     </button>
+//                   ))}
+//                 </div> */}
+//               </div>
 //             )}
 //           </div>
 //         </div>
@@ -2416,9 +3673,8 @@
 //   );
 // }
 
-// ... existing code ...
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 import {
   Search,
@@ -2474,6 +3730,7 @@ const converters = {
       mi: 1609.34,
     },
     type: "unit",
+    keywords: ["distance", "length"],
   },
   "Weight / Mass": {
     units: ["kg", "g", "mg", "t", "lb", "oz"],
@@ -2486,6 +3743,7 @@ const converters = {
       oz: 0.0283495,
     },
     type: "unit",
+    keywords: ["mass", "weight"],
   },
   Temperature: {
     units: ["°C", "°F", "K"],
@@ -2502,6 +3760,15 @@ const converters = {
       return NaN;
     },
     type: "unit",
+    keywords: [
+      "degree",
+      "celsius",
+      "fahrenheit",
+      "kelvin",
+      "hot",
+      "cold",
+      "temp",
+    ],
   },
   Area: {
     units: ["m²", "cm²", "km²", "ha", "ac", "ft²", "in²"],
@@ -2515,6 +3782,7 @@ const converters = {
       "in²": 0.00064516,
     },
     type: "unit",
+    keywords: ["square", "land"],
   },
   Volume: {
     units: ["L", "mL", "m³", "gal", "qt", "pt", "fl oz"],
@@ -2528,6 +3796,7 @@ const converters = {
       "fl oz": 0.0295735,
     },
     type: "unit",
+    keywords: ["liquid", "capacity"],
   },
   Speed: {
     units: ["m/s", "km/h", "mph", "kn", "ft/s"],
@@ -2539,6 +3808,7 @@ const converters = {
       "ft/s": 0.3048,
     },
     type: "unit",
+    keywords: ["velocity"],
   },
   Time: {
     units: ["s", "ms", "min", "h", "day", "week", "year"],
@@ -2552,6 +3822,7 @@ const converters = {
       year: 31536000,
     },
     type: "unit",
+    keywords: ["seconds", "minutes", "hours", "days", "weeks", "years"],
   },
   Pressure: {
     units: ["Pa", "kPa", "bar", "atm", "psi", "mmHg"],
@@ -2564,6 +3835,7 @@ const converters = {
       mmHg: 133.322,
     },
     type: "unit",
+    keywords: ["force", "barometric"],
   },
   "Energy / Heat": {
     units: ["J", "kJ", "cal", "kcal", "Wh", "kWh", "BTU"],
@@ -2577,16 +3849,19 @@ const converters = {
       BTU: 1055.06,
     },
     type: "unit",
+    keywords: ["joules", "calories", "kilowatt", "btu"],
   },
   Power: {
     units: ["W", "kW", "MW", "hp", "BTU/h"],
     factors: { W: 1, kW: 1000, MW: 1000000, hp: 745.7, "BTU/h": 0.293071 },
     type: "unit",
+    keywords: ["watt", "horsepower"],
   },
   Force: {
     units: ["N", "kN", "lbf", "dyn"],
     factors: { N: 1, kN: 1000, lbf: 4.44822, dyn: 0.00001 },
     type: "unit",
+    keywords: ["newton", "pound-force"],
   },
   Angle: {
     units: ["rad", "deg", "grad", "rev"],
@@ -2597,21 +3872,25 @@ const converters = {
       rev: 2 * Math.PI,
     },
     type: "unit",
+    keywords: ["radian", "degree", "gradient", "revolution"],
   },
   Density: {
     units: ["kg/m³", "g/cm³", "lb/ft³"],
     factors: { "kg/m³": 1, "g/cm³": 1000, "lb/ft³": 16.0185 },
     type: "unit",
+    keywords: ["mass", "volume"],
   },
   Torque: {
     units: ["Nm", "lb-ft", "lb-in"],
     factors: { Nm: 1, "lb-ft": 1.35582, "lb-in": 0.112985 },
     type: "unit",
+    keywords: ["newton-meter", "pound-foot"],
   },
   Acceleration: {
     units: ["m/s²", "g", "ft/s²"],
     factors: { "m/s²": 1, g: 9.80665, "ft/s²": 0.3048 },
     type: "unit",
+    keywords: ["gravity"],
   },
   "Data Storage": {
     units: ["B", "KB", "MB", "GB", "TB", "PB"],
@@ -2624,6 +3903,7 @@ const converters = {
       PB: 1024 ** 5,
     },
     type: "unit",
+    keywords: ["bytes", "gigabytes", "megabytes", "terabytes"],
   },
   "Data Transfer Rate": {
     units: ["bps", "Kbps", "Mbps", "Gbps", "MB/s"],
@@ -2635,74 +3915,86 @@ const converters = {
       "MB/s": 8000000,
     },
     type: "unit",
+    keywords: ["bandwidth", "speed"],
   },
   Frequency: {
     units: ["Hz", "kHz", "MHz", "GHz"],
     factors: { Hz: 1, kHz: 1000, MHz: 1000000, GHz: 1000000000 },
     type: "unit",
+    keywords: ["hertz"],
   },
   "Bit/Byte Converter": {
     units: ["bit", "byte"],
     factors: { bit: 1, byte: 8 },
     type: "unit",
+    keywords: ["binary"],
   },
   "Electric Voltage": {
     units: ["V", "mV", "kV"],
     factors: { V: 1, mV: 0.001, kV: 1000 },
     type: "unit",
+    keywords: ["volt", "electricity"],
   },
   "Electric Current": {
     units: ["A", "mA", "kA"],
     factors: { A: 1, mA: 0.001, kA: 1000 },
     type: "unit",
+    keywords: ["ampere", "electricity"],
   },
   "Electric Resistance": {
     units: ["Ω", "kΩ", "MΩ"],
     factors: { Ω: 1, kΩ: 1000, MΩ: 1000000 },
     type: "unit",
+    keywords: ["ohm", "electricity"],
   },
   "Electric Power": {
     units: ["W", "kW", "MW"],
     factors: { W: 1, kW: 1000, MW: 1000000 },
     type: "unit",
+    keywords: ["watt", "electricity"],
   },
   Capacitance: {
     units: ["F", "μF", "pF"],
     factors: { F: 1, μF: 0.000001, pF: 0.000000000001 },
     type: "unit",
+    keywords: ["farad"],
   },
   Inductance: {
     units: ["H", "mH", "μH"],
     factors: { H: 1, mH: 0.001, μH: 0.000001 },
     type: "unit",
+    keywords: ["henry"],
   },
   "Electric Charge": {
     units: ["C", "mAh"],
     factors: { C: 1, mAh: 0.0036 },
     type: "unit",
+    keywords: ["coulomb", "milliampere-hour", "battery"],
   },
   "Magnetic Field Strength": {
     units: ["T", "G"],
     factors: { T: 1, G: 0.0001 },
     type: "unit",
+    keywords: ["tesla", "gauss"],
   },
   Illuminance: {
-    // Lux (lx) is lumens per square meter. Lumens (lm) is luminous flux.
-    // They are not directly convertible without knowing the area or distance from light source.
     units: ["lx", "lm"],
     convert: () =>
       "Requires surface area for conversion or distance from source.",
     type: "unit",
+    keywords: ["lux", "lumen", "light"],
   },
   "Specific Heat Capacity": {
     units: ["J/kg·K", "cal/g·°C"],
     factors: { "J/kg·K": 1, "cal/g·°C": 4.184 },
     type: "unit",
+    keywords: ["heat", "energy"],
   },
   "Fuel Efficiency": {
     units: ["km/l", "mpg"],
     factors: { "km/l": 1, mpg: 0.425144 },
     type: "unit",
+    keywords: ["mileage", "gas"],
   },
   "Pace / Running Speed": {
     units: ["km/h", "mph", "min/km", "min/mi"],
@@ -2721,16 +4013,19 @@ const converters = {
       return NaN;
     },
     type: "unit",
+    keywords: ["running", "jogging", "speed"],
   },
   "Cooking Volume": {
     units: ["ml", "cup", "tbsp", "tsp", "L"],
     factors: { ml: 1, cup: 236.588, tbsp: 14.7868, tsp: 4.92892, L: 1000 },
     type: "unit",
+    keywords: ["recipes", "ingredients"],
   },
   "Cooking Weight": {
     units: ["g", "oz", "lb"],
     factors: { g: 1, oz: 28.3495, lb: 453.592 },
     type: "unit",
+    keywords: ["recipes", "ingredients"],
   },
   "Oven Temperature": {
     units: ["°C", "°F", "Gas Mark"],
@@ -2773,11 +4068,13 @@ const converters = {
       return NaN;
     },
     type: "unit",
+    keywords: ["baking", "cooking", "heat"],
   },
   "Engine Power": {
     units: ["kW", "HP"],
     factors: { kW: 1, HP: 0.7457 },
     type: "unit",
+    keywords: ["horsepower", "kilowatt"],
   },
   Concentration: {
     units: ["mol/L", "%", "ppm"],
@@ -2794,11 +4091,13 @@ const converters = {
       return NaN;
     },
     type: "unit",
+    keywords: ["solution", "chemistry"],
   },
   "Radiation Units": {
     units: ["Gy", "Sv"],
     factors: { Gy: 1, Sv: 1 },
     type: "unit",
+    keywords: ["gray", "sievert"],
   },
   "Shoe Size Converter": {
     units: ["US", "EU", "UK", "Asia (cm)"],
@@ -2817,6 +4116,7 @@ const converters = {
       return NaN;
     },
     type: "unit",
+    keywords: ["footwear", "shoe"],
   },
   "Clothing Size Converter": {
     units: ["US", "EU", "UK"],
@@ -2833,6 +4133,7 @@ const converters = {
       return NaN;
     },
     type: "unit",
+    keywords: ["apparel", "dress"],
   },
   // B. Digital & Computer Converters
   "File Size Calculator": {
@@ -2842,6 +4143,7 @@ const converters = {
       { name: "Bitrate", unit: "bps" },
       { name: "Size", unit: "bits" },
     ],
+    keywords: ["storage", "data", "file"],
   },
 
   // C. Financial & Business Converters
@@ -2857,17 +4159,12 @@ const converters = {
         return "Invalid currency or rates not available.";
       }
 
-      // ExchangeRate-API.com's /latest/USD endpoint provides rates where each rate
-      // is how many of that currency you get per 1 USD.
-      // E.g., allRates['EUR'] is the value of 1 USD in EUR.
-      // So, to convert 'value' from 'from' to 'to':
-      // 1. Convert 'value' from 'from' to USD: value / allRates[from]
-      // 2. Convert that USD value to 'to': (value / allRates[from]) * allRates[to]
       const valueInUSD = value / allRates[from];
       const convertedValue = valueInUSD * allRates[to];
 
       return convertedValue;
     },
+    keywords: ["money", "exchange", "dollars", "euros", "rupees"],
   },
   "Loan / EMI Calculator": {
     type: "calculator",
@@ -2876,6 +4173,7 @@ const converters = {
       { name: "Annual Interest Rate", unit: "%" },
       { name: "Loan Tenure", unit: "months" },
     ],
+    keywords: ["mortgage", "finance", "emi"],
   },
   "Interest Rate Calculator": {
     type: "calculator",
@@ -2884,6 +4182,7 @@ const converters = {
       { name: "Rate", unit: "% per period" },
       { name: "Time", unit: "periods" },
     ],
+    keywords: ["finance", "compound"],
   },
   "Discount Calculator": {
     type: "calculator",
@@ -2891,6 +4190,7 @@ const converters = {
       { name: "Original Price", unit: "currency" },
       { name: "Discount Percentage", unit: "%" },
     ],
+    keywords: ["sale", "price", "reduction"],
   },
   "Sales Tax / VAT Calculator": {
     type: "calculator",
@@ -2898,6 +4198,7 @@ const converters = {
       { name: "Net Price", unit: "currency" },
       { name: "Tax Rate", unit: "%" },
     ],
+    keywords: ["gst", "vat", "tax"],
   },
   "Investment Return Calculator (ROI)": {
     type: "calculator",
@@ -2905,6 +4206,7 @@ const converters = {
       { name: "Initial Investment", unit: "currency" },
       { name: "Final Value", unit: "currency" },
     ],
+    keywords: ["roi", "stock", "profit"],
   },
 
   // D. Engineering & Science Converters
@@ -2915,6 +4217,7 @@ const converters = {
       { name: "Fuel Efficiency", unit: "km/L" },
       { name: "Fuel Price", unit: "currency/L" },
     ],
+    keywords: ["gasoline", "petrol", "mileage"],
   },
 
   // E. Construction & Material Converters
@@ -2925,6 +4228,7 @@ const converters = {
       { name: "Width", unit: "m" },
       { name: "Depth", unit: "m" },
     ],
+    keywords: ["cement", "mix", "slab"],
   },
   "Lumber / Wood Board Feet": {
     type: "calculator",
@@ -2934,6 +4238,7 @@ const converters = {
       { name: "Length", unit: "feet" },
       { name: "Quantity", unit: "pieces" },
     ],
+    keywords: ["timber", "wood", "board"],
   },
   "Steel Weight Calculator": {
     type: "calculator",
@@ -2942,6 +4247,7 @@ const converters = {
       { name: "Width", unit: "m" },
       { name: "Height", unit: "m" },
     ],
+    keywords: ["metal", "iron", "beam"],
   },
   "Tile & Flooring Calculator": {
     type: "calculator",
@@ -2953,6 +4259,7 @@ const converters = {
       { name: "Grout Gap", unit: "mm" },
       { name: "Waste Percentage", unit: "%" },
     ],
+    keywords: ["floor", "grout"],
   },
   "Paint Coverage Calculator": {
     type: "calculator",
@@ -2962,6 +4269,7 @@ const converters = {
       { name: "Number of Coats", unit: "coats" },
       { name: "Coverage per Liter", unit: "m²/L" },
     ],
+    keywords: ["wall", "liter"],
   },
 
   // F. Health, Fitness & Nutrition
@@ -2971,6 +4279,7 @@ const converters = {
       { name: "Weight", unit: "kg" },
       { name: "Height", unit: "m" },
     ],
+    keywords: ["body mass index", "health"],
   },
   "Body Fat Calculator": {
     type: "calculator",
@@ -2980,6 +4289,7 @@ const converters = {
       { name: "Age", unit: "years" },
       { name: "Gender", unit: "select", options: ["Male", "Female"] },
     ],
+    keywords: ["fat percentage", "fitness"],
   },
   "Calorie Burn Calculator": {
     type: "calculator",
@@ -3007,6 +4317,7 @@ const converters = {
         dependsOnValue: "Custom",
       },
     ],
+    keywords: ["exercise", "calories", "workout"],
   },
   "Water Intake Calculator": {
     type: "calculator",
@@ -3018,6 +4329,7 @@ const converters = {
         options: ["Low", "Medium", "High"],
       },
     ],
+    keywords: ["hydration", "water", "drink"],
   },
 
   // G. Cooking & Food Converters
@@ -3031,6 +4343,7 @@ const converters = {
     ],
     calculate: () =>
       "Advanced logic required for ingredient densities and conversion.",
+    keywords: ["recipe", "food"],
   },
 
   // H. Transport & Automotive Converters
@@ -3042,6 +4355,7 @@ const converters = {
       { name: "Fuel Used", unit: "Liters" },
       { name: "Fuel Price", unit: "currency/L" },
     ],
+    keywords: ["car", "gas", "fuel", "trip"],
   },
   "Tire Size Converter": {
     type: "calculator",
@@ -3050,6 +4364,7 @@ const converters = {
       { name: "Aspect Ratio", unit: "%" },
       { name: "Rim Diameter", unit: "inches" },
     ],
+    keywords: ["car", "wheel"],
   },
 
   // I. Physics & Chemistry Converters
@@ -3058,6 +4373,7 @@ const converters = {
     inputs: [{ name: "Chemical Formula", unit: "text" }],
     calculate: () =>
       "Complex parsing of chemical formula and atomic weights required.",
+    keywords: ["chemistry", "molecule"],
   },
   "Pressure Drop (engineering)": {
     type: "calculator",
@@ -3070,12 +4386,14 @@ const converters = {
     ],
     calculate: () =>
       "Complex engineering calculations required (e.g., Darcy-Weisbach equation).",
+    keywords: ["fluid", "pipe", "engineering"],
   },
 
   // J. Date, Time & Planning Tools
   "Age Calculator": {
     type: "calculator",
     inputs: [{ name: "Date of Birth", unit: "date" }],
+    keywords: ["birthday", "birth", "years"],
   },
   "Date Difference Calculator": {
     type: "calculator",
@@ -3083,17 +4401,75 @@ const converters = {
       { name: "Start Date", unit: "date" },
       { name: "End Date", unit: "date" },
     ],
+    keywords: ["days", "duration"],
   },
   "Time Zone Converter": {
     type: "calculator",
     inputs: [
       { name: "Date", unit: "date" },
       { name: "Time", unit: "time" },
-      { name: "From Time Zone", unit: "text" },
-      { name: "To Time Zone", unit: "text" },
+      { name: "From Time Zone", unit: "select", options: [] }, //
+      { name: "To Time Zone", unit: "select", options: [] }, //
     ],
-    calculate: () =>
-      "Time zone conversion requires an external API or library for accuracy.",
+    calculate: async (values) => {
+      const date = values["Date"];
+      const time = values["Time"];
+      const fromTimeZone = values["From Time Zone"];
+      const toTimeZone = values["To Time Zone"];
+
+      if (!date || !time || !fromTimeZone || !toTimeZone) {
+        return "Please fill all fields.";
+      }
+
+      try {
+        // Fetch datetime in the "From" time zone
+        const fromResponse = await fetch(
+          `https://worldtimeapi.org/api/timezone/${fromTimeZone}`
+        );
+        const fromData = await fromResponse.json();
+
+        if (fromData.error) {
+          return `Error in From Time Zone: ${fromData.error}`;
+        }
+
+        // Combine user's date and time with the 'from' timezone's offset to create a UTC datetime string
+        // This is a simplified approach. A full-fledged solution would involve a date library.
+        const userDateTime = new Date(`${date}T${time}:00`); // Assuming input time is local to 'from' timezone
+        const fromOffsetSeconds =
+          fromData.raw_offset + (fromData.dst ? fromData.dst_offset : 0);
+        const userDateTimeUTC = new Date(
+          userDateTime.getTime() - fromOffsetSeconds * 1000
+        );
+
+        // Fetch datetime in the "To" time zone
+        const toResponse = await fetch(
+          `https://worldtimeapi.org/api/timezone/${toTimeZone}`
+        );
+        const toData = await toResponse.json();
+
+        if (toData.error) {
+          return `Error in To Time Zone: ${toData.error}`;
+        }
+
+        const toOffsetSeconds =
+          toData.raw_offset + (toData.dst ? toData.dst_offset : 0);
+        const convertedDateTime = new Date(
+          userDateTimeUTC.getTime() + toOffsetSeconds * 1000
+        );
+
+        const convertedDate = convertedDateTime.toISOString().split("T")[0];
+        const convertedTime = convertedDateTime
+          .toTimeString()
+          .split(" ")[0]
+          .substring(0, 5);
+
+        return `Converted Time: ${convertedDate} ${convertedTime} (${toTimeZone})`;
+      } catch (error) {
+        console.error("Time zone conversion error:", error);
+        return "Error during conversion. Check timezones or network.";
+      }
+    },
+    keywords: ["utc", "gmt", "clock"],
   },
   "Work Hour Calculator": {
     type: "calculator",
@@ -3102,6 +4478,7 @@ const converters = {
       { name: "End Time", unit: "time" },
       { name: "Break Duration", unit: "minutes" },
     ],
+    keywords: ["work", "hours", "shift"],
   },
   "Countdown Calculator": {
     type: "calculator",
@@ -3109,6 +4486,7 @@ const converters = {
       { name: "Target Date", unit: "date" },
       { name: "Target Time", unit: "time" },
     ],
+    keywords: ["timer", "event", "deadline"],
   },
 
   // K. Miscellaneous Converters
@@ -3130,7 +4508,7 @@ const converters = {
         if (from === "Octal" && !/^-?[0-7]+$/.test(cleanedValue)) {
           return "Invalid input for Octal (0-7 only)";
         }
-        if (from === "Decimal" && !/^-?\d+$/.test(cleanedValue)) {
+        if (from === "Decimal" && !/^-?\\d+$/.test(cleanedValue)) {
           return "Invalid input for Decimal (digits 0-9 only)";
         }
         if (from === "Hexadecimal" && !/^-?[0-9A-Fa-f]+$/.test(cleanedValue)) {
@@ -3156,10 +4534,12 @@ const converters = {
         return "Error in conversion: " + error.message;
       }
     },
+    keywords: ["base", "binary", "hex", "oct"],
   },
   "Text Case Converter": {
     type: "calculator",
     inputs: [{ name: "Text", unit: "text" }],
+    keywords: ["upper", "lower", "title", "string"],
   },
   "Roman Numeral Converter": {
     type: "calculator", // CONFIRMED: Keep as calculator type for separate inputs
@@ -3262,6 +4642,14 @@ const converters = {
         return ""; // No valid input provided in either field
       }
     },
+    keywords: ["roman", "numerals"],
+  },
+
+  // NEW: Scientific Calculator
+  "Scientific Calculator": {
+    type: "calculator",
+    inputs: [], // No explicit inputs, managed internally
+    keywords: ["math", "calculator", "science", "trigonometry"],
   },
 };
 
@@ -3308,7 +4696,7 @@ const categoryGroups = {
     "Inductance",
     "Electric Charge",
     "Magnetic Field Strength",
-    "Illuminance",
+    // "Illuminance",
     "Specific Heat Capacity",
     "Fuel Efficiency",
     "Fuel Consumption Cost Calculator",
@@ -3334,7 +4722,7 @@ const categoryGroups = {
   "Cooking & Food Converters": [
     "Cooking Volume",
     "Cooking Weight",
-    "Ingredient-Specific Converter",
+    // "Ingredient-Specific Converter",
     "Oven Temperature",
   ],
   "Transport & Automotive Converters": [
@@ -3355,6 +4743,7 @@ const categoryGroups = {
     "Number System Converter",
     "Text Case Converter",
     "Roman Numeral Converter",
+    "Scientific Calculator", // NEW: Added Scientific Calculator
   ],
 };
 
@@ -3418,7 +4807,12 @@ const calculate = (categoryName, values) => {
   }
 
   if (currentConverter.calculate) {
-    return currentConverter.calculate(values);
+    // For Time Zone Converter, the calculate function is async.
+    // We'll handle its call in useEffect and update state.
+    // For other custom calculators, call directly.
+    if (categoryName !== "Time Zone Converter") {
+      return currentConverter.calculate(values);
+    }
   }
 
   switch (categoryName) {
@@ -3534,7 +4928,7 @@ const calculate = (categoryName, values) => {
     case "Fuel Consumption Cost Calculator": {
       const distance = parseFloat(values.Distance);
       const fuelEfficiency = parseFloat(values["Fuel Efficiency"]);
-      const fuelPrice = parseFloat(values["Fuel Price"]);
+      const fuelPrice = parseFloat(values.FuelPrice);
 
       if (isNaN(distance) || isNaN(fuelEfficiency) || isNaN(fuelPrice))
         return "";
@@ -4009,928 +5403,2140 @@ const calculate = (categoryName, values) => {
       return "";
   }
 };
+const filterAndSortCalculators = (query, allConverters) => {
+  if (!query) {
+    return Object.keys(allConverters); // Return all if query is empty
+  }
+
+  const lowerCaseQuery = query.toLowerCase();
+  const queryWords = lowerCaseQuery.split(" ").filter(Boolean); // Split query into words
+
+  const results = [];
+
+  for (const categoryName of Object.keys(allConverters)) {
+    const converter = allConverters[categoryName];
+    const lowerCaseCategoryName = categoryName.toLowerCase();
+    let score = 0;
+
+    // 1. Exact Category Name Match (Highest priority)
+    if (lowerCaseCategoryName === lowerCaseQuery) {
+      score = Math.max(score, 1000);
+    }
+    // 2. Starts With Category Name Match
+    else if (lowerCaseCategoryName.startsWith(lowerCaseQuery)) {
+      score = Math.max(score, 900);
+    }
+    // 3. Whole Word Match in Category Name
+    else if (
+      new RegExp(`\\b${lowerCaseQuery}\\b`).test(lowerCaseCategoryName)
+    ) {
+      score = Math.max(score, 850);
+    }
+    // 4. Any Query Word is a Whole Word in Category Name
+    else if (
+      queryWords.some((word) =>
+        new RegExp(`\\b${word}\\b`).test(lowerCaseCategoryName)
+      )
+    ) {
+      score = Math.max(score, 800);
+    }
+    // 5. Contains Match in Category Name (substring)
+    else if (lowerCaseCategoryName.includes(lowerCaseQuery)) {
+      score = Math.max(score, 700);
+    }
+    // 6. Match in dedicated keywords
+    if (converter.keywords && Array.isArray(converter.keywords)) {
+      if (
+        converter.keywords.some((keyword) => {
+          const lowerCaseKeyword = keyword.toLowerCase();
+          return (
+            lowerCaseKeyword === lowerCaseQuery || // Exact keyword match
+            lowerCaseKeyword.startsWith(lowerCaseQuery) || // Keyword starts with query
+            new RegExp(`\\b${lowerCaseQuery}\\b`).test(lowerCaseKeyword) || // Query is whole word in keyword
+            lowerCaseKeyword.includes(lowerCaseQuery) || // Keyword contains query
+            queryWords.some((word) =>
+              new RegExp(`\\b${word}\\b`).test(lowerCaseKeyword)
+            ) // Any query word is a whole word in keyword
+          );
+        })
+      ) {
+        score = Math.max(score, 600);
+      }
+    }
+
+    // 7. Match in units (for unit converters)
+    if (converter.type === "unit" && Array.isArray(converter.units)) {
+      if (
+        converter.units.some((unit) => {
+          const lowerCaseUnit = unit.toLowerCase();
+          return (
+            lowerCaseUnit === lowerCaseQuery || // Exact unit match
+            lowerCaseUnit.startsWith(lowerCaseQuery) || // Unit starts with query
+            new RegExp(`\\b${lowerCaseQuery}\\b`).test(lowerCaseUnit) || // Query is whole word in unit
+            lowerCaseUnit.includes(lowerCaseQuery) || // Unit contains query
+            queryWords.some((word) =>
+              new RegExp(`\\b${word}\\b`).test(lowerCaseUnit)
+            ) // Any query word is a whole word in unit
+          );
+        })
+      ) {
+        score = Math.max(score, 500);
+      }
+    }
+
+    // 8. Match in input names (for calculators)
+    if (converter.type === "calculator" && Array.isArray(converter.inputs)) {
+      if (
+        converter.inputs.some((input) => {
+          const lowerCaseInputName = input.name.toLowerCase();
+          return (
+            lowerCaseInputName === lowerCaseQuery || // Exact input name match
+            lowerCaseInputName.startsWith(lowerCaseQuery) || // Input name starts with query
+            new RegExp(`\\b${lowerCaseQuery}\\b`).test(lowerCaseInputName) || // Query is whole word in input name
+            lowerCaseInputName.includes(lowerCaseQuery) || // Input name contains query
+            queryWords.some((word) =>
+              new RegExp(`\\b${word}\\b`).test(lowerCaseInputName)
+            ) // Any query word is a whole word in input name
+          );
+        })
+      ) {
+        score = Math.max(score, 400);
+      }
+    }
+
+    if (score > 0) {
+      results.push({
+        categoryName,
+        score,
+        originalLength: categoryName.length,
+      });
+    }
+  }
+
+  // Sort results: highest score first, then shortest name first for ties
+  results.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    return a.originalLength - b.originalLength;
+  });
+
+  return results.map((result) => result.categoryName);
+};
 
 export default function UniversalUnitConverterClient() {
-	const [selectedCategory, setSelectedCategory] = useState("Length / Distance");
-	const [value, setValue] = useState("1");
-	const [fromUnit, setFromUnit] = useState("m");
-	const [toUnit, setToUnit] = useState("ft");
-	const [searchQuery, setSearchQuery] = useState("");
-	const [showAllResults, setShowAllResults] = useState(true);
-	const [expandedGroups, setExpandedGroups] = useState({
-	  "Core Daily Converters": true,
-	});
-  
-	const [calculatorValues, setCalculatorValues] = useState({});
-	const [calculatorResult, setCalculatorResult] = useState(null);
-	const [showCopyMessage, setShowCopyMessage] = useState(false); // State for copy message
-  
-	// New state for currency exchange rates
-	const [exchangeRates, setExchangeRates] = useState({});
-	const [ratesLoading, setRatesLoading] = useState(false); // Set to false initially, only load when needed
-	const [ratesError, setRatesError] = useState(null);
-  
-	const currentConverter = converters[selectedCategory];
-  
-	const numValue = parseFloat(value) || 0;
-	const mainResult =
-	  currentConverter.type === "unit"
-		? convertValue(
-			numValue,
-			fromUnit,
-			toUnit,
-			selectedCategory,
-			exchangeRates
-		  ) // Pass exchangeRates
-		: null;
-  
-	const allResults =
-	  currentConverter.type === "unit"
-		? currentConverter.units.map((unit) => ({
-			unit,
-			value: convertValue(
-			  numValue,
-			  fromUnit,
-			  unit,
-			  selectedCategory,
-			  exchangeRates // Pass exchangeRates here too
-			),
-		  }))
-		: [];
-  
-	// Effect for updating calculator results and fetching currency rates
-	useEffect(() => {
-	  let intervalId;
-	  if (currentConverter && currentConverter.type === "calculator") {
-		// Special handling for Countdown Calculator
-		if (selectedCategory === "Countdown Calculator") {
-		  const updateCountdown = () => {
-			setCalculatorResult(calculate(selectedCategory, calculatorValues));
-		  };
-  
-		  updateCountdown(); // Initial call
-		  intervalId = setInterval(updateCountdown, 1000); // Update every second
-  
-		  return () => clearInterval(intervalId); // Cleanup interval
-		} else {
-		  const result = calculate(selectedCategory, calculatorValues);
-		  setCalculatorResult(result);
-		}
-	  } else {
-		setCalculatorResult(null);
-	  }
-  
-	  // Fetch currency rates when Currency Converter is selected
-	  if (selectedCategory === "Currency Converter") {
-		const fetchRates = async () => {
-		  setRatesLoading(true);
-		  setRatesError(null);
-		  try {
-			// Hardcode USD as the base for fetching, as per the example API call.
-			// The API returns conversion rates *from* the base currency (USD) to others.
-			const response = await fetch(`${EXCHANGE_RATE_API_BASE_URL}USD`);
-			const data = await response.json();
-  
-			if (data.result === "success") {
-			  setExchangeRates(data.conversion_rates);
-			} else {
-			  setRatesError(
-				data["error-type"] || "Failed to fetch currency rates."
-			  );
-			  console.error("Error fetching currency rates:", data);
-			}
-		  } catch (error) {
-			setRatesError("Network error or failed to fetch rates.");
-			console.error("Network error fetching currency rates:", error);
-		  } finally {
-			setRatesLoading(false);
-		  }
-		};
-		fetchRates();
-	  }
-  
-	  return () => {
-		if (intervalId) clearInterval(intervalId);
-	  };
-	}, [calculatorValues, selectedCategory]);
-  
-	const handleCategoryChange = (category) => {
-	  setSelectedCategory(category);
-	  const converter = converters[category];
-	  if (converter.type === "unit") {
-		setValue("1");
-		setFromUnit(converter.units[0]);
-		setToUnit(converter.units[1] || converter.units[0]);
-		setCalculatorValues({});
-		setCalculatorResult(null);
-	  } else {
-		setValue(""); // For calculators, value input is not generally used the same way
-		setFromUnit("");
-		setToUnit("");
-		// Initialize calculator inputs with empty strings for text/date/time or default for select
-		const initialCalcValues = {};
-		converter.inputs.forEach((input) => {
-		  if (input.unit === "select") {
-			initialCalcValues[input.name] = input.options[0];
-		  } else {
-			initialCalcValues[input.name] = "";
-		  }
-		});
-		setCalculatorValues(initialCalcValues);
-		setCalculatorResult(null);
-	  }
-  
-	  // Specific defaults for Currency Converter
-	  if (category === "Currency Converter") {
-		setValue("1");
-		setFromUnit("USD");
-		setToUnit("PKR");
-	  }
-	};
-  
-	const handleSearch = (query) => {
-	  setSearchQuery(query);
-	  const match = query.match(
-		/([\d.]+)\s*([^\d\s]+)\s*(?:to|in)\s*([^\d\s]+)/i
-	  );
-  
-	  if (match) {
-		const val = match[1];
-		const from = match[2].trim();
-		const to = match[3].trim();
-  
-		for (const [cat, conv] of Object.entries(converters)) {
-		  if (
-			conv.type === "unit" &&
-			Array.isArray(conv.units) && // Ensure conv.units is an array
-			conv.units.includes(from) &&
-			conv.units.includes(to)
-		  ) {
-			setSelectedCategory(cat);
-			setValue(val);
-			setFromUnit(from);
-			setToUnit(to);
-			setSearchQuery("");
-			break;
-		  }
-		}
-	  }
-	};
-  
-	const swapUnits = () => {
-	  const temp = fromUnit;
-	  setFromUnit(toUnit);
-	  setToUnit(temp);
-	};
-  
-	const toggleGroup = (group) => {
-	  setExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
-	};
-  
-	const handleCalculatorInputChange = (inputName, val) => {
-	  setCalculatorValues((prev) => ({ ...prev, [inputName]: val }));
-	};
-  
-	const copyToClipboard = (text) => {
-	  navigator.clipboard
-		.writeText(text)
-		.then(() => {
-		  setShowCopyMessage(true);
-		  setTimeout(() => setShowCopyMessage(false), 2000); // Hide after 2 seconds
-		})
-		.catch((err) => {
-		  console.error("Failed to copy: ", err);
-		});
-	};
-  
-	return (
-		<div style={{ minHeight: "100vh", background: "#F5F7FA" }}>
-		  {/* Header - Your Color Scheme */}
-		  <div
-			style={{
-			  background: "#fff",
-			  borderBottom: "1px solid #E5E7EB",
-			  padding: "3px 24px",
-			  position: "fixed",
-			  top: 0,
-			  left: 0,
-			  right: 0,
-			  zIndex: 1000,
-			}}
-		  >
-			<div
-			  style={{
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "space-between",
-			  }}
-			>
-			  <Stack direction="row" sx={{ gap: "20px", alignItems: "center" }}>
-				<Box component={Link} href="/" sx={{ cursor: "pointer" }}>
-				  <ToolsHubsIcon width="147" />
-				</Box>
-				<h1
-				  style={{
-					fontSize: "24px",
-					fontWeight: "bold",
-					color: "#1E3A8A",
-					margin: 0,
-				  }}
-				>
-				  Universal Unit Converter
-				</h1>
-			  </Stack>
-	
-			  <div style={{ position: "relative", flex: "0 0 400px" }}>
-				<Search
-				  style={{
-					position: "absolute",
-					left: "12px",
-					top: "50%",
-					transform: "translateY(-50%)",
-					width: "20px",
-					height: "20px",
-					color: "#9CA3AF",
-				  }}
-				/>
-				<input
-				  type="text"
-				  placeholder='Try: "25 °C to °F" or "5 kg to lb"'
-				  value={searchQuery}
-				  onChange={(e) => setSearchQuery(e.target.value)}
-				  onKeyDown={(e) => e.key === "Enter" && handleSearch(searchQuery)}
-				  style={{
-					width: "100%",
-					padding: "10px 12px 10px 40px",
-					border: "2px solid #1E3A8A",
-					borderRadius: "12px",
-					outline: "none",
-					fontSize: "14px",
-				  }}
-				/>
-			  </div>
-			</div>
-		  </div>
-	
-		  <div
-			style={{
-			  padding: "70px 16px 16px",
-			  display: "flex",
-			  gap: "16px",
-			  minHeight: "calc(100vh - 90px)",
-			}}
-		  >
-			{/* Sidebar - Your Style */}
-			<div
-			  style={{
-				width: "320px",
-				flexShrink: 0,
-			  }}
-			>
-			  <div
-				style={{
-				  background: "#fff",
-				  borderRadius: "16px",
-				  padding: "16px",
-				  maxHeight: "calc(100vh - 80px)",
-				  overflowY: "auto",
-				  msOverflowStyle: "none",
-				  scrollbarWidth: "none",
-				  "&::WebkitScrollbar": {
-					display: "none",
-				  },
-				}}
-			  >
-				{Object.entries(categoryGroups).map(([group, categories]) => (
-				  <div key={group} style={{ marginBottom: "8px" }}>
-					<button
-					  onClick={() => toggleGroup(group)}
-					  style={{
-						width: "100%",
-						padding: "12px",
-						background:
-						  "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 70%, #80C0C0 100%)",
-						color: theme.palette.primary.fourthMain,
-						border: "none",
-						borderRadius: "12px",
-						fontWeight: "bold",
-						cursor: "pointer",
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-						fontSize: "14px",
-					  }}
-					>
-					  {group}
-					  {expandedGroups[group] ? (
-						<ChevronUp size={18} />
-					  ) : (
-						<ChevronDown size={18} />
-					  )}
-					</button>
-					{expandedGroups[group] && (
-					  <div style={{ paddingTop: "8px" }}>
-						{categories.map((category) => (
-						  <button
-							key={category}
-							onClick={() => handleCategoryChange(category)}
-							style={{
-							  width: "100%",
-							  padding: "10px 12px",
-							  background:
-								selectedCategory === category
-								  ? "#DBEAFE"
-								  : "transparent",
-							  color: theme.palette.primary.main,
-	
-							  border: "none",
-							  borderRadius: "8px",
-							  cursor: "pointer",
-							  textAlign: "left",
-							  marginBottom: "4px",
-							  fontSize: "13px",
-							  transition: "all 0.2s",
-							}}
-							onMouseEnter={(e) => {
-							  if (selectedCategory !== category) {
-								e.target.style.background = "#DBEAFE";
-							  }
-							}}
-							onMouseLeave={(e) => {
-							  if (selectedCategory !== category) {
-								e.target.style.background = "transparent";
-							  }
-							}}
-						  >
-							{category}
-						  </button>
-						))}
-					  </div>
-					)}
-				  </div>
-				))}
-			  </div>
-			</div>
-	
-			{/* Main Converter Panel */}
-			<div style={{ flex: 1 }}>
-			  <div
-				style={{
-				  background: "#fff",
-				  borderRadius: "16px",
-				  padding: "14px 24px",
-				  marginBottom: "16px",
-				}}
-			  >
-				<h2
-				  style={{
-					fontSize: "20px",
-					fontWeight: "bold",
-					color: theme.palette.primary.main,
-					marginBottom: "24px",
-					marginTop: 0,
-				  }}
-				>
-				  {selectedCategory}
-				</h2>
-	
-				{currentConverter.type === "unit" ? (
-				  <>
-					{/* Value Input */}
-					<div style={{ marginBottom: "20px" }}>
-					  <label
-						style={{
-						  display: "block",
-						  fontSize: "14px",
-						  fontWeight: "500",
-						  color: theme.palette.primary.main,
-						  marginBottom: "8px",
-						}}
-					  >
-						Value
-					  </label>
-					  <div style={{ position: "relative" }}>
-						<input
-						  type="text"
-						  value={value}
-						  onChange={(e) => {
-							const val = e.target.value;
-							if (val === "" || /^-?\d*\.?\d*e?-?\d*$/i.test(val)) {
-							  setValue(val);
-							}
-						  }}
-						  className="border"
-						  style={{
-							width: "100%",
-							padding: "12px 40px 12px 16px",
-							borderColor: "2#D1D5DB",
-							borderRadius: "12px",
-							fontSize: "18px",
-							fontWeight: "600",
-							outline: "none",
-						  }}
-						  placeholder="Enter value"
-						  onFocus={(e) =>
-							(e.target.style.borderColor =
-							  theme.palette.primary.main)
-						  }
-						  onBlur={(e) =>
-							(e.target.style.borderColor =
-							  theme.palette.primary.main)
-						  }
-						/>
-						{value && (
-						  <button
-							onClick={() => setValue("")}
-							style={{
-							  position: "absolute",
-							  right: "12px",
-							  top: "50%",
-							  transform: "translateY(-50%)",
-							  background: "#F3F4F6",
-							  border: "none",
-							  borderRadius: "50%",
-							  width: "24px",
-							  height: "24px",
-							  cursor: "pointer",
-							  display: "flex",
-							  alignItems: "center",
-							  justifyContent: "center",
-							}}
-						  >
-							<X size={14} color="#6B7280" />
-						  </button>
-						)}
-					  </div>
-					</div>
-	
-					{/* From Unit */}
-					<div style={{ marginBottom: "16px" }}>
-					  <label
-						style={{
-						  display: "block",
-						  fontSize: "14px",
-						  fontWeight: "500",
-						  color: theme.palette.primary.main,
-						  marginBottom: "8px",
-						}}
-					  >
-						From
-					  </label>
-					  <select
-						value={fromUnit}
-						onChange={(e) => setFromUnit(e.target.value)}
-						className="border"
-						style={{
-						  width: "100%",
-						  padding: "12px",
-						  borderColor: theme.palette.primary.main,
-						  borderRadius: "12px",
-						  fontSize: "16px",
-						  outline: "none",
-						  cursor: "pointer",
-						}}
-					  >
-						{currentConverter.units.map((unit) => (
-						  <option key={unit} value={unit}>
-							{unit}
-						  </option>
-						))}
-					  </select>
-					</div>
-	
-					{/* Swap Button */}
-					<div
-					  style={{
-						display: "flex",
-						justifyContent: "center",
-						margin: "16px 0",
-					  }}
-					>
-					  <button
-						onClick={swapUnits}
-						style={{
-						  padding: "12px",
-						  background: theme.palette.primary.main,
-						  border: "none",
-						  borderRadius: "50%",
-						  cursor: "pointer",
-						  display: "flex",
-						  alignItems: "center",
-						  justifyContent: "center",
-						  transition: "all 0.2s",
-						}}
-					  >
-						<ArrowRightLeft
-						  size={20}
-						  color={theme.palette.primary.fourthMain}
-						/>
-					  </button>
-					</div>
-	
-					{/* To Unit */}
-					<div style={{ marginBottom: "24px" }}>
-					  <label
-						style={{
-						  display: "block",
-						  fontSize: "14px",
-						  fontWeight: "500",
-						  color: theme.palette.primary.main,
-						  marginBottom: "8px",
-						}}
-					  >
-						To
-					  </label>
-					  <select
-						value={toUnit}
-						onChange={(e) => setToUnit(e.target.value)}
-						className="border"
-						style={{
-						  width: "100%",
-						  padding: "12px",
-						  borderColor: theme.palette.primary.main,
-						  borderRadius: "12px",
-						  fontSize: "16px",
-						  outline: "none",
-						  cursor: "pointer",
-						}}
-					  >
-						{currentConverter.units.map((unit) => (
-						  <option key={unit} value={unit}>
-							{unit}
-						  </option>
-						))}
-					  </select>
-					</div>
-				  </>
-				) : (
-				  <>
-					{/* Calculator Inputs */}
-					{currentConverter.inputs.map((input) =>
-					  input.optional &&
-					  input.dependsOn &&
-					  calculatorValues[input.dependsOn] !==
-						input.dependsOnValue ? null : (
-						<div key={input.name} style={{ marginBottom: "20px" }}>
-						  <label
-							style={{
-							  display: "block",
-							  fontSize: "14px",
-							  fontWeight: "500",
-							  color: theme.palette.primary.main,
-							  marginBottom: "8px",
-							}}
-						  >
-							{input.name}{" "}
-							{input.unit && input.unit !== "select"
-							  ? `(${input.unit})`
-							  : ""}
-						  </label>
-						  {input.unit === "select" ? (
-							<select
-							  value={
-								calculatorValues[input.name] || input.options[0]
-							  }
-							  onChange={(e) =>
-								handleCalculatorInputChange(
-								  input.name,
-								  e.target.value
-								)
-							  }
-							  className="border"
-							  style={{
-								width: "100%",
-								padding: "12px 16px",
-								borderColor: theme.palette.primary.main,
-								borderRadius: "12px",
-								fontSize: "16px",
-								outline: "none",
-							  }}
-							>
-							  {input.options.map((option) => (
-								<option key={option} value={option}>
-								  {option}
-								</option>
-							  ))}
-							</select>
-						  ) : (
-							<input
-							  type={
-								(input.unit && input.unit.includes("date")) ||
-								(input.unit && input.unit.includes("time"))
-								  ? input.unit
-								  : input.unit === "number"
-								  ? "number"
-								  : "text" // Explicitly set type to number for numerical inputs
-							  }
-							  value={calculatorValues[input.name] || ""}
-							  onChange={(e) =>
-								handleCalculatorInputChange(
-								  input.name,
-								  e.target.value
-								)
-							  }
-							  className="border"
-							  style={{
-								width: "100%",
-								padding: "12px 16px",
-								borderColor: theme.palette.primary.main,
-								borderRadius: "12px",
-								color: theme.palette.primary.main,
-								fontSize: "16px",
-								outline: "none",
-							  }}
-							  placeholder={`Enter ${input.name}`}
-							/>
-						  )}
-						</div>
-					  )
-					)}
-				  </>
-				)}
-	
-				{/* Main Result - Your Color Scheme */}
-				<div
-				  style={{
-					background: "#09123aea",
-					borderRadius: "16px",
-					padding: "24px",
-					color: "#fff",
-					position: "relative",
-					cursor: "pointer", // Make it clickable to copy
-				  }}
-				  onClick={() => {
-					const textToCopy =
-					  currentConverter.type === "unit"
-						? `${formatNumber(mainResult)} ${toUnit}`
-						: String(calculatorResult).replace(/<[^>]*>?/gm, ""); // Remove HTML if present for calculator results
-					copyToClipboard(textToCopy);
-				  }}
-				>
-				  <div
-					style={{
-					  fontSize: "12px",
-					  opacity: 0.9,
-					  marginBottom: "8px",
-					  fontWeight: "500",
-					}}
-				  >
-					{currentConverter.type === "unit"
-					  ? "Result"
-					  : "Calculation Result"}
-				  </div>
-				  <div
-					style={{
-					  fontSize: "36px",
-					  fontWeight: "bold",
-					  marginBottom: "8px",
-					  wordBreak: "break-all",
-					}}
-				  >
-					{currentConverter.type === "unit"
-					  ? ratesLoading && selectedCategory === "Currency Converter"
-						? "Loading rates..."
-						: ratesError && selectedCategory === "Currency Converter"
-						? ratesError
-						: formatNumber(mainResult)
-					  : (() => {
-						  const resultText = String(calculatorResult); // Ensure it's a string
-						  if (resultText.includes("\n")) {
-							return resultText.split("\n").map((line, index) => {
-							  const parts = line.split(":");
-							  return (
-								<div key={index}>
-								  <span
-									style={{
-									  color: theme.palette.secondary.fifthMain,
-									  marginRight: "8px",
-									}}
-								  >
-									{parts[0]}:
-								  </span>
-								  <span style={{ color: "#fff" }}>
-									{parts.slice(1).join(":")}
-								  </span>
-								</div>
-							  );
-							});
-						  } else if (resultText.includes(":")) {
-							// Handle single line "Label: Value"
-							const parts = resultText.split(":");
-							return (
-							  <div>
-								<span
-								  style={{ color: "#93C5FD", marginRight: "8px" }}
-								>
-								  {parts[0]}:
-								</span>
-								<span style={{ color: "#fff" }}>
-								  {parts.slice(1).join(":")}
-								</span>
-							  </div>
-							);
-						  } else {
-							return formatNumber(calculatorResult); // Fallback for other single-line outputs (e.g., "Invalid Input")
-						  }
-						})()}
-				  </div>
-				  <div
-					style={{
-					  fontSize: "18px",
-					  opacity: 0.9,
-					  color: currentConverter.type === "unit" ? "#93C5FD" : "#fff", // Apply color to unit
-					}}
-				  >
-					{currentConverter.type === "unit" &&
-					!ratesLoading &&
-					!ratesError
-					  ? toUnit
-					  : ""}
-				  </div>
-				  {showCopyMessage && (
-					<div
-					  style={{
-						position: "absolute",
-						bottom: "10px",
-						right: "10px",
-						background: "rgba(0,0,0,0.7)",
-						color: "#fff",
-						padding: "5px 10px",
-						borderRadius: "5px",
-						fontSize: "12px",
-					  }}
-					>
-					  Copied!
-					</div>
-				  )}
-				</div>
-				{(currentConverter.type !== "unit" ||
-				  (currentConverter.type === "unit" && mainResult)) && (
-				  <button
-					onClick={() => {
-					  const textToCopy =
-						currentConverter.type === "unit"
-						  ? `${formatNumber(mainResult)} ${toUnit}`
-						  : String(calculatorResult).replace(/<[^>]*>?/gm, "");
-					  copyToClipboard(textToCopy);
-					}}
-					style={{
-					  marginTop: "10px",
-					  width: "100%",
-					  padding: "12px",
-					  background:
-						"radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
-					  color: "#fff",
-					  border: "none",
-					  borderRadius: "12px",
-					  fontSize: "16px",
-					  fontWeight: "bold",
-					  cursor: "pointer",
-					  display: "flex",
-					  alignItems: "center",
-					  justifyContent: "center",
-					  gap: "8px",
-					  transition: "background-color 0.2s",
-					}}
-					onMouseEnter={(e) =>
-					  (e.target.style.backgroundColor = "#3B82F6")
-					}
-					onMouseLeave={(e) =>
-					  (e.target.style.backgroundColor = "#1E3A8A")
-					}
-				  >
-					<Copy size={18} /> Copy Result
-				  </button>
-				)}
-			  </div>
-			</div>
-	
-			{/* Results Table */}
-			{currentConverter.type === "unit" && showAllResults && (
-			  <div style={{ width: "320px", flexShrink: 0 }}>
-				<div
-				  style={{
-					background: "#fff",
-					borderRadius: "16px",
-					padding: "16px",
-					maxHeight: "calc(100vh - 130px)",
-					overflowY: "auto",
-					msOverflowStyle: "none",
-					scrollbarWidth: "none",
-					"&::WebkitScrollbar": {
-					  display: "none",
-					},
-				  }}
-				>
-				  <div
-					style={{
-					  display: "flex",
-					  justifyContent: "space-between",
-					  alignItems: "center",
-					  marginBottom: "16px",
-					}}
-				  >
-					<h3
-					  style={{
-						fontSize: "14px",
-						fontWeight: "bold",
-						color: theme.palette.primary.main,
-						textTransform: "uppercase",
-						letterSpacing: "0.05em",
-						margin: 0,
-					  }}
-					>
-					  All Conversions
-					</h3>
-					<button
-					  onClick={() => setShowAllResults(false)}
-					  style={{
-						background: "transparent",
-						border: "none",
-						cursor: "pointer",
-						padding: "4px",
-					  }}
-					>
-					  <X size={18} color="#6B7280" />
-					</button>
-				  </div>
-				  <div>
-					{allResults.map(({ unit, value: val }) => (
-					  <div
-						key={unit}
-						style={{
-						  padding: "12px",
-						  marginBottom: "8px",
-						  borderRadius: "12px",
-						  background: unit === toUnit ? "#DBEAFE" : "#F9FAFB",
-						  border:
-							unit === toUnit
-							  ? "2px solid #1E3A8A"
-							  : "1px solid #E5E7EB",
-						  transition: "all 0.2s",
-						}}
-					  >
-						<div
-						  style={{
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-							gap: "8px",
-						  }}
-						>
-						  <span
-							style={{
-							  fontWeight: "500",
-							  color: "#374151",
-							  fontSize: "14px",
-							}}
-						  >
-							{unit}
-						  </span>
-						  <span
-							style={{
-							  fontSize: "13px",
-							  color: "#111827",
-							  color: "#111827",
-							  fontWeight: "600",
-							  textAlign: "right",
-							  wordBreak: "break-all",
-							}}
-						  >
-							{formatNumber(val)}
-						  </span>
-						</div>
-					  </div>
-					))}
-				  </div>
-				</div>
-			  </div>
-			)}
-	
-			{currentConverter.type === "unit" && !showAllResults && (
-			  <button
-				onClick={() => setShowAllResults(true)}
-				style={{
-				  position: "fixed",
-				  right: "20px",
-				  top: "80px",
-				  background: theme.palette.primary.main,
-				  color: "#fff",
-				  border: "none",
-				  borderRadius: "50%",
-				  width: "56px",
-				  height: "56px",
-				  cursor: "pointer",
-				  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-				  display: "flex",
-				  alignItems: "center",
-				  justifyContent: "center",
-				}}
-			  >
-				<ChevronDown size={24} />
-			  </button>
-			)}
-		  </div>
-		</div>
-	  );
+  const [selectedCategory, setSelectedCategory] = useState("Length / Distance");
+  const [value, setValue] = useState("1");
+  const [fromUnit, setFromUnit] = useState("m");
+  const [toUnit, setToUnit] = useState("ft");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAllResults, setShowAllResults] = useState(true);
+  const [expandedGroups, setExpandedGroups] = useState({
+    "Core Daily Converters": true,
+  });
+
+  const [calculatorValues, setCalculatorValues] = useState({});
+  const [calculatorResult, setCalculatorResult] = useState(null);
+  const [showCopyMessage, setShowCopyMessage] = useState(false); // State for copy message
+
+  // New state for currency exchange rates
+  const [exchangeRates, setExchangeRates] = useState({});
+  const [ratesLoading, setRatesLoading] = useState(false); // Set to false initially, only load when needed
+  const [ratesError, setRatesError] = useState(null);
+
+  // New state for Time Zone Converter
+  const [timezones, setTimezones] = useState([]);
+  const [timeZoneLoading, setTimeZoneLoading] = useState(false);
+  const [timeZoneError, setTimeZoneError] = useState(null);
+
+  // New states for Scientific Calculator
+  const [calcCurrentInput, setCalcCurrentInput] = useState("0"); // What's shown in the main display
+  const [calcExpression, setCalcExpression] = useState(""); // The full expression
+  const [calcResult, setCalcResult] = useState(null); // The result of the current expression
+  const [lastButtonWasEquals, setLastButtonWasEquals] = useState(false); // To handle chaining operations
+  const [trigMode, setTrigMode] = useState("rad"); // 'rad' or 'deg'
+  const [inverseMode, setInverseMode] = useState(false); // true for Inv functions
+  // NEW: Ref for search input and state for filtered categories
+  const searchInputRef = useRef(null);
+  const [filteredCategories, setFilteredCategories] = useState(
+    Object.keys(converters)
+  );
+  const currentConverter = converters[selectedCategory];
+
+  const numValue = parseFloat(value) || 0;
+  const mainResult =
+    currentConverter.type === "unit"
+      ? convertValue(
+          numValue,
+          fromUnit,
+          toUnit,
+          selectedCategory,
+          exchangeRates
+        ) // Pass exchangeRates
+      : null;
+
+  const allResults =
+    currentConverter.type === "unit"
+      ? currentConverter.units.map((unit) => ({
+          unit,
+          value: convertValue(
+            numValue,
+            fromUnit,
+            unit,
+            selectedCategory,
+            exchangeRates // Pass exchangeRates here too
+          ),
+        }))
+      : [];
+
+  // Helper to evaluate scientific expressions
+  const evaluateScientificExpression = useCallback(
+    (expression) => {
+      try {
+        if (!expression.trim()) return "";
+
+        let cleanedExpression = expression;
+
+        // --- Implicit Multiplication ---
+        // Cases: Number followed by π, Number followed by function, ) followed by Number, π followed by (
+        cleanedExpression = cleanedExpression
+          .replace(/(\d+)(π)/g, "$1*$2") // e.g., 2π -> 2*π
+          .replace(/(\d+)([a-zA-Z]+\()/g, "$1*$2") // e.g., 2sin( -> 2*sin(
+          .replace(/(\))(\d+)/g, "$1*$2") // e.g., (2+3)5 -> (2+3)*5
+          .replace(/(π)(\()/g, "$1*$2") // e.g., π(2) -> π*(2)
+          .replace(
+            /(\d+\.?\d*)\s*(?:e|E)\s*(\-?\d+)/g,
+            (match, p1, p2) =>
+              `${parseFloat(p1)}*Math.pow(10,${parseInt(p2, 10)})`
+          ); // Handle scientific notation like 2e3
+
+        // --- Function mapping and trig mode ---
+        cleanedExpression = cleanedExpression
+          .replace(/sin\(/g, `Math.${inverseMode ? "asin" : "sin"}(`)
+          .replace(/cos\(/g, `Math.${inverseMode ? "acos" : "cos"}(`)
+          .replace(/tan\(/g, `Math.${inverseMode ? "atan" : "tan"}(`)
+          .replace(/log\(/g, `Math.${inverseMode ? "pow(10," : "log10"}(`) // log base 10
+          .replace(/ln\(/g, `Math.${inverseMode ? "exp" : "log"}(`) // natural log (ln)
+          .replace(/sqrt\(/g, "Math.sqrt(")
+          .replace(/exp\(/g, "Math.exp(") // Explicit exp() for e^x
+          .replace(/\^/g, "**")
+          .replace(/π/g, "Math.PI");
+
+        // Convert degrees to radians if trigMode is 'deg' for trigonometric functions
+        if (trigMode === "deg") {
+          cleanedExpression = cleanedExpression.replace(
+            /(Math\.(?:sin|cos|tan)\([^)]*\))/g,
+            (match) => {
+              const arg = match.substring(
+                match.indexOf("(") + 1,
+                match.lastIndexOf(")")
+              );
+              // Temporarily evaluate the argument to convert it to radians
+              // This is a simplified approach, a full parser would be more robust
+              let argInRadians;
+              try {
+                argInRadians = (eval(arg) * Math.PI) / 180;
+              } catch {
+                return "Error"; // If argument itself is invalid
+              }
+              return match.replace(arg, argInRadians);
+            }
+          );
+        }
+
+        // Auto-close any open parenthesis
+        const openParens = (cleanedExpression.match(/\(/g) || []).length;
+        const closeParens = (cleanedExpression.match(/\)/g) || []).length;
+        for (let i = 0; i < openParens - closeParens; i++) {
+          cleanedExpression += ")";
+        }
+
+        // Attempt to evaluate
+        // Using a Function constructor for safer evaluation than direct eval
+        const result = Function(
+          `"use strict"; return (${cleanedExpression})`
+        )();
+
+        if (isNaN(result) || !isFinite(result)) {
+          return "Error";
+        }
+        return String(result);
+      } catch (e) {
+        return "Error";
+      }
+    },
+    [trigMode, inverseMode]
+  );
+
+  // Effect for updating calculator results and fetching currency rates
+  useEffect(() => {
+    let intervalId;
+    if (currentConverter && currentConverter.type === "calculator") {
+      // Special handling for Countdown Calculator
+      if (selectedCategory === "Countdown Calculator") {
+        const updateCountdown = () => {
+          setCalculatorResult(calculate(selectedCategory, calculatorValues));
+        };
+
+        updateCountdown(); // Initial call
+        intervalId = setInterval(updateCountdown, 1000); // Update every second
+
+        return () => clearInterval(intervalId); // Cleanup interval
+      } else if (selectedCategory === "Time Zone Converter") {
+        // Handle Time Zone Converter as it has an async calculate function
+        const updateTimeZoneConversion = async () => {
+          setCalculatorResult("Calculating...");
+          const result = await calculate(selectedCategory, calculatorValues);
+          setCalculatorResult(result);
+        };
+        updateTimeZoneConversion();
+      } else if (selectedCategory !== "Scientific Calculator") {
+        // Only run for non-scientific calculators
+        const result = calculate(selectedCategory, calculatorValues);
+        setCalculatorResult(result);
+      }
+    } else {
+      setCalculatorResult(null);
+    }
+
+    // Fetch currency rates when Currency Converter is selected
+    if (selectedCategory === "Currency Converter") {
+      const fetchRates = async () => {
+        setRatesLoading(true);
+        setRatesError(null);
+        try {
+          // Hardcode USD as the base for fetching, as per the example API call.
+          // The API returns conversion rates *from* the base currency (USD) to others.
+          const response = await fetch(`${EXCHANGE_RATE_API_BASE_URL}USD`);
+          const data = await response.json();
+
+          if (data.result === "success") {
+            setExchangeRates(data.conversion_rates);
+          } else {
+            setRatesError(
+              data["error-type"] || "Failed to fetch currency rates."
+            );
+            console.error("Error fetching currency rates:", data);
+          }
+        } catch (error) {
+          setRatesError("Network error or failed to fetch rates.");
+          console.error("Network error fetching currency rates:", error);
+        } finally {
+          setRatesLoading(false);
+        }
+      };
+      fetchRates();
+    }
+
+    // Fetch time zones when Time Zone Converter is selected
+    if (selectedCategory === "Time Zone Converter" && timezones.length === 0) {
+      const fetchTimezones = async () => {
+        setTimeZoneLoading(true);
+        setTimeZoneError(null);
+        try {
+          const response = await fetch("https://worldtimeapi.org/api/timezone");
+          const data = await response.json();
+          if (response.ok) {
+            setTimezones(data);
+          } else {
+            setTimeZoneError("Failed to fetch time zones.");
+            console.error("Error fetching time zones:", data);
+          }
+        } catch (error) {
+          setTimeZoneError("Network error or failed to fetch time zones.");
+          console.error("Network error fetching time zones:", error);
+        } finally {
+          setTimeZoneLoading(false);
+        }
+      };
+      fetchTimezones();
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [
+    calculatorValues,
+    selectedCategory,
+    timezones.length,
+    currentConverter,
+    evaluateScientificExpression,
+  ]); // Added evaluateScientificExpression
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    const converter = converters[category];
+    if (converter.type === "unit") {
+      setValue("1");
+      setFromUnit(converter.units[0]);
+      setToUnit(converter.units[1] || converter.units[0]);
+      setCalculatorValues({});
+      setCalculatorResult(null);
+      // Reset scientific calculator states
+      setCalcCurrentInput("0");
+      setCalcExpression("");
+      setCalcResult(null);
+      setLastButtonWasEquals(false);
+      setTrigMode("rad");
+      setInverseMode(false);
+    } else {
+      setValue(""); // For calculators, value input is not generally used the same way
+      setFromUnit("");
+      setToUnit("");
+      // Reset scientific calculator states
+      setCalcCurrentInput("0");
+      setCalcExpression("");
+      setCalcResult(null);
+      setLastButtonWasEquals(false);
+      setTrigMode("rad");
+      setInverseMode(false);
+
+      // Initialize calculator inputs with empty strings for text/date/time or default for select
+      const initialCalcValues = {};
+      // Only iterate if inputs exist (Scientific Calculator has no explicit inputs)
+      if (converter.inputs) {
+        converter.inputs.forEach((input) => {
+          if (input.unit === "select") {
+            initialCalcValues[input.name] = input.options[0];
+          } else {
+            initialCalcValues[input.name] = "";
+          }
+        });
+      }
+      setCalculatorValues(initialCalcValues);
+      setCalculatorResult(null);
+    }
+
+    // Specific defaults for Currency Converter
+    if (category === "Currency Converter") {
+      setValue("1");
+      setFromUnit("USD");
+      setToUnit("PKR");
+    }
+
+    // Specific defaults for Time Zone Converter
+    if (category === "Time Zone Converter") {
+      // Set default values for date and time to current date and time
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, "0");
+      const day = now.getDate().toString().padStart(2, "0");
+      const hours = now.getHours().toString().padStart(2, "0");
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+
+      setCalculatorValues({
+        Date: `${year}-${month}-${day}`,
+        Time: `${hours}:${minutes}`,
+        "From Time Zone": "Etc/UTC", // Default to UTC
+        "To Time Zone": "America/New_York", // Default to a common timezone
+      });
+      setCalculatorResult(null);
+    }
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    // NEW: Use the intelligent filtering and sorting for calculator suggestions
+    const newFilteredCategories = filterAndSortCalculators(query, converters);
+    setFilteredCategories(newFilteredCategories);
+
+    // Keep the direct unit conversion parsing for specific patterns
+    const match = query.match(
+      /([\\d.]+)\\s*([^\\d\\s]+)\\s*(?:to|in)\\s*([^\\d\\s]+)/i
+    );
+
+    if (match) {
+      const val = match[1];
+      const from = match[2].trim();
+      const to = match[3].trim();
+
+      for (const [cat, conv] of Object.entries(converters)) {
+        if (
+          conv.type === "unit" &&
+          Array.isArray(conv.units) &&
+          conv.units.includes(from) &&
+          conv.units.includes(to)
+        ) {
+          setSelectedCategory(cat);
+          setValue(val);
+          setFromUnit(from);
+          setToUnit(to);
+          setSearchQuery(""); // Clear search query if direct conversion is applied
+          break;
+        }
+      }
+    }
+  };
+
+  const swapUnits = () => {
+    const temp = fromUnit;
+    setFromUnit(toUnit);
+    setToUnit(temp);
+  };
+
+  const toggleGroup = (group) => {
+    setExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  const handleCalculatorInputChange = (inputName, val) => {
+    setCalculatorValues((prev) => ({ ...prev, [inputName]: val }));
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setShowCopyMessage(true);
+        setTimeout(() => setShowCopyMessage(false), 2000); // Hide after 2 seconds
+      })
+      .catch((err) => {
+        console.error("Failed to copy: ", err);
+      });
+  };
+
+  // Updated handleCalculatorButtonClick function with fixes
+  const handleCalculatorButtonClick = useCallback(
+    (buttonValue) => {
+      const operators = ["+", "-", "*", "/", "^"];
+      const scientificFunctions = [
+        "sin(",
+        "cos(",
+        "tan(",
+        "log(",
+        "ln(",
+        "sqrt(",
+        "exp(",
+        "asin(",
+        "acos(",
+        "atan(",
+      ];
+      const specialValues = ["π"];
+
+      let newExpression = calcExpression;
+      let newCurrentInput = calcCurrentInput;
+      let newLastButtonWasEquals = false;
+
+      // Helper function to count parenthesis
+      const countParens = (str) => {
+        const open = (str.match(/\(/g) || []).length;
+        const close = (str.match(/\)/g) || []).length;
+        return { open, close };
+      };
+
+      // Helper function to auto-close parenthesis
+      const autoCloseParens = (expr) => {
+        const { open, close } = countParens(expr);
+        let result = expr;
+        for (let i = 0; i < open - close; i++) {
+          result += ")";
+        }
+        return result;
+      };
+
+      if (buttonValue === "C") {
+        newCurrentInput = "0";
+        newExpression = "";
+        setCalcResult(null);
+      } else if (buttonValue === "Bksp") {
+        if (lastButtonWasEquals) {
+          newCurrentInput = "0";
+          newExpression = "";
+          setCalcResult(null);
+        } else if (newCurrentInput.length > 0 && newCurrentInput !== "0") {
+          newCurrentInput = newCurrentInput.slice(0, -1);
+          newExpression = newExpression.slice(0, -1);
+          if (newCurrentInput === "") {
+            newCurrentInput = "0";
+          }
+        } else if (newExpression.length > 0) {
+          newExpression = newExpression.slice(0, -1);
+        }
+      } else if (buttonValue === "=") {
+        newLastButtonWasEquals = true;
+        try {
+          // Auto-close any open parenthesis before evaluating
+          let finalExpression = autoCloseParens(newExpression);
+          const finalResult = evaluateScientificExpression(finalExpression);
+          if (finalResult !== "Error") {
+            newCurrentInput = formatNumber(parseFloat(finalResult));
+            newExpression = finalResult;
+            setCalcResult(null);
+          } else {
+            newCurrentInput = "Error";
+            newExpression = "";
+          }
+        } catch (e) {
+          newCurrentInput = "Error";
+          newExpression = "";
+        }
+      } else if (buttonValue === "±") {
+        if (newCurrentInput === "0" && newExpression === "") {
+          newCurrentInput = "-0";
+          newExpression = "-";
+        } else if (newCurrentInput.startsWith("-")) {
+          newCurrentInput = newCurrentInput.substring(1);
+          newExpression = newExpression.replace(/^-/, "");
+        } else {
+          newCurrentInput = "-" + newCurrentInput;
+          newExpression = "-" + newExpression;
+        }
+      } else if (buttonValue === "%") {
+        try {
+          // Apply % to the current input number
+          const currentValue = parseFloat(newCurrentInput);
+          if (!isNaN(currentValue)) {
+            const percentValue = currentValue / 100;
+            newCurrentInput = String(percentValue);
+            // Replace the last number in the expression with its percentage value
+            newExpression = newExpression.replace(
+              /(\d+\.?\d*)$/,
+              String(percentValue)
+            );
+          }
+        } catch (e) {
+          newCurrentInput = "Error";
+          newExpression = "";
+        }
+      } else if (buttonValue === "1/x") {
+        try {
+          let valueToReciprocal = newCurrentInput;
+          if (
+            lastButtonWasEquals &&
+            calcResult !== null &&
+            calcResult !== "Error"
+          ) {
+            valueToReciprocal = String(calcResult);
+          }
+
+          const currentValue = parseFloat(valueToReciprocal);
+          if (!isNaN(currentValue) && currentValue !== 0) {
+            newCurrentInput = String(1 / currentValue);
+            // If the expression ends with a number, replace that number with its reciprocal.
+            // Otherwise, apply 1/ to the entire current expression (e.g., if it's a function).
+            if (/\d$/.test(newExpression)) {
+              newExpression = newExpression.replace(
+                /(\d+\.?\d*)$/,
+                `(1/${currentValue})`
+              );
+            } else {
+              newExpression = `(1/${newExpression})`;
+            }
+          } else {
+            newCurrentInput = "Error";
+            newExpression = "";
+          }
+        } catch (e) {
+          newCurrentInput = "Error";
+          newExpression = "";
+        }
+      } else if (buttonValue === "x²") {
+        try {
+          const currentValue = parseFloat(newCurrentInput);
+          if (!isNaN(currentValue)) {
+            newCurrentInput = String(currentValue * currentValue);
+            if (/\d$/.test(newExpression)) {
+              newExpression = newExpression.replace(
+                /(\d+\.?\d*)$/,
+                `(${currentValue}**2)`
+              );
+            } else {
+              newExpression = `(${newExpression}**2)`;
+            }
+          } else {
+            newCurrentInput = "Error";
+            newExpression = "";
+          }
+        } catch (e) {
+          newCurrentInput = "Error";
+          newExpression = "";
+        }
+      } else if (buttonValue === "√") {
+        // If a number is currently displayed, multiply it by sqrt(
+        if (
+          calcCurrentInput !== "0" &&
+          !isNaN(parseFloat(calcCurrentInput)) &&
+          !operators.includes(calcExpression.slice(-1))
+        ) {
+          newExpression += "*sqrt(";
+          newCurrentInput = "sqrt(";
+        } else {
+          newExpression += "sqrt(";
+          newCurrentInput = "sqrt(";
+        }
+        newLastButtonWasEquals = false;
+      } else if (buttonValue === "Rad") {
+        setTrigMode("rad");
+        return;
+      } else if (buttonValue === "Deg") {
+        setTrigMode("deg");
+        return;
+      } else if (buttonValue === "Inv") {
+        setInverseMode((prev) => !prev);
+        return;
+      } else if (!isNaN(Number(buttonValue)) || buttonValue === ".") {
+        if (lastButtonWasEquals) {
+          newExpression = buttonValue;
+          newCurrentInput = buttonValue;
+        } else if (buttonValue === ".") {
+          if (!newCurrentInput.includes(".")) {
+            if (newCurrentInput === "0" || newCurrentInput === "") {
+              newCurrentInput = "0.";
+              newExpression += "0.";
+            } else {
+              newCurrentInput += ".";
+              newExpression += ".";
+            }
+          }
+        } else {
+          // If the last character in the expression is a closing parenthesis or π,
+          // and a number is pressed, it implies multiplication.
+          const lastChar = newExpression.slice(-1);
+          if (lastChar === ")" || lastChar === "π") {
+            newExpression += "*" + buttonValue;
+            newCurrentInput = buttonValue;
+          } else if (newCurrentInput === "0" && newExpression === "0") {
+            // If only "0" is present, replace it with the new digit
+            newCurrentInput = buttonValue;
+            newExpression = buttonValue;
+          } else if (
+            newCurrentInput === "0" &&
+            newExpression.endsWith("0") &&
+            operators.includes(newExpression.slice(-2, -1))
+          ) {
+            // Replace trailing "0" after an operator
+            newCurrentInput = buttonValue;
+            newExpression = newExpression.slice(0, -1) + buttonValue;
+          } else if (
+            scientificFunctions.some((fn) => newExpression.endsWith(fn))
+          ) {
+            // Inside a function call, just append the number
+            newCurrentInput =
+              newCurrentInput === "0"
+                ? buttonValue
+                : newCurrentInput + buttonValue;
+            newExpression += buttonValue;
+          } else if (newCurrentInput === "0") {
+            newCurrentInput = buttonValue;
+            // Only replace the last '0' if it's the beginning of a number or after an operator
+            const lastNumRegex = /(\D|^)0$/; // Matches a 0 preceded by non-digit or start of string
+            if (lastNumRegex.test(newExpression)) {
+              newExpression = newExpression.replace(
+                lastNumRegex,
+                `$1${buttonValue}`
+              );
+            } else {
+              newExpression += buttonValue;
+            }
+          } else {
+            newCurrentInput += buttonValue;
+            newExpression += buttonValue;
+          }
+        }
+      } else if (operators.includes(buttonValue)) {
+        // Auto-close open parenthesis before adding operator
+        const { open, close } = countParens(newExpression);
+        if (open > close) {
+          newExpression = autoCloseParens(newExpression);
+        }
+
+        if (lastButtonWasEquals) {
+          newExpression = calcExpression + buttonValue;
+        } else if (
+          newExpression.length > 0 &&
+          operators.includes(newExpression.slice(-1))
+        ) {
+          // Replace last operator if an operator is already there
+          newExpression = newExpression.slice(0, -1) + buttonValue;
+        } else {
+          newExpression += buttonValue;
+        }
+        newCurrentInput = "0";
+        newLastButtonWasEquals = false;
+      } else if (scientificFunctions.some((fn) => buttonValue.startsWith(fn))) {
+        let functionCall = buttonValue;
+        // If there's a current number input and it's not "0", assume implicit multiplication
+        if (
+          newCurrentInput !== "0" &&
+          !isNaN(parseFloat(newCurrentInput)) &&
+          !operators.includes(newExpression.slice(-1))
+        ) {
+          newExpression += "*" + functionCall;
+        } else {
+          newExpression += functionCall;
+        }
+        newCurrentInput = functionCall;
+        newLastButtonWasEquals = false;
+      } else if (buttonValue === "(" || buttonValue === ")") {
+        // If a number or 'π' precedes an opening parenthesis, add multiplication.
+        const lastChar = newExpression.slice(-1);
+        if (
+          buttonValue === "(" &&
+          (/\d/.test(lastChar) || lastChar === "π" || lastChar === ")")
+        ) {
+          newExpression += "*" + buttonValue;
+        } else {
+          newExpression += buttonValue;
+        }
+        newCurrentInput = buttonValue;
+        newLastButtonWasEquals = false;
+      } else if (specialValues.includes(buttonValue)) {
+        const lastChar = newExpression.slice(-1);
+        // If a number precedes π, add multiplication.
+        if (buttonValue === "π" && /\d/.test(lastChar)) {
+          newExpression += "*Math.PI";
+        } else {
+          newExpression += buttonValue === "π" ? "Math.PI" : buttonValue;
+        }
+        newCurrentInput = "π"; // Display 'π' directly
+        newLastButtonWasEquals = false;
+      }
+
+      setCalcExpression(newExpression);
+      setCalcCurrentInput(newCurrentInput);
+      setLastButtonWasEquals(newLastButtonWasEquals);
+
+      // Real-time evaluation
+      // Only attempt real-time evaluation if the expression doesn't end with an operator or an incomplete function
+      if (
+        newExpression &&
+        newExpression !== "Error" &&
+        !operators.includes(newExpression.slice(-1)) &&
+        !scientificFunctions.some((fn) =>
+          newExpression.endsWith(fn.slice(0, -1))
+        ) && // Check for incomplete function names
+        newExpression.slice(-1) !== "("
+      ) {
+        let evalExpression = newExpression;
+        // Don't auto-close for real-time eval, let user see incomplete functions
+        const realTimeEval = evaluateScientificExpression(evalExpression);
+        if (realTimeEval !== "Error") {
+          setCalcResult(formatNumber(parseFloat(realTimeEval)));
+        } else {
+          setCalcResult(null);
+        }
+      } else {
+        setCalcResult(null);
+      }
+    },
+    [
+      calcCurrentInput,
+      calcExpression,
+      lastButtonWasEquals,
+      evaluateScientificExpression,
+      calcResult,
+      trigMode,
+      inverseMode,
+    ]
+  );
+
+  // ... existing code ...
+
+  // Handle keyboard input
+  useEffect(() => {
+    if (selectedCategory !== "Scientific Calculator") return;
+
+    const handleKeyDown = (event) => {
+      const key = event.key;
+      const validKeys = [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "+",
+        "-",
+        "*",
+        "/",
+        ".",
+        "=",
+        "Enter",
+        "Backspace",
+        "Escape",
+        "(",
+        ")",
+        "p", // For Pi
+        "s", // For sin/asin
+        "c", // For cos/acos
+        "t", // For tan/atan
+        "l", // For log/ln
+        "q", // For sqrt
+        "^", // For x^y
+      ];
+
+      if (validKeys.includes(key)) {
+        event.preventDefault(); // Prevent default browser actions
+        if (key === "Enter") {
+          handleCalculatorButtonClick("=");
+        } else if (key === "Backspace") {
+          handleCalculatorButtonClick("Bksp");
+        } else if (key === "Escape") {
+          handleCalculatorButtonClick("C");
+        } else if (key === "p") {
+          handleCalculatorButtonClick("π");
+        } else if (key === "s") {
+          handleCalculatorButtonClick("sin(");
+        } else if (key === "c") {
+          handleCalculatorButtonClick("cos(");
+        } else if (key === "t") {
+          handleCalculatorButtonClick("tan(");
+        } else if (key === "l") {
+          // This might need more sophisticated handling if 'l' is for both log and ln,
+          // but for now, we'll map to 'ln(' as 'log' is usually 'log10'
+          if (inverseMode) {
+            handleCalculatorButtonClick("exp("); // e^x
+          } else {
+            handleCalculatorButtonClick("ln("); // ln
+          }
+        } else if (key === "q") {
+          handleCalculatorButtonClick("sqrt(");
+        } else {
+          handleCalculatorButtonClick(key);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedCategory, handleCalculatorButtonClick, inverseMode]);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#F5F7FA" }}>
+      {/* Header - Your Color Scheme */}
+      <div
+        style={{
+          background: "#fff",
+          borderBottom: "1px solid #E5E7EB",
+          padding: "3px 24px",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Stack direction="row" sx={{ gap: "20px", alignItems: "center" }}>
+            <Box component={Link} href="/" sx={{ cursor: "pointer" }}>
+              <ToolsHubsIcon width="147" />
+            </Box>
+            <h1
+              style={{
+                fontSize: "28px",
+                fontWeight: "1000",
+                color: theme.palette.primary.main,
+                margin: 0,
+              }}
+            >
+              Universal Unit Converter
+            </h1>
+          </Stack>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "30px",
+              alignItems: "center",
+            }}
+          >
+            {" "}
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: "bold",
+                color: theme.palette.primary.main,
+              }}
+            >
+              {selectedCategory}
+            </h2>
+            <div style={{ position: "relative", flex: "0 0 400px" }}>
+              <Search
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "20px",
+                  height: "20px",
+                  color: "#9CA3AF",
+                }}
+              />
+              <input
+                type="text"
+                placeholder='Try: "25 °C to °F" or "5 kg to lb" or search calculators like "Age"' // Updated placeholder
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)} // Call handleSearch directly on change
+                ref={searchInputRef} // NEW: Add ref to the search input
+                onFocus={() => {
+                  if (searchInputRef.current) {
+                    searchInputRef.current.isFocused = true; // Custom property to track focus
+                  }
+                }}
+                onBlur={() => {
+                  if (searchInputRef.current) {
+                    searchInputRef.current.isFocused = false; // Custom property to track focus
+                  }
+                }}
+                className="border"
+                style={{
+                  width: "100%",
+                  padding: "10px 12px 10px 40px",
+                  borderColor: theme.palette.primary.main,
+                  borderRadius: "12px",
+                  outline: "none",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+          </Box>
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: "70px 16px 16px",
+          display: "flex",
+          gap: "16px",
+          minHeight: "calc(100vh - 90px)",
+        }}
+      >
+        {/* Sidebar - Your Style */}
+        <div
+          style={{
+            width: "320px",
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              padding: "16px",
+              maxHeight: "calc(100vh - 80px)",
+              overflowY: "auto",
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
+              "&::WebkitScrollbar": {
+                display: "none",
+              },
+            }}
+          >
+            {Object.entries(categoryGroups)
+              .filter(([group, categories]) => {
+                const lowerCaseQuery = searchQuery.toLowerCase();
+                // If search query is empty, show all groups
+                if (!lowerCaseQuery) return true;
+                // If group name matches, show group
+                if (group.toLowerCase().includes(lowerCaseQuery)) return true;
+                // If any category within the group matches, show group
+                return categories.some(
+                  (category) => filteredCategories.includes(category) // Check against the new filteredCategories
+                );
+              })
+              .map(([group, categories]) => (
+                <div key={group} style={{ marginBottom: "8px" }}>
+                  <button
+                    onClick={() => toggleGroup(group)}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      background:
+                        "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 70%, #80C0C0 100%)",
+                      color: theme.palette.primary.fourthMain,
+                      border: "none",
+                      borderRadius: "12px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {group}
+                    {expandedGroups[group] || searchQuery.length > 0 ? ( // Always expand if searching
+                      <ChevronUp size={18} />
+                    ) : (
+                      <ChevronDown size={18} />
+                    )}
+                  </button>
+                  {(expandedGroups[group] || searchQuery.length > 0) && ( // Always expand if searching
+                    <div style={{ paddingTop: "8px" }}>
+                      {categories
+                        .filter((category) =>
+                          filteredCategories.includes(category)
+                        ) // Filter categories based on search results
+                        .map((category) => (
+                          <button
+                            key={category}
+                            onClick={() => handleCategoryChange(category)}
+                            style={{
+                              width: "100%",
+                              padding: "10px 12px",
+                              background:
+                                selectedCategory === category
+                                  ? "#DBEAFE"
+                                  : "transparent",
+                              color: theme.palette.primary.main,
+                              border: "none",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              marginBottom: "4px",
+                              fontSize: "13px",
+                              transition: "all 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (selectedCategory !== category) {
+                                e.target.style.background = "#DBEAFE";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (selectedCategory !== category) {
+                                e.target.style.background = "transparent";
+                              }
+                            }}
+                          >
+                            {category}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Main Converter Panel */}
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              padding: "14px 24px",
+              marginBottom: "16px",
+              width:
+                selectedCategory === "Scientific Calculator" ? "70%" : "100%",
+            }}
+          >
+            {currentConverter.type === "unit" ? (
+              <>
+                {/* Value Input */}
+                <div style={{ marginBottom: "20px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: theme.palette.primary.main,
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Value
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || /^-?\d*\.?\d*e?-?\d*$/i.test(val)) {
+                          setValue(val);
+                        }
+                      }}
+                      className="border"
+                      style={{
+                        width: "100%",
+                        padding: "12px 40px 12px 16px",
+                        borderColor: "2#D1D5DB",
+                        borderRadius: "12px",
+                        fontSize: "18px",
+                        fontWeight: "600",
+                        outline: "none",
+                      }}
+                      placeholder="Enter value"
+                      onFocus={(e) =>
+                        (e.target.style.borderColor =
+                          theme.palette.primary.main)
+                      }
+                      onBlur={(e) =>
+                        (e.target.style.borderColor =
+                          theme.palette.primary.main)
+                      }
+                    />
+                    {value && (
+                      <button
+                        onClick={() => setValue("")}
+                        style={{
+                          position: "absolute",
+                          right: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "#F3F4F6",
+                          border: "none",
+                          borderRadius: "50%",
+                          width: "24px",
+                          height: "24px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <X size={14} color="#6B7280" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{ alignItems: "end", my: "25px" }}
+                >
+                  {" "}
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: theme.palette.primary.main,
+                        marginBottom: "8px",
+                      }}
+                    >
+                      From
+                    </label>
+                    <select
+                      value={fromUnit}
+                      onChange={(e) => setFromUnit(e.target.value)}
+                      className="border"
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderColor: theme.palette.primary.main,
+                        borderRadius: "12px",
+                        fontSize: "16px",
+                        outline: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {currentConverter.units.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Swap Button */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <button
+                      onClick={swapUnits}
+                      style={{
+                        padding: "12px",
+                        background: theme.palette.primary.main,
+                        border: "none",
+                        borderRadius: "50%",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <ArrowRightLeft
+                        size={20}
+                        color={theme.palette.primary.fourthMain}
+                      />
+                    </button>
+                  </div>
+                  {/* To Unit */}
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: theme.palette.primary.main,
+                        marginBottom: "8px",
+                      }}
+                    >
+                      To
+                    </label>
+                    <select
+                      value={toUnit}
+                      onChange={(e) => setToUnit(e.target.value)}
+                      className="border"
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderColor: theme.palette.primary.main,
+                        borderRadius: "12px",
+                        fontSize: "16px",
+                        outline: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {currentConverter.units.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </Stack>
+                {/* From Unit */}
+              </>
+            ) : (
+              <>
+                {/* Calculator Inputs (excluding Scientific Calculator) */}
+                {selectedCategory !== "Scientific Calculator" &&
+                  currentConverter.inputs.map((input) =>
+                    input.optional &&
+                    input.dependsOn &&
+                    calculatorValues[input.dependsOn] !==
+                      input.dependsOnValue ? null : (
+                      <div key={input.name} style={{ marginBottom: "20px" }}>
+                        <label
+                          style={{
+                            display: "block",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            color: theme.palette.primary.main,
+                            marginBottom: "8px",
+                          }}
+                        >
+                          {input.name}{" "}
+                          {input.unit && input.unit !== "select"
+                            ? `(${input.unit})`
+                            : ""}
+                        </label>
+                        {input.unit === "select" ? (
+                          <select
+                            value={
+                              calculatorValues[input.name] || input.options[0]
+                            }
+                            onChange={(e) =>
+                              handleCalculatorInputChange(
+                                input.name,
+                                e.target.value
+                              )
+                            }
+                            className="border"
+                            style={{
+                              width: "100%",
+                              padding: "12px 16px",
+                              borderColor: theme.palette.primary.main,
+                              borderRadius: "12px",
+                              fontSize: "16px",
+                              outline: "none",
+                            }}
+                          >
+                            {/* Render timezones if available and for Time Zone Converter */}
+                            {input.name === "From Time Zone" ||
+                            input.name === "To Time Zone"
+                              ? timeZoneLoading
+                                ? [
+                                    <option key="loading" value="">
+                                      Loading time zones...
+                                    </option>,
+                                  ]
+                                : timeZoneError
+                                ? [
+                                    <option key="error" value="">
+                                      Error loading time zones
+                                    </option>,
+                                  ]
+                                : timezones.map((tz) => (
+                                    <option key={tz} value={tz}>
+                                      {tz}
+                                    </option>
+                                  ))
+                              : // Original options rendering for other select inputs
+                                input.options.map((option) => (
+                                  <option key={option} value={option}>
+                                    {option}
+                                  </option>
+                                ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={
+                              (input.unit && input.unit.includes("date")) ||
+                              (input.unit && input.unit.includes("time"))
+                                ? input.unit
+                                : input.unit === "number"
+                                ? "number"
+                                : "text" // Explicitly set type to number for numerical inputs
+                            }
+                            value={calculatorValues[input.name] || ""}
+                            onChange={(e) =>
+                              handleCalculatorInputChange(
+                                input.name,
+                                e.target.value
+                              )
+                            }
+                            className="border"
+                            style={{
+                              width: "100%",
+                              padding: "12px 16px",
+                              borderColor: theme.palette.primary.main,
+                              borderRadius: "12px",
+                              color: theme.palette.primary.main,
+                              fontSize: "16px",
+                              outline: "none",
+                            }}
+                            placeholder={`Enter ${input.name}`}
+                          />
+                        )}
+                      </div>
+                    )
+                  )}
+              </>
+            )}
+
+            {/* Main Result / Calculator Display Area */}
+            <div
+              style={{
+                background: "#09123aea",
+                borderRadius: "16px",
+                padding: "24px",
+                color: "#fff",
+                position: "relative",
+
+                cursor:
+                  selectedCategory === "Scientific Calculator"
+                    ? "default"
+                    : "pointer", // No copy on click for calculator
+              }}
+              onClick={() => {
+                if (selectedCategory !== "Scientific Calculator") {
+                  // Only copy on click for non-calculator types
+                  const textToCopy =
+                    currentConverter.type === "unit"
+                      ? `${formatNumber(mainResult)} ${toUnit}`
+                      : String(calculatorResult).replace(/<[^>]*>?/gm, "");
+                  copyToClipboard(textToCopy);
+                }
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  opacity: 0.9,
+                  marginBottom: "8px",
+                  fontWeight: "500",
+                }}
+              >
+                {currentConverter.type === "unit"
+                  ? "Result"
+                  : selectedCategory === "Scientific Calculator"
+                  ? "Calculator Output"
+                  : "Calculation Result"}
+              </div>
+              {selectedCategory === "Scientific Calculator" && (
+                <button
+                  onClick={() => {
+                    const textToCopy =
+                      calcResult !== null && calcResult !== "Error"
+                        ? String(calcResult)
+                        : calcCurrentInput;
+                    copyToClipboard(textToCopy);
+                  }}
+                  style={{
+                    position: "absolute",
+                    right: 10,
+                    top: 10,
+                    padding: "12px",
+                    background:
+                      "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#3B82F6")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "#1E3A8A")
+                  }
+                >
+                  <Copy size={18} /> Copy Calculation
+                </button>
+              )}
+              <div
+                style={{
+                  fontSize:
+                    selectedCategory === "Scientific Calculator"
+                      ? "1.2em"
+                      : "36px", // Smaller font for expression
+                  opacity:
+                    selectedCategory === "Scientific Calculator" ? 0.7 : 0.9,
+                  wordBreak: "break-all",
+                  marginBottom:
+                    selectedCategory === "Scientific Calculator"
+                      ? "5px"
+                      : "8px",
+                }}
+              >
+                {selectedCategory === "Scientific Calculator"
+                  ? calcExpression
+                  : ""}
+              </div>
+              <div
+                style={{
+                  fontSize:
+                    selectedCategory === "Scientific Calculator"
+                      ? "2.5em"
+                      : "36px",
+                  fontWeight: "bold",
+                  wordBreak: "break-all",
+                }}
+              >
+                {currentConverter.type === "unit"
+                  ? ratesLoading && selectedCategory === "Currency Converter"
+                    ? "Loading rates..."
+                    : ratesError && selectedCategory === "Currency Converter"
+                    ? ratesError
+                    : formatNumber(mainResult)
+                  : selectedCategory === "Scientific Calculator"
+                  ? calcResult !== null && calcResult !== "Error"
+                    ? formatNumber(calcResult)
+                    : formatNumber(calcCurrentInput)
+                  : (() => {
+                      const resultText = String(calculatorResult); // Ensure it's a string
+                      if (
+                        selectedCategory === "Time Zone Converter" &&
+                        timeZoneLoading
+                      ) {
+                        return "Loading time zones...";
+                      }
+                      if (
+                        selectedCategory === "Time Zone Converter" &&
+                        timeZoneError
+                      ) {
+                        return timeZoneError;
+                      }
+                      if (resultText.includes("\n")) {
+                        return resultText.split("\n").map((line, index) => {
+                          const parts = line.split(":");
+                          return (
+                            <div key={index}>
+                              <span
+                                style={{
+                                  color: theme.palette.secondary.fifthMain,
+                                  marginRight: "8px",
+                                }}
+                              >
+                                {parts[0]}:
+                              </span>
+                              <span style={{ color: "#fff" }}>
+                                {parts.slice(1).join(":")}
+                              </span>
+                            </div>
+                          );
+                        });
+                      } else if (resultText.includes(":")) {
+                        // Handle single line "Label: Value"
+                        const parts = resultText.split(":");
+                        return (
+                          <div>
+                            <span
+                              style={{ color: "#93C5FD", marginRight: "8px" }}
+                            >
+                              {parts[0]}:
+                            </span>
+                            <span style={{ color: "#fff" }}>
+                              {parts.slice(1).join(":")}
+                            </span>
+                          </div>
+                        );
+                      } else {
+                        return formatNumber(calculatorResult); // Fallback for other single-line outputs (e.g., "Invalid Input")
+                      }
+                    })()}
+              </div>
+              <div
+                style={{
+                  fontSize: "18px",
+                  opacity: 0.9,
+                  color: currentConverter.type === "unit" ? "#93C5FD" : "#fff", // Apply color to unit
+                }}
+              >
+                {currentConverter.type === "unit" &&
+                !ratesLoading &&
+                !ratesError
+                  ? toUnit
+                  : ""}
+              </div>
+              {showCopyMessage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "10px",
+                    right: "10px",
+                    background: "rgba(0,0,0,0.7)",
+                    color: "#fff",
+                    padding: "5px 10px",
+                    borderRadius: "5px",
+                    fontSize: "12px",
+                  }}
+                >
+                  Copied!
+                </div>
+              )}
+              {(currentConverter.type !== "unit" ||
+                (currentConverter.type === "unit" && mainResult)) &&
+                selectedCategory !== "Scientific Calculator" && (
+                  <button
+                    onClick={() => {
+                      const textToCopy =
+                        currentConverter.type === "unit"
+                          ? `${formatNumber(mainResult)} ${toUnit}`
+                          : String(calculatorResult).replace(/<[^>]*>?/gm, "");
+                      copyToClipboard(textToCopy);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 10,
+                      right: 10,
+
+                      padding: "12px",
+                      background:
+                        "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "12px",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      transition: "background-color 0.2s",
+                    }}
+                    // onMouseEnter={(e) =>
+                    //   (e.target.style.backgroundColor = "#3B82F6")
+                    // }
+                    // onMouseLeave={(e) =>
+                    //   (e.target.style.backgroundColor = "#1E3A8A")
+                    // }
+                  >
+                    <Copy size={18} /> Copy Result
+                  </button>
+                )}
+            </div>
+
+            {/* Scientific Calculator Buttons */}
+            {/* Scientific Calculator Buttons - Google Style */}
+            {selectedCategory === "Scientific Calculator" && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  marginTop: "16px",
+                }}
+              >
+                {/* First Row: Rad, Deg, xl, (, ), %, AC */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(7, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  {[
+                    // { label: "Rad", value: "Rad", type: "mode" },
+                    // { label: "Deg", value: "Deg", type: "mode" },
+                    { label: "x²", value: "x²", type: "utility" },
+                    { label: "x!", value: "!", type: "operator" }, // Factorial not implemented yet
+                    { label: "(", value: "(", type: "paren" },
+                    { label: ")", value: ")", type: "paren" },
+                    { label: "AC", value: "AC", type: "clear" },
+                    { label: "Bksp", value: "Bksp", type: "clear" },
+                    { label: "÷", value: "/", type: "operator" },
+                  ].map((btn) => (
+                    <button
+                      key={btn.value}
+                      style={{
+                        padding: "18px 8px",
+                        fontSize: "16px",
+                        borderRadius: "8px",
+                        border: "none",
+                        background: theme.palette.primary.main,
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: "500",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target.style.background =
+                          theme.palette.secondary.secondMain),
+                          (e.target.style.color = theme.palette.primary.main);
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target.style.background =
+                          theme.palette.primary.main),
+                          (e.target.style.color =
+                            theme.palette.primary.fourthMain);
+                      }}
+                      onClick={() => {
+                        if (btn.value === "AC") {
+                          handleCalculatorButtonClick("C");
+                        } else if (btn.type === "mode") {
+                          handleCalculatorButtonClick(btn.value);
+                        } else if (btn.value === "!") {
+                          // Factorial needs to be implemented
+                        } else {
+                          handleCalculatorButtonClick(btn.value);
+                        }
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Second Row: Inv, sin, ln, 7, 8, 9, ÷ */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(7, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  {[
+                    // { label: "Inv", value: "Inv", type: "mode" },
+                    { label: "%", value: "%", type: "operator" },
+                    {
+                      label: inverseMode ? "sin⁻¹" : "sin",
+                      value: "sin(",
+                      type: "function",
+                    },
+                    {
+                      label: inverseMode ? "eˣ" : "ln",
+                      value: inverseMode ? "exp(" : "ln(",
+                      type: "function",
+                    },
+                    { label: "7", value: "7", type: "number" },
+                    { label: "8", value: "8", type: "number" },
+                    { label: "9", value: "9", type: "number" },
+                    { label: "+", value: "+", type: "operator" },
+                  ].map((btn) => (
+                    <button
+                      key={btn.value}
+                      style={{
+                        padding: "18px 8px",
+                        fontSize: "16px",
+                        borderRadius: "8px",
+                        border: "none",
+                        background: theme.palette.primary.main,
+                        // btn.value === "/"
+                        //   ? "#1E3A8A"
+                        //   : btn.value === "Inv"
+                        //   ? inverseMode
+                        //     ? "#80C0C0"
+                        //     : "#2D3E5F"
+                        //   : ["7", "8", "9"].includes(btn.value)
+                        //   ? "#3A4A5C"
+                        //   : "#2D3E5F",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: ["7", "8", "9"].includes(btn.value)
+                          ? "normal"
+                          : "500",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target.style.background =
+                          theme.palette.secondary.secondMain),
+                          (e.target.style.color = theme.palette.primary.main);
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target.style.background =
+                          theme.palette.primary.main),
+                          (e.target.style.color =
+                            theme.palette.primary.fourthMain);
+                      }}
+                      onClick={() => {
+                        handleCalculatorButtonClick(btn.value);
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Third Row: π, cos, log, 4, 5, 6, × */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(7, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  {[
+                    { label: "π", value: "π", type: "value" },
+                    {
+                      label: inverseMode ? "cos⁻¹" : "cos",
+                      value: "cos(",
+                      type: "function",
+                    },
+                    {
+                      label: inverseMode ? "10ˣ" : "log",
+                      value: inverseMode ? "pow(10," : "log(",
+                      type: "function",
+                    },
+                    { label: "4", value: "4", type: "number" },
+                    { label: "5", value: "5", type: "number" },
+                    { label: "6", value: "6", type: "number" },
+                    { label: "×", value: "*", type: "operator" },
+                  ].map((btn) => (
+                    <button
+                      key={btn.value}
+                      style={{
+                        padding: "18px 8px",
+                        fontSize: "16px",
+                        borderRadius: "8px",
+                        border: "none",
+                        // background: btn.value === "*" ? "#1E3A8A" : "#3A4A5C",
+                        background: theme.palette.primary.main,
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: ["4", "5", "6"].includes(btn.value)
+                          ? "normal"
+                          : "500",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target.style.background =
+                          theme.palette.secondary.secondMain),
+                          (e.target.style.color = theme.palette.primary.main);
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target.style.background =
+                          theme.palette.primary.main),
+                          (e.target.style.color =
+                            theme.palette.primary.fourthMain);
+                      }}
+                      onClick={() => {
+                        handleCalculatorButtonClick(btn.value);
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Fourth Row: e, tan, √, 1, 2, 3, − */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(7, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  {[
+                    { label: "e", value: "Math.E", type: "value" }, // Euler's number
+                    {
+                      label: inverseMode ? "tan⁻¹" : "tan",
+                      value: "tan(",
+                      type: "function",
+                    },
+                    { label: "√", value: "sqrt(", type: "function" },
+                    { label: "1", value: "1", type: "number" },
+                    { label: "2", value: "2", type: "number" },
+                    { label: "3", value: "3", type: "number" },
+                    { label: "−", value: "-", type: "operator" },
+                  ].map((btn) => (
+                    <button
+                      key={btn.value}
+                      style={{
+                        padding: "18px 8px",
+                        fontSize: "16px",
+                        borderRadius: "8px",
+                        border: "none",
+                        background: theme.palette.primary.main,
+                        // background: btn.value === "-" ? "#1E3A8A" : "#3A4A5C",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: ["1", "2", "3"].includes(btn.value)
+                          ? "normal"
+                          : "500",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target.style.background =
+                          theme.palette.secondary.secondMain),
+                          (e.target.style.color = theme.palette.primary.main);
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target.style.background =
+                          theme.palette.primary.main),
+                          (e.target.style.color =
+                            theme.palette.primary.fourthMain);
+                      }}
+                      onClick={() => {
+                        handleCalculatorButtonClick(btn.value);
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Fifth Row: Ans, EXP, x^y, 0, ., =, + */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(7, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  {[
+                    { label: "Ans", value: "Ans", type: "memory" }, // Answer recall
+                    { label: "EXP", value: "exp(", type: "function" }, // e^x, same as inverse ln
+                    { label: "xʸ", value: "^", type: "operator" },
+                    { label: "0", value: "0", type: "number", span: 2 },
+                    { label: ".", value: ".", type: "number" },
+                    { label: "=", value: "=", type: "equals" },
+                  ].map((btn) => (
+                    <button
+                      key={btn.value}
+                      style={{
+                        padding: "18px 8px",
+                        fontSize: "16px",
+                        borderRadius: "8px",
+                        border: "none",
+                        background: theme.palette.primary.main,
+                        // btn.value === "=" || btn.value === "+"
+                        //   ? "#1E3A8A"
+                        //   : btn.value === "0"
+                        //   ? "#3A4A5C"
+                        //   : "#2D3E5F",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight:
+                          btn.value === "0" || btn.value === "."
+                            ? "normal"
+                            : "500",
+                        transition: "all 0.2s",
+                        gridColumn: btn.span ? `span ${btn.span}` : "auto",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target.style.background =
+                          theme.palette.secondary.secondMain),
+                          (e.target.style.color = theme.palette.primary.main);
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target.style.background =
+                          theme.palette.primary.main),
+                          (e.target.style.color =
+                            theme.palette.primary.fourthMain);
+                      }}
+                      onClick={() => {
+                        handleCalculatorButtonClick(btn.value);
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Advanced Row: 1/x, x², Bksp */}
+                {/* <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  {[
+                    { label: "1/x", value: "1/x", type: "utility" },
+
+                  
+                  ].map((btn) => (
+                    <button
+                      key={btn.value}
+                      style={{
+                        padding: "12px 8px",
+                        fontSize: "0.9em",
+                        borderRadius: "8px",
+                        border: "none",
+                        background:
+                          btn.value === "Bksp" ? "#1E3A8A" : "#2D3E5F",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: "500",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.target.style.opacity = "0.9")}
+                      onMouseLeave={(e) => (e.target.style.opacity = "1")}
+                      onClick={() => {
+                        handleCalculatorButtonClick(btn.value);
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div> */}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Results Table */}
+        {currentConverter.type === "unit" && showAllResults && (
+          <div style={{ width: "320px", flexShrink: 0 }}>
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "16px",
+                padding: "16px",
+                maxHeight: "calc(100vh - 130px)",
+                overflowY: "auto",
+                msOverflowStyle: "none",
+                scrollbarWidth: "none",
+                "&::WebkitScrollbar": {
+                  display: "none",
+                },
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "16px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: theme.palette.primary.main,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    margin: 0,
+                  }}
+                >
+                  All Conversions
+                </h3>
+                <button
+                  onClick={() => setShowAllResults(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px",
+                  }}
+                >
+                  <X size={18} color="#6B7280" />
+                </button>
+              </div>
+              <div>
+                {allResults.map(({ unit, value: val }) => (
+                  <div
+                    key={unit}
+                    style={{
+                      padding: "12px",
+                      marginBottom: "8px",
+                      borderRadius: "12px",
+                      background: unit === toUnit ? "#DBEAFE" : "#F9FAFB",
+                      border:
+                        unit === toUnit
+                          ? "2px solid #1E3A8A"
+                          : "1px solid #E5E7EB",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: "500",
+                          color: "#374151",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {unit}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          color: "#111827",
+                          color: "#111827",
+                          fontWeight: "600",
+                          textAlign: "right",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {formatNumber(val)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentConverter.type === "unit" && !showAllResults && (
+          <button
+            onClick={() => setShowAllResults(true)}
+            style={{
+              position: "fixed",
+              right: "20px",
+              top: "80px",
+              background: theme.palette.primary.main,
+              color: "#fff",
+              border: "none",
+              borderRadius: "50%",
+              width: "56px",
+              height: "56px",
+              cursor: "pointer",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ChevronDown size={24} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }

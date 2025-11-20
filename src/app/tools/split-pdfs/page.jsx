@@ -30,7 +30,7 @@ export const metadata = {
     description:
       "Quickly split PDF files by pages or extract custom page ranges using ToolsHub's free and efficient online PDF splitter. No installation required.",
     url: `${TOOLSHUB_BASE_URL}/tools/split-pdfs`,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
         url: `${TOOLSHUB_BASE_URL}/images/split-pdfs-banner.png`, // TODO: Replace with a specific banner for Split PDFs

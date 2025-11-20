@@ -31,10 +31,10 @@ export const metadata = {
     description:
       "Quickly generate personalized QR codes for websites, messages, WiFi, and contact details. ToolsHub offers a free and versatile QR code creation tool.",
     url: `${TOOLSHUB_BASE_URL}/tools/qr-code-generator`,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
-        url: `${TOOLSHUB_BASE_URL}/images/qr-code-generator-banner.png`, // TODO: Replace with a specific banner for QR Code Generator
+        url: `${TOOLSHUB_BASE_URL}/images/qr-code-generator-banner.png`,
         width: 1200,
         height: 630,
         alt: "Online QR Code Generator Tool",

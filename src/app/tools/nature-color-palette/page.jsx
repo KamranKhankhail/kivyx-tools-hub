@@ -30,7 +30,7 @@ export const metadata = {
     description:
       "Explore and create beautiful, natural color palettes for any design project. Get instant hex and RGB values from ToolsHub's easy-to-use online tool.",
     url: `${TOOLSHUB_BASE_URL}/tools/nature-color-palette`,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
         url: `${TOOLSHUB_BASE_URL}/images/nature-color-palette-banner.png`, // TODO: Replace with a specific banner for Nature Color Palette

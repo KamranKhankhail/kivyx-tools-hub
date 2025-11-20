@@ -30,7 +30,7 @@ export const metadata = {
     description:
       "Access a free and comprehensive online unit converter for length, weight, temperature, currency, and more. ToolsHub makes converting measurements simple and accurate.",
     url: `${TOOLSHUB_BASE_URL}/tools/universal-unit-converter`,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
         url: `${TOOLSHUB_BASE_URL}/images/unit-converter-banner.png`, // TODO: Replace with a specific banner for Unit Converter

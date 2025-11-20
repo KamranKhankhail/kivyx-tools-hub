@@ -96,13 +96,16 @@ export const metadata = {
     "color palette generator",
     "online utilities",
     "kivyx tools",
+    "PDF Merge Tools",
+    "PDF Split Tools",
+    "Only PDF Tools",
   ],
   openGraph: {
     title: "ToolsHub | Your Essential Online Toolkit for Everyday Tasks",
     description:
       "Access a wide range of free online tools for daily digital needs including password generation, QR codes, PDF manipulation, unit conversion, and more. Simplify your workflow with ToolsHub.",
     url: TOOLSHUB_BASE_URL,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
         url: `${TOOLSHUB_BASE_URL}/images/toolshub-banner.png`, // TODO: Replace with a compelling banner image for the ToolsHub homepage

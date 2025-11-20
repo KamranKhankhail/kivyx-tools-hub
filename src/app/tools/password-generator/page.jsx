@@ -32,7 +32,7 @@ export const metadata = {
     description:
       "Instantly create strong, unique, and random passwords tailored to your needs. ToolsHub's Password Generator helps secure your digital life with customizable options.",
     url: `${TOOLSHUB_BASE_URL}/tools/password-generator`,
-    siteName: "Kivyx Technologies ToolsHub",
+    siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
         url: `${TOOLSHUB_BASE_URL}/images/password-generator-banner.png`, // TODO: Replace with a specific banner for Password Generator

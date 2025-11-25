@@ -39,7 +39,16 @@ const parseTime = (timeString) => {
   d.setHours(hours, minutes, 0, 0);
   return d;
 };
-
+const factorial = (n) => {
+  if (n < 0) return NaN;
+  if (n === 0 || n === 1) return 1;
+  if (n > 170) return Infinity; // Prevent overflow
+  let result = 1;
+  for (let i = 2; i <= n; i++) {
+    result *= i;
+  }
+  return result;
+};
 // ===== COMPLETE CONVERSION LOGIC WITH ALL YOUR CONVERTERS =====
 const converters = {
   "Length / Distance": {
@@ -7048,7 +7057,22 @@ export default function UniversalUnitConverterClient() {
         if (!expression.trim()) return "";
 
         let cleanedExpression = expression;
-
+        cleanedExpression = cleanedExpression.replace(
+          /(\d+\.?\d*|\([^)]+\))!/g,
+          (match, p1) => {
+            // If p1 contains parentheses, evaluate it first
+            if (p1.startsWith("(")) {
+              try {
+                const innerValue = Function(`"use strict"; return (${p1})`)();
+                return `(${factorial(Math.floor(innerValue))})`;
+              } catch {
+                return "Error";
+              }
+            }
+            // For simple numbers
+            return `(${factorial(parseFloat(p1))})`;
+          }
+        );
         // --- Implicit Multiplication ---
         // Cases: Number followed by π, Number followed by function, ) followed by Number, π followed by (
         cleanedExpression = cleanedExpression
@@ -7641,8 +7665,35 @@ export default function UniversalUnitConverterClient() {
         }
         newCurrentInput = "π"; // Display 'π' directly
         newLastButtonWasEquals = false;
+      } else if (buttonValue === "!") {
+        try {
+          // Apply factorial to the current input number
+          const currentValue = parseFloat(newCurrentInput);
+          if (
+            !isNaN(currentValue) &&
+            currentValue >= 0 &&
+            Number.isInteger(currentValue)
+          ) {
+            const factorialValue = factorial(currentValue);
+            newCurrentInput = String(factorialValue);
+            // Replace the last number in the expression with its factorial
+            if (/\d$/.test(newExpression)) {
+              newExpression = newExpression.replace(
+                /(\d+\.?\d*)$/,
+                `${factorialValue}`
+              );
+            } else {
+              newExpression = `(${newExpression})!`;
+            }
+          } else {
+            newCurrentInput = "Error";
+            newExpression = "";
+          }
+        } catch (e) {
+          newCurrentInput = "Error";
+          newExpression = "";
+        }
       }
-
       setCalcExpression(newExpression);
       setCalcCurrentInput(newCurrentInput);
       setLastButtonWasEquals(newLastButtonWasEquals);
@@ -8606,7 +8657,7 @@ export default function UniversalUnitConverterClient() {
                         } else if (btn.type === "mode") {
                           handleCalculatorButtonClick(btn.value);
                         } else if (btn.value === "!") {
-                          // Factorial needs to be implemented
+                          handleCalculatorButtonClick(btn.value);
                         } else {
                           handleCalculatorButtonClick(btn.value);
                         }

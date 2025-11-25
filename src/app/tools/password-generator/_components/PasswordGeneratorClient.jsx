@@ -208,7 +208,7 @@ export default function PasswordGeneratorClient() {
         <Box
           sx={{
             position: "fixed",
-            top: 20,
+            bottom: 20,
             right: 20,
             zIndex: 9999,
             display: "flex",

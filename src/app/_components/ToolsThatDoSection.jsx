@@ -276,6 +276,20 @@ const toolsThatDoMoreToolsData = [
     icon: UnitConverterIcon,
     href: "/tools/universal-unit-converter",
   },
+  {
+    primaryText: "Rotate PDFs",
+    secondaryText:
+      "Convert units like length, weight, temperature, currency, and more.",
+    icon: UnitConverterIcon,
+    href: "/tools/rotate-pdfs",
+  },
+  {
+    primaryText: "Delete PDFs",
+    secondaryText:
+      "Convert units like length, weight, temperature, currency, and more.",
+    icon: UnitConverterIcon,
+    href: "/tools/delete-pdfs",
+  },
 ];
 
 export default function ToolsThatDoSection({ searchTerm }) {

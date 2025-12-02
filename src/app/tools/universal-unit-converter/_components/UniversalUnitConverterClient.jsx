@@ -11,12 +11,12 @@ import {
   ChevronUp,
   Copy, // Import Copy icon for the copy button
 } from "lucide-react";
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, TextField, Select, MenuItem } from "@mui/material";
 import Link from "next/link";
 import ToolsHubsIcon from "@/icons/ToolsHubsIcon";
 import theme from "@/styles/theme";
 import ThemeRegistry from "@/styles/ThemeRegistry";
-
+import moment from "moment-timezone";
 // API Configuration for Currency Converter
 const EXCHANGE_RATE_API_KEY = "07b08cdc2c129775d2b8f0c0"; // Your provided API key
 const EXCHANGE_RATE_API_BASE_URL = `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/`;
@@ -553,7 +553,9 @@ const converters = {
       "cold",
       "temp",
       "temperature",
-      "triple point of water", // Added as keyword for searchability
+      "triple point of water",
+      "degree to celsius",
+      "celsius to degree",
     ],
   },
   Area: {
@@ -3272,11 +3274,12 @@ const converters = {
   },
   "Time Zone Converter": {
     type: "calculator",
-    inputs: [
+    inputs: (timezones) => [
+      // This changes 'inputs' from an array to a function that returns an array
       { name: "Date", unit: "date" },
       { name: "Time", unit: "time" },
-      { name: "From Time Zone", unit: "select", options: [] }, //
-      { name: "To Time Zone", unit: "select", options: [] }, //
+      { name: "From Time Zone", unit: "select", options: timezones }, // Dynamically pass timezones here
+      { name: "To Time Zone", unit: "select", options: timezones }, // Dynamically pass timezones here
     ],
     calculate: async (values) => {
       const date = values["Date"];
@@ -3289,51 +3292,23 @@ const converters = {
       }
 
       try {
-        // Fetch datetime in the "From" time zone
-        const fromResponse = await fetch(
-          `https://worldtimeapi.org/api/timezone/${fromTimeZone}`
-        );
-        const fromData = await fromResponse.json();
+        // Use moment-timezone to parse and convert
+        const dateTimeString = `${date}T${time}:00`;
+        const fromMoment = moment.tz(dateTimeString, fromTimeZone);
 
-        if (fromData.error) {
-          return `Error in From Time Zone: ${fromData.error}`;
+        if (!fromMoment.isValid()) {
+          return "Invalid Date or Time provided.";
         }
 
-        // Combine user's date and time with the 'from' timezone's offset to create a UTC datetime string
-        // This is a simplified approach. A full-fledged solution would involve a date library.
-        const userDateTime = new Date(`${date}T${time}:00`); // Assuming input time is local to 'from' timezone
-        const fromOffsetSeconds =
-          fromData.raw_offset + (fromData.dst ? fromData.dst_offset : 0);
-        const userDateTimeUTC = new Date(
-          userDateTime.getTime() - fromOffsetSeconds * 1000
-        );
+        const toMoment = fromMoment.clone().tz(toTimeZone);
 
-        // Fetch datetime in the "To" time zone
-        const toResponse = await fetch(
-          `https://worldtimeapi.org/api/timezone/${toTimeZone}`
-        );
-        const toData = await toResponse.json();
-
-        if (toData.error) {
-          return `Error in To Time Zone: ${toData.error}`;
-        }
-
-        const toOffsetSeconds =
-          toData.raw_offset + (toData.dst ? toData.dst_offset : 0);
-        const convertedDateTime = new Date(
-          userDateTimeUTC.getTime() + toOffsetSeconds * 1000
-        );
-
-        const convertedDate = convertedDateTime.toISOString().split("T")[0];
-        const convertedTime = convertedDateTime
-          .toTimeString()
-          .split(" ")[0]
-          .substring(0, 5);
+        const convertedDate = toMoment.format("YYYY-MM-DD");
+        const convertedTime = toMoment.format("HH:mm");
 
         return `Converted Time: ${convertedDate} ${convertedTime} (${toTimeZone})`;
       } catch (error) {
         console.error("Time zone conversion error:", error);
-        return "Error during conversion. Check timezones or network.";
+        return "Error during conversion. Check timezones or ensure Moment-Timezone is configured correctly.";
       }
     },
     keywords: ["utc", "gmt", "clock"],
@@ -6255,9 +6230,7 @@ const calculate = (categoryName, values) => {
     // For Time Zone Converter, the calculate function is async.
     // We'll handle its call in useEffect and update state.
     // For other custom calculators, call directly.
-    if (categoryName !== "Time Zone Converter") {
-      return currentConverter.calculate(values);
-    }
+    return currentConverter.calculate(values);
   }
 
   switch (categoryName) {
@@ -7045,10 +7018,40 @@ export default function UniversalUnitConverterClient() {
             fromUnit,
             unit,
             selectedCategory,
-            exchangeRates // Pass exchangeRates here too
+            exchangeRates
           ),
         }))
       : [];
+
+  // Reorder allResults for display in the right sidebar
+  const displayResults = [...allResults];
+
+  // Find and remove fromUnit result to place at top
+  const fromResultIndex = displayResults.findIndex(
+    (item) => item.unit === fromUnit
+  );
+  let fromResultItem = null;
+  if (fromResultIndex > -1) {
+    fromResultItem = displayResults.splice(fromResultIndex, 1)[0];
+  }
+
+  // Find and remove toUnit result to place at top
+  const toResultIndex = displayResults.findIndex(
+    (item) => item.unit === toUnit
+  );
+  let toResultItem = null;
+  if (toResultIndex > -1) {
+    toResultItem = displayResults.splice(toResultIndex, 1)[0];
+  }
+
+  // Add fromUnit and toUnit to the beginning of the array in desired order (toUnit then fromUnit if both exist)
+  if (fromResultItem) {
+    displayResults.unshift(fromResultItem);
+  }
+  if (toResultItem) {
+    // toUnit will appear before fromUnit if both are present
+    displayResults.unshift(toResultItem);
+  }
 
   // Helper to evaluate scientific expressions
   const evaluateScientificExpression = useCallback(
@@ -7210,17 +7213,12 @@ export default function UniversalUnitConverterClient() {
         setTimeZoneLoading(true);
         setTimeZoneError(null);
         try {
-          const response = await fetch("https://worldtimeapi.org/api/timezone");
-          const data = await response.json();
-          if (response.ok) {
-            setTimezones(data);
-          } else {
-            setTimeZoneError("Failed to fetch time zones.");
-            console.error("Error fetching time zones:", data);
-          }
+          // Replace API call with moment-timezone
+          const allTimezones = moment.tz.names();
+          setTimezones(allTimezones);
+          // No need for response.ok check as it's local data
         } catch (error) {
-          setTimeZoneError("Network error or failed to fetch time zones.");
-          console.error("Network error fetching time zones:", error);
+          setTimeZoneError(error.message);
         } finally {
           setTimeZoneLoading(false);
         }
@@ -7267,11 +7265,16 @@ export default function UniversalUnitConverterClient() {
       setTrigMode("rad");
       setInverseMode(false);
 
-      // Initialize calculator inputs with empty strings for text/date/time or default for select
       const initialCalcValues = {};
       // Only iterate if inputs exist (Scientific Calculator has no explicit inputs)
       if (converter.inputs) {
-        converter.inputs.forEach((input) => {
+        // Determine the actual inputs array, calling the function if inputs is a function
+        const currentInputs =
+          typeof converter.inputs === "function"
+            ? converter.inputs(timezones)
+            : converter.inputs;
+
+        currentInputs.forEach((input) => {
           if (input.unit === "select") {
             initialCalcValues[input.name] = input.options[0];
           } else {
@@ -8251,108 +8254,153 @@ export default function UniversalUnitConverterClient() {
             ) : (
               <>
                 {/* Calculator Inputs (excluding Scientific Calculator) */}
+                {/* Calculator Inputs (excluding Scientific Calculator) */}
                 {selectedCategory !== "Scientific Calculator" &&
-                  currentConverter.inputs.map((input) =>
-                    input.optional &&
-                    input.dependsOn &&
-                    calculatorValues[input.dependsOn] !==
-                      input.dependsOnValue ? null : (
-                      <div key={input.name} style={{ marginBottom: "20px" }}>
-                        <label
-                          style={{
-                            display: "block",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                            color: theme.palette.primary.main,
-                            marginBottom: "8px",
-                          }}
-                        >
-                          {input.name}{" "}
-                          {input.unit && input.unit !== "select"
-                            ? `(${input.unit})`
-                            : ""}
-                        </label>
-                        {input.unit === "select" ? (
-                          <select
-                            value={
-                              calculatorValues[input.name] || input.options[0]
-                            }
-                            onChange={(e) =>
-                              handleCalculatorInputChange(
-                                input.name,
-                                e.target.value
-                              )
-                            }
-                            className="border"
+                  (typeof currentConverter.inputs === "function" // Check if inputs is a function
+                    ? currentConverter.inputs(timezones) // If it's a function, call it with timezones
+                    : currentConverter.inputs
+                  ) // Otherwise, use it directly (it's an array)
+                    .map((input) =>
+                      input.optional &&
+                      input.dependsOn &&
+                      calculatorValues[input.dependsOn] !==
+                        input.dependsOnValue ? null : (
+                        <div key={input.name} style={{ marginBottom: "20px" }}>
+                          <label
                             style={{
-                              width: "100%",
-                              padding: "12px 16px",
-                              borderColor: theme.palette.primary.main,
-                              borderRadius: "12px",
-                              fontSize: "16px",
-                              outline: "none",
+                              display: "block",
+                              fontSize: "14px",
+                              fontWeight: "500",
+                              color: theme.palette.primary.main,
+                              marginBottom: "8px",
                             }}
                           >
-                            {/* Render timezones if available and for Time Zone Converter */}
-                            {input.name === "From Time Zone" ||
-                            input.name === "To Time Zone"
-                              ? timeZoneLoading
-                                ? [
-                                    <option key="loading" value="">
-                                      Loading time zones...
-                                    </option>,
-                                  ]
-                                : timeZoneError
-                                ? [
-                                    <option key="error" value="">
-                                      Error loading time zones
-                                    </option>,
-                                  ]
-                                : timezones.map((tz) => (
-                                    <option key={tz} value={tz}>
-                                      {tz}
-                                    </option>
-                                  ))
-                              : // Original options rendering for other select inputs
-                                input.options.map((option) => (
-                                  <option key={option} value={option}>
-                                    {option}
-                                  </option>
-                                ))}
-                          </select>
-                        ) : (
-                          <input
-                            type={
-                              (input.unit && input.unit.includes("date")) ||
-                              (input.unit && input.unit.includes("time"))
-                                ? input.unit
-                                : input.unit === "number"
-                                ? "number"
-                                : "text" // Explicitly set type to number for numerical inputs
-                            }
-                            value={calculatorValues[input.name] || ""}
-                            onChange={(e) =>
-                              handleCalculatorInputChange(
-                                input.name,
-                                e.target.value
-                              )
-                            }
-                            className="border"
-                            style={{
-                              width: "100%",
-                              padding: "12px 16px",
-                              borderColor: theme.palette.primary.main,
-                              borderRadius: "12px",
-                              color: theme.palette.primary.main,
-                              fontSize: "16px",
-                              outline: "none",
-                            }}
-                            placeholder={`Enter ${input.name}`}
-                          />
-                        )}
-                      </div>
-                    )
-                  )}
+                            {input.name}{" "}
+                            {input.unit && input.unit !== "select"
+                              ? `(${input.unit})`
+                              : ""}
+                          </label>
+                          {input.unit === "select" ? (
+                            <Select
+                              value={calculatorValues[input.name] || ""}
+                              onChange={(e) =>
+                                handleCalculatorInputChange(
+                                  input.name,
+                                  e.target.value
+                                )
+                              }
+                              displayEmpty
+                              fullWidth
+                              sx={{
+                                "& .MuiOutlinedInput-notchedOutline": {
+                                  borderColor: theme.palette.primary.main,
+                                  borderRadius: "10px",
+                                },
+                                "&:hover .MuiOutlinedInput-notchedOutline": {
+                                  borderColor: theme.palette.primary.main,
+                                  borderRadius: "10px",
+                                },
+                                "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                  {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                              }}
+                            >
+                              {input.options.map((option) => (
+                                <MenuItem key={option} value={option}>
+                                  {option}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          ) : input.unit === "date" ? (
+                            <TextField
+                              type="date"
+                              fullWidth
+                              value={calculatorValues[input.name] || ""}
+                              onChange={(e) =>
+                                handleCalculatorInputChange(
+                                  input.name,
+                                  e.target.value
+                                )
+                              }
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  "& fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                  "&.Mui-focused fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                },
+                              }}
+                            />
+                          ) : input.unit === "time" ? (
+                            <TextField
+                              type="time"
+                              fullWidth
+                              value={calculatorValues[input.name] || ""}
+                              onChange={(e) =>
+                                handleCalculatorInputChange(
+                                  input.name,
+                                  e.target.value
+                                )
+                              }
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  "& fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                  "&.Mui-focused fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                },
+                              }}
+                            />
+                          ) : (
+                            <TextField
+                              type={input.unit === "number" ? "number" : "text"}
+                              fullWidth
+                              value={calculatorValues[input.name] || ""}
+                              onChange={(e) =>
+                                handleCalculatorInputChange(
+                                  input.name,
+                                  e.target.value
+                                )
+                              }
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  "& fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                  "&.Mui-focused fieldset": {
+                                    borderColor: theme.palette.primary.main,
+                                    borderRadius: "10px",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+                        </div>
+                      )
+                    )}
               </>
             )}
 
@@ -9006,53 +9054,64 @@ export default function UniversalUnitConverterClient() {
                 </button>
               </div>
               <div>
-                {allResults.map(({ unit, value: val }) => (
-                  <div
-                    key={unit}
-                    style={{
-                      padding: "12px",
-                      marginBottom: "8px",
-                      borderRadius: "12px",
-                      background: unit === toUnit ? "#DBEAFE" : "#F9FAFB",
-                      border:
-                        unit === toUnit
-                          ? "2px solid #1E3A8A"
-                          : "1px solid #E5E7EB",
-                      transition: "all 0.2s",
-                    }}
-                  >
+                {displayResults.map((item) => {
+                  const isFromUnit = item.unit === fromUnit;
+                  const isToUnit = item.unit === toUnit;
+                  const isHighlighted = isFromUnit || isToUnit;
+
+                  return (
                     <div
+                      className="border"
+                      key={item.unit}
                       style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: "2px",
+                        padding: "12px",
+                        marginBottom: "8px",
+                        borderRadius: "12px",
+                        background: isToUnit
+                          ? "#DBEAFE"
+                          : isFromUnit
+                          ? "#DBEAFE" // Slightly different highlight for fromUnit
+                          : "#F9FAFB",
+                        borderColor: isToUnit
+                          ? theme.palette.secondary.secondMain
+                          : isFromUnit
+                          ? theme.palette.secondary.secondMain // Different border for fromUnit
+                          : "#E5E7EB",
+                        transition: "all 0.2s",
                       }}
                     >
-                      <span
+                      <div
                         style={{
-                          fontWeight: "500",
-                          color: "#374151",
-                          fontSize: "14px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "2px",
                         }}
                       >
-                        {unit}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "13px",
-                          color: "#111827",
-                          color: "#111827",
-                          fontWeight: "600",
-                          textAlign: "right",
-                          wordBreak: "break-all",
-                        }}
-                      >
-                        {formatNumber(val)}
-                      </span>
+                        <span
+                          style={{
+                            fontWeight: 500,
+                            color: theme.palette.primary.main,
+                            fontSize: "14px",
+                          }}
+                        >
+                          {item.unit}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: theme.palette.primary.main,
+                            fontWeight: 500,
+                            textAlign: "right",
+                            wordBreak: "break-all",
+                          }}
+                        >
+                          {formatNumber(item.value)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

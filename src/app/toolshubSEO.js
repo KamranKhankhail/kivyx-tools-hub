@@ -385,7 +385,7 @@ export const faqSchemasQrCodeGenerator = {
   ],
 };
 
-export const speakableAEOPassQrCodeGenerator = {
+export const speakableAEOQrCodeGenerator = {
   "@context": "https://schema.org",
   "@type": "SpeakableSpecification",
   xpath: ["/html/head/title", "/html/body//h1", "/html/body//p[1]"],
@@ -876,6 +876,231 @@ export const faqSchemasUnitConverter = {
 };
 
 export const speakableAEOUnitConverter = {
+  "@context": "https://schema.org",
+  "@type": "SpeakableSpecification",
+  xpath: ["/html/head/title", "/html/body//h1", "/html/body//p[1]"],
+};
+
+// ===============================
+// ROTATE PDF – SEO METADATA
+// ===============================
+export const metadataRotatePdf = {
+  title: "Rotate PDF Online | Free PDF Rotator Tool - ToolsHub",
+  description:
+    "Rotate your PDF pages instantly with our free online PDF rotator tool. Rotate single or multiple pages left, right, or 180 degrees. Fast, secure, and no installation required.",
+  keywords: [
+    "rotate pdf",
+    "pdf rotator",
+    "rotate pdf online",
+    "rotate pages pdf",
+    "rotate pdf free",
+    "fix pdf orientation",
+    "pdf tools",
+    "kivyx rotate pdf",
+  ],
+  openGraph: {
+    title: "Rotate PDF Online | Free & Secure PDF Rotator",
+    description:
+      "Easily rotate PDF pages left, right, or 180° using ToolsHub's free online PDF rotation tool. Works fast and keeps your files secure.",
+    url: `${TOOLSHUB_BASE_URL}/tools/rotate-pdf`,
+    siteName: "Toolshub | Kivyx Technologies",
+    images: [
+      {
+        url: `${TOOLSHUB_BASE_URL}/images/rotate-pdf-banner.png`,
+        width: 1200,
+        height: 630,
+        alt: "Online Rotate PDF Tool",
+      },
+    ],
+    type: "website",
+  },
+};
+
+// JSON-LD
+export const jsonLdRotatePdf = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Rotate PDF Online",
+  description:
+    "Rotate PDF pages easily using ToolsHub's free online PDF rotator tool. Rotate left, right, or 180 degrees instantly.",
+  url: `${TOOLSHUB_BASE_URL}/tools/rotate-pdf`,
+  publisher: {
+    "@type": "Organization",
+    name: "Kivyx Technologies",
+    url: KIVYX_MAIN_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: KIVYX_FAVICON_URL,
+    },
+  },
+};
+
+// Breadcrumbs
+export const breadcrumbsRotatePdf = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "ToolsHub",
+      item: TOOLSHUB_BASE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Rotate PDF",
+      item: `${TOOLSHUB_BASE_URL}/tools/rotate-pdf`,
+    },
+  ],
+};
+
+// FAQ Schema
+export const faqSchemasRotatePdf = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Is the Rotate PDF tool free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes! ToolsHub's Rotate PDF tool is 100% free with no registration required.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is my PDF safe when I rotate it?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, your files are processed securely and never stored on our servers.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I rotate individual PDF pages?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, you can rotate specific pages or the entire PDF document.",
+      },
+    },
+  ],
+};
+
+// Speakable
+export const speakableAEORotatePdf = {
+  "@context": "https://schema.org",
+  "@type": "SpeakableSpecification",
+  xpath: ["/html/head/title", "/html/body//h1", "/html/body//p[1]"],
+};
+
+// ===============================
+// DELETE PDF – SEO METADATA
+// ===============================
+export const metadataDeletePdf = {
+  title: "Delete Pages from PDF Online | Free PDF Page Remover - ToolsHub",
+  description:
+    "Remove unwanted pages from your PDF instantly with our free online PDF page remover tool. Delete single or multiple PDF pages securely and easily.",
+  keywords: [
+    "delete pdf pages",
+    "remove pdf pages",
+    "delete pages from pdf",
+    "pdf page remover",
+    "edit pdf online",
+    "pdf tools",
+    "kivyx delete pdf",
+  ],
+  openGraph: {
+    title: "Delete PDF Pages Online | Free & Secure PDF Page Remover",
+    description:
+      "Easily remove pages from PDF files using ToolsHub’s free online PDF page deletion tool. Secure, fast, and user-friendly.",
+    url: `${TOOLSHUB_BASE_URL}/tools/delete-pdf`,
+    siteName: "Toolshub | Kivyx Technologies",
+    images: [
+      {
+        url: `${TOOLSHUB_BASE_URL}/images/delete-pdf-banner.png`,
+        width: 1200,
+        height: 630,
+        alt: "Online Delete PDF Tool",
+      },
+    ],
+    type: "website",
+  },
+};
+
+// JSON-LD
+export const jsonLdDeletePdf = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Delete Pages from PDF Online",
+  description:
+    "Delete one or multiple PDF pages instantly using ToolsHub’s free and secure PDF page remover.",
+  url: `${TOOLSHUB_BASE_URL}/tools/delete-pdf`,
+  publisher: {
+    "@type": "Organization",
+    name: "Kivyx Technologies",
+    url: KIVYX_MAIN_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: KIVYX_FAVICON_URL,
+    },
+  },
+};
+
+// Breadcrumbs
+export const breadcrumbsDeletePdf = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "ToolsHub",
+      item: TOOLSHUB_BASE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Delete PDF Pages",
+      item: `${TOOLSHUB_BASE_URL}/tools/delete-pdf`,
+    },
+  ],
+};
+
+// FAQ Schema
+export const faqSchemasDeletePdf = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Is the Delete PDF Pages tool free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes! ToolsHub provides a completely free PDF page deletion tool with no sign-up required.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are my files safe when deleting pages?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all operations are done securely, and your files are never stored.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I delete multiple pages at once?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, you can remove one, several, or all unwanted PDF pages easily.",
+      },
+    },
+  ],
+};
+
+// Speakable
+export const speakableAEODeletePdf = {
   "@context": "https://schema.org",
   "@type": "SpeakableSpecification",
   xpath: ["/html/head/title", "/html/body//h1", "/html/body//p[1]"],

@@ -10,35 +10,83 @@ import FaqLeftIcon from "../_components/icons/FaqLeftArrow";
 const FAQsCards = [
   {
     q: "What is ToolsHub?",
-    a: "ToolsHub is an all-in-one platform offering 100+ online tools designed to simplify daily tasks, boost productivity, and save time — all in one place.",
+    a: "ToolsHub is an online platform that offers many helpful tools in one place, such as converters, generators, editors, and utilities.",
   },
   {
     q: "Are all the tools free to use?",
-    a: "Yes, all tools available on ToolsHub are completely free to use, giving users access to premium-quality utilities without any cost.",
+    a: "Yes, all tools on ToolsHub are completely free and can be used without any charges.",
   },
   {
     q: "Do I need to create an account to use the tools?",
-    a: "No, you can instantly access and use all tools without signing up. Account features such as saving preferences will be added in future updates.",
+    a: "No, you can use every tool without creating an account. Extra features may be added in the future for logged-in users.",
   },
   {
-    q: "What types of tools are available on ToolsHub?",
-    a: "ToolsHub includes a wide variety of utilities — from password and QR code generators to file converters, text utilities, image tools, and more.",
+    q: "What types of tools does ToolsHub offer?",
+    a: "ToolsHub includes PDF tools, image tools, text utilities, converters, generators, minifiers, beautifiers, and many more.",
   },
   {
     q: "Is ToolsHub safe to use?",
-    a: "Yes, ToolsHub is designed with user privacy and data security in mind. No personal data is collected when you use our tools.",
+    a: "Yes, ToolsHub does not collect personal data, and most tools work directly in your browser for better privacy.",
   },
   {
     q: "Will more tools be added in the future?",
-    a: "Yes, new tools and features are added regularly to expand the platform and make it even more useful for users across different needs.",
+    a: "Yes, new tools are added regularly based on user needs and feedback.",
   },
   {
-    q: "Can I suggest a tool to be added?",
-    a: "Absolutely! We welcome feedback and suggestions. You can share your ideas through our contact page or feedback form.",
+    q: "Can I suggest a new tool?",
+    a: "Yes, you can send your suggestions through the contact form or feedback page.",
   },
   {
-    q: "Is ToolsHub accessible on mobile devices?",
-    a: "Yes, ToolsHub is fully responsive and optimized for both mobile and desktop, allowing you to use all tools anywhere, anytime.",
+    q: "Is ToolsHub mobile-friendly?",
+    a: "Yes, ToolsHub works smoothly on both mobile and desktop devices.",
+  },
+  {
+    q: "Do you store any uploaded files?",
+    a: "No, ToolsHub does not store your uploaded files. They are processed locally or deleted immediately after use.",
+  },
+  {
+    q: "Do ToolsHub tools reduce file quality?",
+    a: "No, the tools are designed to maintain the highest possible quality unless you choose to compress or reduce size.",
+  },
+  {
+    q: "Can I use ToolsHub tools offline?",
+    a: "Some tools may work offline after loading once, but most require an internet connection.",
+  },
+  {
+    q: "Are there limits on file size or usage?",
+    a: "Most tools have no strict limits, but some features may have size restrictions depending on browser capability.",
+  },
+  {
+    q: "Do I need to install anything to use the tools?",
+    a: "No installation is required. All tools run directly in your browser.",
+  },
+  {
+    q: "Can I use ToolsHub on any browser?",
+    a: "Yes, ToolsHub works on all major browsers including Chrome, Firefox, Safari, and Edge.",
+  },
+  {
+    q: "Is ToolsHub suitable for students and professionals?",
+    a: "Yes, ToolsHub offers tools useful for students, designers, developers, office workers, and general users.",
+  },
+  {
+    q: "Are there ads on ToolsHub?",
+    a: "ToolsHub may show small ads to keep the service free, but tools remain fully accessible.",
+  },
+  {
+    q: "Can I use ToolsHub tools for commercial work?",
+    a: "Yes, you can use all ToolsHub tools for personal or commercial projects.",
+  },
+  {
+    q: "Does ToolsHub offer customer support?",
+    a: "Yes, you can contact the support team through the contact page if you face any issues.",
+  },
+  {
+    q: "Do ToolsHub tools work on low-end devices?",
+    a: "Yes, most tools are lightweight and work well even on devices with low performance.",
+  },
+  {
+    q: "Does ToolsHub plan to launch mobile apps?",
+    a: "A mobile app may be released in the future depending on user demand.",
   },
 ];
 

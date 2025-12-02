@@ -882,6 +882,84 @@ export const speakableAEOUnitConverter = {
 };
 
 // =====================================================================
+// Image Format Converter SEO
+// =====================================================================
+
+export const breadcrumbsImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "ToolsHub",
+      item: TOOLSHUB_BASE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Image Tools",
+      item: `${TOOLSHUB_BASE_URL}/tools/image-format-converter`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Image Format Converter",
+      item: `${TOOLSHUB_BASE_URL}/tools/image-format-converter`,
+    },
+  ],
+};
+
+export const faqSchemasImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Is the image format converter free to use?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, ToolsHub’s image format converter is completely free with no signup required.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Which image formats are supported?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You can convert JPG, PNG, WEBP, GIF, BMP, TIFF, and more.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does converting an image reduce its quality?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "ToolsHub keeps the highest possible quality during conversion, but changing formats like JPG may cause compression.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is my uploaded image safe?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all conversions happen on your device or are deleted instantly after processing.",
+      },
+    },
+  ],
+};
+
+export const speakableAEOImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".tool-heading", ".tool-description"],
+  },
+  url: `${TOOLSHUB_BASE_URL}/tools/image-format-converter`,
+};
+
+// =====================================================================
 // Sitemap Entries for Toolshub (Append to app/sitemap.js)
 // =====================================================================
 

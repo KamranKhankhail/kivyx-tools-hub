@@ -14,8 +14,9 @@ const NavbarWrapper = () => {
     "/tools/compress-pdfs",
     "/tools/convert-pdf",
     "/tools/universal-unit-converter",
-    "/tools/rotate-pdfs",
-    "/tools/delete-pdfs",
+    "/tools/rotate-pdf-pages",
+    "/tools/delete-pdf-pages",
+    "/tools/image-format-converter",
   ];
 
   const shouldShowNavbar = !hiddenRoutes.includes(pathname);

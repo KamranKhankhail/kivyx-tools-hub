@@ -4,47 +4,53 @@ import SectionMainHeading from "../../components/common/SectionMainHeading";
 import SectionMainPara from "../../components/common/SectionMainPara";
 import theme from "../../styles/theme";
 import CodeToolsIcon from "../_components/icons/CodeToolsIcon";
+import PdfMergeIcon from "./icons/PdfMergeIcon";
+import Image from "next/image";
 const getResultsData = [
   {
-    primaryText: "Code Tools - Format, Debug, Beautify",
+    primaryText: "PDF Tools – Merge, Split, Rotate, Extract & Delete",
     secondaryText:
-      "Write, debug, and refine your code with ease. Our coding tools are built for speed and accuracy, helping you stay focused on development instead of formatting:",
+      "Handle all your PDF tasks in one place. Merge, split, rotate, and delete pages with simple, fast, and reliable tools:",
     features: [
-      "Format messy HTML, CSS, JS in seconds",
-      "Minify scripts for faster load times",
-      "Test and validate with Regex and JWT decoders",
+      "Merge multiple PDFs into one organized file",
+      "Split PDFs into individual pages or custom ranges",
+      "Rotate PDF pages left, right, or 180°",
+      "Delete unwanted or blank pages from PDFs",
     ],
     popularPicks:
-      "Try popular picks: Regex Tester, SQL Beautifier, CSS Minifier",
-    icon: CodeToolsIcon, // Add the icon component to the data
+      "Try popular picks: Merge PDFs, Split PDFs, Rotate PDFs, Delete PDFs",
+    icon: PdfMergeIcon,
   },
+
   {
-    primaryText: "Code Tools - Format, Debug, Beautify",
+    primaryText: "Image Tools – Convert & Optimize",
     secondaryText:
-      "Write, debug, and refine your code with ease. Our coding tools are built for speed and accuracy, helping you stay focused on development instead of formatting:",
+      "Work with images effortlessly. Convert image formats instantly and prepare files for web or design use:",
     features: [
-      "Format messy HTML, CSS, JS in seconds",
-      "Minify scripts for faster load times",
-      "Test and validate with Regex and JWT decoders",
+      "Convert JPG, PNG, WEBP, and GIF formats",
+      "Maintain high-quality output while converting",
+      "Ideal for designers, developers, and editors",
     ],
-    popularPicks:
-      "Try popular picks: Regex Tester, SQL Beautifier, CSS Minifier",
-    icon: CodeToolsIcon, // Add the icon component to the data
+    popularPicks: "Try popular picks: Image Format Converter",
+    icon: "/images/homepageIcons/imageFormatConverterIcon.png",
   },
+
   {
-    primaryText: "Code Tools - Format, Debug, Beautify",
+    primaryText: "Essential Utility Tools",
     secondaryText:
-      "Write, debug, and refine your code with ease. Our coding tools are built for speed and accuracy, helping you stay focused on development instead of formatting:",
+      "Useful everyday tools that help you generate passwords, create QR codes, convert units, and explore color palettes:",
     features: [
-      "Format messy HTML, CSS, JS in seconds",
-      "Minify scripts for faster load times",
-      "Test and validate with Regex and JWT decoders",
+      "Generate secure, random passwords instantly",
+      "Create custom QR codes for links, WiFi, and more",
+      "Convert units like temperature, weight, currency, etc.",
+      "Find beautiful nature-inspired color palettes",
     ],
     popularPicks:
-      "Try popular picks: Regex Tester, SQL Beautifier, CSS Minifier",
-    icon: CodeToolsIcon, // Add the icon component to the data
+      "Try popular picks: Password Generator, QR Code Generator, Unit Converter",
+    icon: "/images/homepageIcons/passwordGeneratorIcon.png",
   },
 ];
+
 export default function BrowseByCategoriesSection() {
   return (
     <Stack
@@ -64,14 +70,21 @@ export default function BrowseByCategoriesSection() {
         </SectionMainPara>
       </Box>
       <Stack
-        direction="row"
+        direction="column"
         gap={8}
-        sx={{ flexWrap: "wrap", justifyContent: "center", pt: "80px" }}
+        sx={{
+          flexWrap: "wrap",
+          justifyContent: "center",
+          pt: "80px",
+
+          flex: 1,
+        }}
       >
         {getResultsData.map((tool, i) => (
           <Stack
             key={i}
             sx={{
+              flex: 1,
               background:
                 "linear-gradient(180deg, rgba(175, 236, 255, 0.157059) 0%, rgba(204, 230, 230, 0.186) 50%, rgba(128, 192, 192, 0.2) 100%)",
               borderRadius: {
@@ -120,7 +133,7 @@ export default function BrowseByCategoriesSection() {
                 pb: "18px",
               }}
             >
-              {tool.icon && <tool.icon />} {tool.primaryText}
+              {tool.primaryText}
             </Typography>{" "}
             <Typography
               component="p"
@@ -227,20 +240,9 @@ export default function BrowseByCategoriesSection() {
                     fontWeight: "600",
                     color: theme.palette.primary.main,
                   },
-                  "& span": {
-                    // Styling for the individual tool names
-                    fontWeight: "400",
-                    color: theme.palette.primary.dark, // A slightly darker shade for contrast
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                    "&:hover": {
-                      color: theme.palette.primary.main,
-                    },
-                  },
                 }}
               >
-                <strong>Try popular picks:</strong> Regex Tester, SQL
-                Beautifier, CSS Minifier
+                <strong>Try popular picks:</strong> {tool.popularPicks}
               </Typography>
             )}
           </Stack>

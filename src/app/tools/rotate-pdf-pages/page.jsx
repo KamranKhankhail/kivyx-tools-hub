@@ -1,8 +1,8 @@
-// import {
-//   breadcrumbsMergePdfs,
-//   faqSchemasMergePdfs,
-//   speakableAEOMergePdfs,
-// } from "@/app/toolshubSEO"; // Adjust path if needed
+import {
+  breadcrumbsRotatePdf,
+  faqSchemasRotatePdf,
+  speakableAEORotatePdf,
+} from "@/app/toolshubSEO"; // Adjust path if needed
 
 import Head from "next/head";
 import RotatePdfClient from "./_components/RotatePdfClient";
@@ -10,34 +10,31 @@ import RotatePdfClient from "./_components/RotatePdfClient";
 const TOOLSHUB_BASE_URL = "https://www.toolshub.kivyx.com";
 const KIVYX_MAIN_URL = "https://www.kivyx.com";
 const KIVYX_FAVICON_URL = "https://www.kivyx.com/favicon.ico";
+
 export const metadata = {
-  title: "Merge PDFs Online | Combine PDF Files for Free - ToolsHub",
+  title: "Rotate PDF Pages Online | Free PDF Rotator - ToolsHub",
   description:
-    "Combine multiple PDF files into one single document instantly with ToolsHub's free online PDF Merger. Easy to use, secure, and no software installation required. Merge your PDFs quickly and efficiently.",
+    "Rotate your PDF pages easily online with ToolsHub's free PDF Rotator. Rotate PDF left, right, or 180° in seconds without installing software.",
   keywords: [
-    "merge PDFs",
-    "combine PDF files",
-    "PDF merger",
-    "free PDF merge",
-    "online PDF combiner",
-    "PDF tools",
-    "join PDFs",
-    "collate PDFs",
-    "document management",
-    "kivyx PDF merger",
+    "rotate PDF pages",
+    "PDF rotator",
+    "online PDF rotate",
+    "rotate PDF free",
+    "PDF editor",
+    "ToolsHub PDF",
   ],
   openGraph: {
-    title: "Merge PDFs Online | Free PDF File Combiner",
+    title: "Rotate PDF Pages Online | Free PDF Rotator",
     description:
-      "Effortlessly merge multiple PDF documents into a single, organized file with ToolsHub's free online PDF merger. Secure, fast, and user-friendly.",
-    url: `${TOOLSHUB_BASE_URL}/tools/merge-pdfs`,
+      "Quickly rotate PDF pages online using ToolsHub's free PDF Rotator tool. Secure, fast, and easy to use.",
+    url: `${TOOLSHUB_BASE_URL}/tools/rotate-pdf-pages`,
     siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
-        url: `${TOOLSHUB_BASE_URL}/images/merge-pdfs-banner.png`, // TODO: Replace with a specific banner for Merge PDFs
+        url: `${TOOLSHUB_BASE_URL}/images/rotate-pdf-banner.png`,
         width: 1200,
         height: 630,
-        alt: "Online PDF Merge Tool",
+        alt: "Online PDF Rotator",
       },
     ],
     type: "website",
@@ -54,10 +51,10 @@ export default function page() {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebPage",
-              name: "Online PDF Merger",
+              name: "Online PDF Rotator",
               description:
-                "Combine multiple PDF documents into one single file quickly and securely with ToolsHub's free online PDF merging tool.",
-              url: `${TOOLSHUB_BASE_URL}/tools/merge-pdfs`,
+                "Rotate your PDF pages easily and quickly using ToolsHub's free online PDF Rotator tool.",
+              url: `${TOOLSHUB_BASE_URL}/tools/rotate-pdf-pages`,
               publisher: {
                 "@type": "Organization",
                 name: "Kivyx Technologies",
@@ -69,29 +66,29 @@ export default function page() {
               },
               mainEntityOfPage: {
                 "@type": "WebPage",
-                "@id": `${TOOLSHUB_BASE_URL}/tools/merge-pdfs`,
+                "@id": `${TOOLSHUB_BASE_URL}/tools/rotate-pdf-pages`,
               },
             }),
           }}
         />
-        {/* <script
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbsMergePdfs),
+            __html: JSON.stringify(breadcrumbsRotatePdf),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(faqSchemasMergePdfs),
+            __html: JSON.stringify(faqSchemasRotatePdf),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(speakableAEOMergePdfs),
+            __html: JSON.stringify(speakableAEORotatePdf),
           }}
-        /> */}
+        />
       </Head>
       <RotatePdfClient />
     </>

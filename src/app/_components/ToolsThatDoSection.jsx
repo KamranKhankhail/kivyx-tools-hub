@@ -232,27 +232,28 @@ import UnitConverterIcon from "../_components/icons/UnitConverterIcon";
 import SectionMajorButton from "../../components/common/SectionMajorButton";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation"; // Import useSearchParams
+import Image from "next/image";
 
 const toolsThatDoMoreToolsData = [
   {
     primaryText: "Password Generator",
     secondaryText:
       "Create strong, secure, and random passwords to protect your accounts.",
-    icon: PasswordGeneratorIcon,
+    icon: "/images/homepageIcons/passwordGeneratorIcon.png",
     href: "/tools/password-generator",
   },
   {
     primaryText: "QR Code Generator",
     secondaryText:
       "Generate custom QR codes for links, text, WiFi, and contact information.",
-    icon: QrCodeGeneratorIcon,
+    icon: "/images/homepageIcons/qrCodeGeneratorIcon.png",
     href: "tools/qr-code-generator",
   },
   {
     primaryText: "Nature Color Palette",
     secondaryText:
       "Choose beautiful color palettes inspired by nature for your designs.",
-    icon: ColorPaletteGeneratorIcon,
+    icon: "/images/homepageIcons/colorPaletteIcon.png",
     href: "/tools/nature-color-palette",
   },
   {
@@ -273,22 +274,29 @@ const toolsThatDoMoreToolsData = [
     primaryText: "Unit Converter",
     secondaryText:
       "Convert units like length, weight, temperature, currency, and more.",
-    icon: UnitConverterIcon,
+    icon: "/images/homepageIcons/unitConverterIcon.png",
     href: "/tools/universal-unit-converter",
   },
   {
-    primaryText: "Rotate PDFs",
+    primaryText: "Rotate PDF Pages",
     secondaryText:
-      "Convert units like length, weight, temperature, currency, and more.",
-    icon: UnitConverterIcon,
-    href: "/tools/rotate-pdfs",
+      "Quickly rotate your PDF pages to the correct angle with a fast and easy online PDF rotation tool.",
+    icon: "/images/homepageIcons/rotatePdfIcon.png",
+    href: "/tools/rotate-pdf-pages",
   },
   {
-    primaryText: "Delete PDFs",
+    primaryText: "Delete PDF Pages",
     secondaryText:
-      "Convert units like length, weight, temperature, currency, and more.",
-    icon: UnitConverterIcon,
-    href: "/tools/delete-pdfs",
+      "Remove unwanted or blank PDF pages instantly using a simple online tool designed for fast PDF page deletion.",
+    icon: "/images/homepageIcons/deletePdfIcon.png",
+    href: "/tools/delete-pdf-pages",
+  },
+  {
+    primaryText: "Image Format Converter",
+    secondaryText:
+      "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
+    icon: "/images/homepageIcons/imageFormatConverterIcon.png",
+    href: "/tools/image-format-converter",
   },
 ];
 
@@ -428,9 +436,18 @@ export default function ToolsThatDoSection({ searchTerm }) {
               cursor: "pointer",
             }}
           >
-            <Box sx={{ pb: "20px" }}>
+            {typeof tool.icon === "string" &&
+            tool.icon.startsWith("/images/") ? (
+              <Image
+                src={tool.icon}
+                alt={tool.primaryText}
+                width={128} // Adjust width as needed
+                height={128} // Adjust height as needed
+                quality={100}
+              />
+            ) : (
               <tool.icon />
-            </Box>
+            )}
             <Typography
               component="h1"
               variant="body2"

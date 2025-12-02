@@ -1280,7 +1280,8 @@ import { Close, ContentCopy, Download } from "@mui/icons-material";
 import Image from "next/image";
 import theme from "@/styles/theme";
 import Head from "next/head"; // ← Added
-
+import Lottie from "lottie-react"; // ← Added
+import copiedGif from "/public/sample.gif";
 const colorPalettesData = [
   {
     paletteImageSrc: "color-palette-1.jpg",
@@ -1904,7 +1905,7 @@ export default function NatureColorPaletteClient() {
     navigator.clipboard.writeText(color);
     setCopiedColor(color);
     setSnackbar({ open: true, message: "Color copied!" });
-    setTimeout(() => setCopiedColor(null), 1000);
+    setTimeout(() => setCopiedColor(null), 1500);
   };
 
   const handleDownloadPalette = () => {
@@ -2235,7 +2236,7 @@ export default function NatureColorPaletteClient() {
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCopyColor(color);
+                            handleOpenModal(palette);
                           }}
                         />
                       ))}
@@ -2337,14 +2338,45 @@ export default function NatureColorPaletteClient() {
                         background: color,
                         borderRadius: "8px",
                         cursor: "pointer",
-                        position: "relative",
+                        position: "relative", // Changed to relative for absolute positioning of children
                         transition: "all 0.2s",
-                        border:
-                          copiedColor === color ? "3px solid #4CAF50" : "none",
-                        "&:hover": { transform: "scale(1.05)" },
+
+                        display: "flex", // Added to center the copied message
+                        alignItems: "center", // Added to center the copied message
+                        justifyContent: "center", // Added to center the copied message
                       }}
                       onClick={() => handleCopyColor(color)}
-                    />
+                    >
+                      {/* Moved Copied! message inside the color box */}
+                      {copiedColor === color && (
+                        <Box
+                          sx={{
+                            borderRadius: "50px",
+                            p: "1px",
+
+                            background: theme.palette.primary.fourthMain, // Slightly transparent background
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#fff",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            position: "absolute", // Position absolutely within the parent Box
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)", // Center the message
+                          }}
+                        >
+                          <Image
+                            src={copiedGif}
+                            alt="Copied"
+                            width={50} // Adjust width as needed
+                            height={50} // Adjust height as needed
+                            unoptimized // GIFs are not optimized by Next.js Image component
+                          />
+                        </Box>
+                      )}
+                    </Box>
                     <Box
                       sx={{
                         px: 1,
@@ -2363,22 +2395,7 @@ export default function NatureColorPaletteClient() {
                     >
                       {color}
                     </Box>
-                    {copiedColor === color && (
-                      <Box
-                        sx={{
-                          borderRadius: "4px",
-                          p: "6px",
-                          background: "#4CAF50",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#fff",
-                          fontSize: "12px",
-                        }}
-                      >
-                        Copied!
-                      </Box>
-                    )}
+                    {/* Removed the old copied message block */}
                   </Stack>
                 ))}
               </Box>

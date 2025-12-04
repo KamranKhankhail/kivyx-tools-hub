@@ -1281,7 +1281,7 @@ import Image from "next/image";
 import theme from "@/styles/theme";
 import Head from "next/head"; // ← Added
 import Lottie from "lottie-react"; // ← Added
-import copiedGif from "/public/sample.gif";
+import copiedGif from "/public/images/sample.gif";
 const colorPalettesData = [
   {
     paletteImageSrc: "color-palette-1.jpg",

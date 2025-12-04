@@ -806,7 +806,7 @@ export default function NatureColorPaletteClient() {
       <Box sx={{ minHeight: "100vh", p: 2, pt: 0 }}>
         <Box sx={{ maxWidth: "100%", mx: "auto" }}>
           {/* Header */}
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, mt: { lg: 0, md: 0, sm: 0, xs: 0, mob: "10px" } }}>
             <Typography
               component="h1"
               variant="body2"
@@ -881,13 +881,14 @@ export default function NatureColorPaletteClient() {
                 onClick={() => handleOpenModal(palette)}
                 key={i}
                 item
-                size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                size={{ mob: 12, xs: 6, sm: 6, md: 4, lg: 3 }}
               >
                 <Card
                   sx={{
                     background: "#fff",
                     borderRadius: "12px",
                     overflow: "hidden",
+                    position: "relative",
                     boxShadow: palette.colorPalette
                       .map((c, i) => `0 ${8 + i * 4}px ${16 + i * 8}px ${c}40`)
                       .join(", "),
@@ -996,9 +997,16 @@ export default function NatureColorPaletteClient() {
                 transform: "translate(-50%, -50%)",
                 background: "#fff",
                 borderRadius: "16px",
-                p: 4,
-                maxWidth: 600,
-                width: "90%",
+                px: { lg: 4, md: 4, sm: 4, xs: 4, mob: 2 },
+                py: 4,
+                maxWidth: { lg: 600, md: 600, sm: 600, xs: 600, mob: "100%" },
+                width: {
+                  lg: "90%",
+                  md: "90%",
+                  sm: "90%",
+                  xs: "90%",
+                  mob: "98%",
+                },
                 boxShadow: "0 20px 80px rgba(0, 0, 0, 0.3)",
               }}
             >
@@ -1062,12 +1070,19 @@ export default function NatureColorPaletteClient() {
                 Color Palette
               </Typography>
 
-              <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
+              <Stack
+                direction="row"
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  mb: 3,
+                }}
+              >
                 {selectedPalette?.colorPalette.map((color, idx) => (
                   <Stack
                     direction="column"
                     key={idx}
-                    sx={{ gap: "12px", flex: 1 }}
+                    sx={{ gap: "12px", flex: "1 1 auto", minWidth: 30 }}
                   >
                     <Box
                       sx={{
@@ -1116,11 +1131,11 @@ export default function NatureColorPaletteClient() {
                     </Box>
                     <Box
                       sx={{
-                        px: 1,
+                        px: { lg: 1, md: 1, sm: 1, xs: 1, mob: 0 },
                         py: 0.3,
                         borderRadius: "20px",
                         background: "#fff",
-                        fontSize: "16px",
+                        fontSize: { lg: 16, md: 16, sm: 16, xs: 16, mob: 12 },
                         textAlign: "center",
                         fontWeight: 600,
                         color: theme.palette.primary.main,
@@ -1135,7 +1150,7 @@ export default function NatureColorPaletteClient() {
                     {/* Removed the old copied message block */}
                   </Stack>
                 ))}
-              </Box>
+              </Stack>
 
               {/* Action Buttons */}
               <Box sx={{ display: "flex", gap: 2, mt: 4, flexWrap: "wrap" }}>
@@ -1150,7 +1165,7 @@ export default function NatureColorPaletteClient() {
                     py: 1.2,
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "18px",
+                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
                     "&:hover": {
                       borderColor: "#0097A7",
                       background: "rgba(0, 188, 212, 0.05)",
@@ -1192,7 +1207,7 @@ export default function NatureColorPaletteClient() {
                     py: 1.2,
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "18px",
+                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
                     "&:hover": {
                       borderColor: "#388E3C",
                       background: "rgba(76, 175, 80, 0.05)",
@@ -1216,7 +1231,7 @@ export default function NatureColorPaletteClient() {
                     py: 1.2,
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "18px",
+                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
                     "&:hover": {
                       borderColor: "#F57C00",
                       background: "rgba(255, 152, 0, 0.05)",
@@ -1253,7 +1268,7 @@ export default function NatureColorPaletteClient() {
                     py: 1.2,
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "18px",
+                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
                     "&:hover": {
                       borderColor: theme.palette.primary.main,
                       background: "#f5f5f5",

@@ -93,7 +93,7 @@ export default function page() {
           }}
         />
       </Head>
-      <Suspense fallback={<div>Loading Nature Color Palette...</div>}>
+      <Suspense>
         <NatureColorPaletteClient />
       </Suspense>
     </>

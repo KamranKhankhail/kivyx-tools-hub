@@ -427,7 +427,7 @@ export default function Navbar() {
             disableGutters
             sx={{
               px: "32px",
-              py: "6px",
+              py: { lg: "6px", md: "6px", sm: "6px", xs: "6px", mob: "1px" },
               justifyContent: "space-between",
             }}
           >
@@ -452,8 +452,29 @@ export default function Navbar() {
             >
               Islam Encyclo
             </Typography> */}
-            <Box component={Link} href="/" sx={{ cursor: "pointer" }}>
-              <ToolsHubIcon width="147" />
+            <Box
+              component={Link}
+              href="/"
+              sx={{
+                cursor: "pointer",
+                width: {
+                  mob: "120px", // For your 'mob' breakpoint
+                  xs: "120px", // For your 'xs' breakpoint
+                  sm: "147px", // For your 'sm' breakpoint
+                  md: "147px", // For 'md' and larger, keep original size
+                },
+                height: {
+                  mob: "auto", // Maintain aspect ratio
+                  xs: "auto",
+                  sm: "auto",
+                  md: "auto",
+                },
+                display: "flex", // Added to ensure the SVG inside flexes correctly
+                alignItems: "center", // Center vertically
+                justifyContent: "center", // Center horizontally
+              }}
+            >
+              <ToolsHubIcon /> {/* ToolsHubIcon will now fill this Box */}
             </Box>
 
             <TextField

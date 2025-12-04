@@ -182,7 +182,7 @@ export default function RootLayout({ children }) {
                   "radial-gradient(425.23% 208% at -81.08% -22.7%, rgba(255, 255, 255, 0.870588) 0%, rgba(175, 236, 255, 0.785294) 65.51%, rgba(204, 230, 230, 0.93) 100%)",
               }}
             >
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense>
                 {" "}
                 <NavbarWrapper />
                 {children}

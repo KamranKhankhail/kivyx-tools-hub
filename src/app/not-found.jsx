@@ -1,4 +1,5 @@
 import NotFoundClient from "../components/common/NotFoundClient";
+import { Suspense } from "react";
 
 // ✅ SEO metadata (works on server)
 export const metadata = {
@@ -11,5 +12,9 @@ export const metadata = {
 };
 
 export default function NotFound() {
-  return <NotFoundClient />;
+  return (
+    <Suspense>
+      <NotFoundClient />
+    </Suspense>
+  );
 }

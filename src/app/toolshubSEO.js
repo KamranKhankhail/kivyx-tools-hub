@@ -1,9 +1,9 @@
 // src/app/toolshubSEO.js
 
 // Base URL for Toolshub
-const TOOLSHUB_BASE_URL = "https://www.toolshub.kivyx.com";
-const KIVYX_MAIN_URL = "https://www.kivyx.com";
-const KIVYX_FAVICON_URL = "https://www.kivyx.com/favicon.ico";
+export const TOOLSHUB_BASE_URL = "https://www.toolshub.kivyx.com";
+export const KIVYX_MAIN_URL = "https://www.kivyx.com";
+export const KIVYX_FAVICON_URL = "https://www.kivyx.com/favicon.ico";
 
 // =====================================================================
 // Toolshub Homepage SEO
@@ -1106,60 +1106,130 @@ export const speakableAEODeletePdf = {
   xpath: ["/html/head/title", "/html/body//h1", "/html/body//p[1]"],
 };
 
+export const metadataImageFormatConverter = {
+  title:
+    "Image Format Converter | Convert JPG, PNG, WEBP, GIF Online - ToolsHub",
+  description:
+    "Convert images between formats like JPG, PNG, WEBP, GIF, BMP, and more instantly with ToolsHub's free online Image Format Converter.",
+  keywords: [
+    "image format converter",
+    "convert jpg to png",
+    "convert png to jpg",
+    "convert webp to jpg",
+    "convert image online",
+    "free image converter",
+    "jpg to webp",
+    "png to webp",
+  ],
+  openGraph: {
+    title: "Image Format Converter | Free Online JPG, PNG, WEBP Converter",
+    description:
+      "Easily convert images between formats like JPG, PNG, WEBP, and GIF using ToolsHub’s fast and free online converter.",
+    url: `${TOOLSHUB_BASE_URL}/tools/image-format-converter`,
+    siteName: "ToolsHub | Kivyx Technologies",
+    images: [
+      {
+        url: `${TOOLSHUB_BASE_URL}/images/image-format-converter-banner.png`,
+        width: 1200,
+        height: 630,
+        alt: "Online Image Format Converter Tool",
+      },
+    ],
+    type: "website",
+  },
+};
+
+export const jsonLdImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Image Format Converter",
+  description:
+    "Convert images between JPG, PNG, WEBP, GIF, and other formats instantly using ToolsHub’s free online converter.",
+  url: `${TOOLSHUB_BASE_URL}/tools/image-format-converter`,
+  publisher: {
+    "@type": "Organization",
+    name: "Kivyx Technologies",
+    url: KIVYX_MAIN_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: KIVYX_FAVICON_URL,
+    },
+  },
+};
+
+export const breadcrumbsImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: KIVYX_MAIN_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "ToolsHub",
+      item: TOOLSHUB_BASE_URL,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Image Format Converter",
+      item: `${TOOLSHUB_BASE_URL}/tools/image-format-converter`,
+    },
+  ],
+};
+
+export const faqSchemasImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What image formats can I convert?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Our Image Format Converter supports a wide range of popular formats including JPG, PNG, WEBP, GIF, BMP, and more, allowing you to convert between them seamlessly.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is the Image Format Converter free to use?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, ToolsHub's Image Format Converter is completely free to use, with no hidden costs or limits on conversions.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is my image data secure during conversion?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We prioritize your privacy and security. All image processing happens in your browser or on secure servers, and files are automatically deleted after conversion.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do I need to install any software?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No, our Image Format Converter is an online tool that works directly in your web browser. No software installation is required.",
+      },
+    },
+  ],
+};
+
+export const speakableAEOImageFormatConverter = {
+  "@context": "https://schema.org",
+  "@type": "SpeakableSpecification",
+  xpath: ["/html/head/title", "/html/body//h1", "/html/body//p[1]"],
+};
+
 // =====================================================================
 // Sitemap Entries for Toolshub (Append to app/sitemap.js)
 // =====================================================================
 
 // You will need to add these entries to your existing `app/sitemap.js` file.
 // Make sure to merge this with your existing sitemap array.
-export const toolshubSitemapEntries = [
-  // 🔹 Toolshub Homepage
-  {
-    url: `${TOOLSHUB_BASE_URL}/`,
-    lastModified: new Date(),
-    changefreq: "daily",
-    priority: 1.0,
-  },
-  // 🔹 Password Generator
-  {
-    url: `${TOOLSHUB_BASE_URL}/tools/password-generator`,
-    lastModified: new Date(),
-    changefreq: "weekly",
-    priority: 0.8,
-  },
-  // 🔹 QR Code Generator
-  {
-    url: `${TOOLSHUB_BASE_URL}/tools/qr-code-generator`,
-    lastModified: new Date(),
-    changefreq: "weekly",
-    priority: 0.8,
-  },
-  // 🔹 Nature Color Palette
-  {
-    url: `${TOOLSHUB_BASE_URL}/tools/nature-color-palette`,
-    lastModified: new Date(),
-    changefreq: "monthly",
-    priority: 0.7,
-  },
-  // 🔹 Merge PDFs
-  {
-    url: `${TOOLSHUB_BASE_URL}/tools/merge-pdfs`,
-    lastModified: new Date(),
-    changefreq: "weekly",
-    priority: 0.8,
-  },
-  // 🔹 Split PDFs
-  {
-    url: `${TOOLSHUB_BASE_URL}/tools/split-pdfs`,
-    lastModified: new Date(),
-    changefreq: "weekly",
-    priority: 0.8,
-  },
-  // 🔹 Universal Unit Converter
-  {
-    url: `${TOOLSHUB_BASE_URL}/tools/universal-unit-converter`,
-    lastModified: new Date(),
-    changefreq: "weekly",
-    priority: 0.8,
-  },
-];

@@ -4,6 +4,7 @@ import {
   speakableAEONatureColorPalette,
 } from "@/app/toolshubSEO"; // Adjust path if needed
 import NatureColorPaletteClient from "@/app/tools/nature-color-palette/_components/NatureColorPaletteClient";
+import { Suspense } from "react";
 import Head from "next/head";
 const TOOLSHUB_BASE_URL = "https://www.toolshub.kivyx.com";
 const KIVYX_MAIN_URL = "https://www.kivyx.com";
@@ -92,7 +93,9 @@ export default function page() {
           }}
         />
       </Head>
-      <NatureColorPaletteClient />
+      <Suspense fallback={<div>Loading Nature Color Palette...</div>}>
+        <NatureColorPaletteClient />
+      </Suspense>
     </>
   );
 }

@@ -86,7 +86,7 @@ export default function HeaderSection({ searchTerm, onSearchChange }) {
         justifyContent: "center",
         alignItems: "center",
         // pt: { lg: "60px", md: "60px", sm: "0px", xs: "0px", mob: "0px" },
-        px: { lg: "100px", md: "100px", sm: "30px", xs: "30px", mob: "30px" },
+        px: { lg: "100px", md: "100px", sm: "30px", xs: "30px", mob: "20px" },
       }}
     >
       <TextField
@@ -112,7 +112,7 @@ export default function HeaderSection({ searchTerm, onSearchChange }) {
           },
           "& .MuiOutlinedInput-root": {
             borderRadius: "50px",
-            px: "40px",
+            px: { sm: "40px", xs: "30px", mob: "20px" },
             background:
               "linear-gradient(180deg, rgba(128, 192, 192, 0.2) 0%, rgba(213, 234, 234, 0.136) 50%, rgba(37, 49, 100, 0.174118) 100%)",
 
@@ -138,7 +138,13 @@ export default function HeaderSection({ searchTerm, onSearchChange }) {
             backgroundColor: "transparent",
             py: "20px",
             px: "10px",
-            fontSize: "28px",
+            fontSize: {
+              lg: "28px",
+              md: "28px",
+              sm: "28px",
+              xs: "22px",
+              mob: "18px",
+            },
             color: "#2424249C", // Text color
           },
         }}

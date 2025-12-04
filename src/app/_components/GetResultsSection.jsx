@@ -43,8 +43,12 @@ export default function GetResultsSection() {
       </SectionMainPara>
       <Stack
         direction="row"
-        gap={8}
-        sx={{ flexWrap: "wrap", justifyContent: "center", pt: "80px" }}
+        gap={{ lg: 8, md: 8, sm: 8, xs: 6, mob: 4 }}
+        sx={{
+          flexWrap: "wrap",
+          justifyContent: "center",
+          pt: { lg: "80px", md: "80px", sm: "80px", xs: "40px", mob: "0px" },
+        }}
       >
         {getResultsData.map((tool, i) => (
           <Stack
@@ -147,8 +151,8 @@ export default function GetResultsSection() {
           border: "1px solid #DDFDFDED",
           p: "44px",
           alignItems: "center",
-          mt: "90px",
-          mb: "30px",
+          mt: { lg: "90px", md: "90px", sm: "90px", xs: "90px", mob: "45px" },
+          mb: { lg: "30px", md: "30px", sm: "30px", xs: "30px", mob: "20px" },
         }}
       >
         <Typography
@@ -174,7 +178,13 @@ export default function GetResultsSection() {
             color: "#ddfdfdb1",
             textAlign: "center",
             zIndex: "5",
-            px: "280px",
+            px: {
+              lg: "280px",
+              md: "280px",
+              sm: "280px",
+              xs: "20px",
+              mob: "10px",
+            },
           }}
         >
           Finish tasks in minutes, no setup required. Pure efficiency, zero

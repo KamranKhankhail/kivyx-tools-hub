@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+
 import {
   Box,
   Grid,
@@ -19,6 +19,11 @@ import theme from "@/styles/theme";
 import Head from "next/head"; // ← Added
 import Lottie from "lottie-react"; // ← Added
 import copiedGif from "/public/images/sample.gif";
+// Add these imports at the top of NatureColorPaletteClient.jsx
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import React, { useState, useRef, useEffect, useCallback } from "react"; // Ensure these are imported
+
 const colorPalettesData = [
   {
     paletteImageSrc: "color-palette-1.jpg",
@@ -628,6 +633,55 @@ export default function NatureColorPaletteClient() {
   const [copiedColor, setCopiedColor] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
 
+  // ... existing state ...
+  const theme = useTheme();
+  // Adjust breakpoint as needed. 'mob' is your smallest.
+  const isMobile = useMediaQuery(theme.breakpoints.down("xs")); // true for screens smaller than 640px
+
+  // State to keep track of which card is "centered" on mobile
+  const [centeredCardId, setCenteredCardId] = useState(null);
+
+  // Refs for each card to observe
+  const cardRefs = useRef({});
+
+  // Intersection Observer callback
+  const handleIntersect = useCallback(
+    (entries) => {
+      entries.forEach((entry) => {
+        const cardId = entry.target.dataset.cardId;
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.75) {
+          // Adjust threshold as needed
+          setCenteredCardId(cardId);
+        } else if (centeredCardId === cardId && !entry.isIntersecting) {
+          setCenteredCardId(null);
+        }
+      });
+    },
+    [centeredCardId]
+  ); // Dependency on centeredCardId to clear it when no longer intersecting
+
+  useEffect(() => {
+    if (!isMobile) {
+      setCenteredCardId(null); // Clear centered state if no longer mobile
+      return;
+    }
+
+    const observer = new IntersectionObserver(handleIntersect, {
+      root: null, // viewport
+      rootMargin: "0px",
+      threshold: [0, 0.25, 0.5, 0.4, 1], // Observe various visibility percentages
+    });
+
+    Object.values(cardRefs.current).forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      Object.values(cardRefs.current).forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [isMobile, handleIntersect]);
   const handleOpenModal = (palette) => {
     setSelectedPalette(palette);
     setOpenModal(true);
@@ -884,6 +938,8 @@ export default function NatureColorPaletteClient() {
                 size={{ mob: 12, xs: 6, sm: 6, md: 4, lg: 3 }}
               >
                 <Card
+                  ref={(el) => (cardRefs.current[palette.paletteName] = el)}
+                  data-card-id={palette.paletteName}
                   sx={{
                     background: "#fff",
                     borderRadius: "12px",
@@ -903,6 +959,16 @@ export default function NatureColorPaletteClient() {
                         )
                         .join(", "),
                     },
+                    ...(isMobile &&
+                      centeredCardId === palette.paletteName && {
+                        transform: "translateY(-8px)",
+                        boxShadow: palette.colorPalette
+                          .map(
+                            (c, i) =>
+                              `0 ${12 + i * 5}px ${24 + i * 10}px ${c}60`
+                          )
+                          .join(", "),
+                      }),
                   }}
                 >
                   <Box

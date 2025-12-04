@@ -27,7 +27,7 @@ export default function WhytoolshubSection() {
           "radial-gradient(278.82% 508.63% at -133.28% -141.92%, rgba(204, 230, 230, 0.93) 0%, #09123A 50%, #80C0C0 100%)",
 
         px: { lg: "40px", md: "40px", sm: "100px", xs: "50px", mob: "0px" },
-        py: "120px",
+        py: { lg: "120px", md: "120px", sm: "120px", xs: "80px", mob: "80px" },
 
         position: "relative", // IMPORTANT: This Stack needs to be relative for absolute children
         alignItems: "center", // Center content horizontally
@@ -46,7 +46,10 @@ export default function WhytoolshubSection() {
       <Stack
         direction="column"
         gap={8}
-        sx={{ justifyContent: "center", pt: "80px" }}
+        sx={{
+          justifyContent: "center",
+          pt: { lg: "80px", md: "80px", sm: "80px", xs: "60px", mob: "20px" },
+        }}
       >
         {whyToolshubData.map((tool, i) => (
           <Stack

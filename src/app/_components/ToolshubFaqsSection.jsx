@@ -100,7 +100,7 @@ export default function ToolshubFaqsSection() {
     <Stack
       sx={{
         px: { lg: "30px", md: "40px", sm: "100px", xs: "50px", mob: "0px" },
-        py: "180px",
+        py: { lg: "180px", md: "180px", sm: "180px", xs: "120px", mob: "80px" },
 
         position: "relative",
         alignItems: "center",
@@ -127,7 +127,7 @@ export default function ToolshubFaqsSection() {
             justifyContent: "center",
             gap: "20px",
             alignItems: "start",
-            pt: "60px",
+            pt: { lg: "60px", md: "60px", sm: "60px", xs: "40px", mob: "20px" },
           }}
         >
           {FAQsCards.map((card, i) => (
@@ -136,10 +136,21 @@ export default function ToolshubFaqsSection() {
               role="button"
               key={i}
               sx={{
-                borderRadius: "30px",
+                borderRadius: {
+                  lg: "30px",
+                  md: "30px",
+                  sm: "30px",
+                  xs: "20px",
+                  mob: "20px",
+                },
                 minWidth: "100%",
-                p: "40px",
-
+                p: {
+                  lg: "40px",
+                  md: "40px",
+                  sm: "40px",
+                  xs: "30px",
+                  mob: "30px",
+                },
                 // background:
                 //   "linear-gradient(180deg, #FFFFFF 0%, rgba(213, 234, 234, 0.8) 50%, rgba(170, 213, 213, 0.7) 100%) padding-box padding-box, linear-gradient(180deg, rgba(128, 192, 192, 0.57) 0%, rgba(128, 192, 192, 0.68) 100%) border-box border-box",
 

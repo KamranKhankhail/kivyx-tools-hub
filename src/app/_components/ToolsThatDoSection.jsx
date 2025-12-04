@@ -298,13 +298,13 @@ const toolsThatDoMoreToolsData = [
     icon: "/images/homepageIcons/imageFormatConverterIcon.png",
     href: "/tools/image-format-converter",
   },
-  {
-    primaryText: "Image Compressor",
-    secondaryText:
-      "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
-    icon: "/images/homepageIcons/imageFormatConverterIcon.png",
-    href: "/tools/image-compressor",
-  },
+  // {
+  //   primaryText: "Image Compressor",
+  //   secondaryText:
+  //     "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
+  //   icon: "/images/homepageIcons/imageFormatConverterIcon.png",
+  //   href: "/tools/image-compressor",
+  // },
 ];
 
 export default function ToolsThatDoSection({ searchTerm }) {
@@ -358,7 +358,7 @@ export default function ToolsThatDoSection({ searchTerm }) {
           color: theme.palette.primary.main,
           textAlign: "center",
           zIndex: 5,
-          px: "46px",
+          px: { lg: "46px", md: "46px", sm: "46px", xs: "36px", mob: "26px" },
         }}
       >
         ToolsHub — Your Toolkit for the
@@ -402,7 +402,7 @@ export default function ToolsThatDoSection({ searchTerm }) {
           zIndex: "5",
 
           pt: "12px",
-          px: "80px",
+          px: { lg: "80px", md: "80px", sm: "80px", xs: "80px", mob: "20px" },
         }}
       >
         ToolsHub is a complete collection of online utilities designed to
@@ -414,7 +414,7 @@ export default function ToolsThatDoSection({ searchTerm }) {
         gap={2}
         sx={{
           flexWrap: "wrap",
-          px: "40px",
+          px: { lg: "40px", md: "40px", sm: "40px", xs: "40px", mob: "10px" },
           justifyContent: "center",
           pt: "20px",
         }}

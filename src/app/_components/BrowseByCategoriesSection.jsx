@@ -56,7 +56,7 @@ export default function BrowseByCategoriesSection() {
     <Stack
       sx={{
         px: { lg: "100px", md: "40px", sm: "100px", xs: "50px", mob: "0px" },
-        py: "180px",
+        my: { lg: "180px", md: "180px", sm: "160px", xs: "130px", mob: "90px" },
 
         position: "relative",
         alignItems: "center",
@@ -75,7 +75,7 @@ export default function BrowseByCategoriesSection() {
         sx={{
           flexWrap: "wrap",
           justifyContent: "center",
-          pt: "80px",
+          pt: { lg: "80px", md: "80px", sm: "80px", xs: "50px", mob: "20px" },
 
           flex: 1,
         }}

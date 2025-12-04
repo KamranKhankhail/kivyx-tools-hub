@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function SearchIcon({ width = "31px", height = "31px" }) {
+export default function SearchIcon({ width = "22px", height = "22px" }) {
   return (
     <svg
       width={width}

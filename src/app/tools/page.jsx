@@ -295,13 +295,13 @@ const toolsThatDoMoreToolsData = [
     icon: "/images/homepageIcons/imageFormatConverterIcon.png",
     href: "/tools/image-format-converter",
   },
-  {
-    primaryText: "Image Compressor",
-    secondaryText:
-      "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
-    icon: "/images/homepageIcons/imageFormatConverterIcon.png",
-    href: "/tools/image-compressor",
-  },
+  // {
+  //   primaryText: "Image Compressor",
+  //   secondaryText:
+  //     "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
+  //   icon: "/images/homepageIcons/imageFormatConverterIcon.png",
+  //   href: "/tools/image-compressor",
+  // },
 ];
 
 export default function page() {

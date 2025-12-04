@@ -271,7 +271,7 @@ const toolsThatDoMoreToolsData = [
     primaryText: "Unit Converter",
     secondaryText:
       "Convert units like length, weight, temperature, currency, and more.",
-    icon: "/images/homepageIcons/UnitConverterIcon.png",
+    icon: "/images/UnitConverterIcon.png",
     href: "/tools/universal-unit-converter",
   },
   {
@@ -294,6 +294,13 @@ const toolsThatDoMoreToolsData = [
       "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
     icon: "/images/homepageIcons/imageFormatConverterIcon.png",
     href: "/tools/image-format-converter",
+  },
+  {
+    primaryText: "Image Compressor",
+    secondaryText:
+      "Convert images between formats like JPG, PNG, WEBP, and GIF instantly with this fast and easy online tool.",
+    icon: "/images/homepageIcons/imageFormatConverterIcon.png",
+    href: "/tools/image-compressor",
   },
 ];
 

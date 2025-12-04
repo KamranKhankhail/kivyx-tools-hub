@@ -274,7 +274,7 @@ const toolsThatDoMoreToolsData = [
     primaryText: "Unit Converter",
     secondaryText:
       "Convert units like length, weight, temperature, currency, and more.",
-    icon: "/images/homepageIcons/UnitConverterIcon.png",
+    icon: "/images/UnitConverterIcon.png",
     href: "/tools/universal-unit-converter",
   },
   {

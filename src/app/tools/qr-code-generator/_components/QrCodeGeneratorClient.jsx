@@ -108,30 +108,30 @@ const qrCodesButtonsData = [
     icon: FacebookIcon, // Replaced with MUI FacebookIcon
     openingComponent: FacebookScreen,
   },
-  {
-    title: "PDF",
-    tooltipText: "Displays a PDF",
-    icon: PictureAsPdfIcon, // Replaced with MUI PictureAsPdfIcon
-    openingComponent: PdfScreen,
-  },
-  {
-    title: "MP3",
-    tooltipText: "Plays an MP3 file",
-    icon: AudiotrackIcon, // Replaced with MUI AudiotrackIcon
-    openingComponent: Mp3Screen,
-  },
+  // {
+  //   title: "PDF",
+  //   tooltipText: "Displays a PDF",
+  //   icon: PictureAsPdfIcon, // Replaced with MUI PictureAsPdfIcon
+  //   openingComponent: PdfScreen,
+  // },
+  // {
+  //   title: "MP3",
+  //   tooltipText: "Plays an MP3 file",
+  //   icon: AudiotrackIcon, // Replaced with MUI AudiotrackIcon
+  //   openingComponent: Mp3Screen,
+  // },
   {
     title: "APP STORES",
     tooltipText: "Redirects to different app stores",
     icon: ShopTwoIcon, // Replaced with MUI ShopTwoIcon
     openingComponent: AppStoresScreen,
   },
-  {
-    title: "IMAGES",
-    tooltipText: "Shows an image gallery",
-    icon: PhotoLibraryIcon, // Replaced with MUI PhotoLibraryIcon
-    openingComponent: ImageGalleryScreen,
-  },
+  // {
+  //   title: "IMAGES",
+  //   tooltipText: "Shows an image gallery",
+  //   icon: PhotoLibraryIcon, // Replaced with MUI PhotoLibraryIcon
+  //   openingComponent: ImageGalleryScreen,
+  // },
 ];
 
 // Frame data for the QR code preview container
@@ -888,7 +888,7 @@ export default function QrCodeGeneratorClient() {
       </Grid>
 
       {/* 🔹 History Section */}
-      <Box sx={{ mt: 4 }}>
+      {/* <Box sx={{ mt: 4 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
           History
         </Typography>
@@ -913,7 +913,7 @@ export default function QrCodeGeneratorClient() {
             ))
           )}
         </Stack>
-      </Box>
+      </Box> */}
 
       <Snackbar
         open={toast.open}

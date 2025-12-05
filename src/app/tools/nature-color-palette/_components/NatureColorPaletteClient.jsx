@@ -12,8 +12,20 @@ import {
   Alert,
   Stack,
   Fade,
+  Menu,
+  MenuItem,
 } from "@mui/material";
-import { Close, ContentCopy, Download } from "@mui/icons-material";
+import {
+  Close,
+  ContentCopy,
+  Download,
+  Share,
+  Twitter,
+  Facebook,
+  LinkOutlined,
+  WhatsApp,
+  MoreHoriz,
+} from "@mui/icons-material";
 import Image from "next/image";
 import theme from "@/styles/theme";
 import Head from "next/head"; // ← Added
@@ -23,7 +35,7 @@ import copiedGif from "/public/images/sample.gif";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import React, { useState, useRef, useEffect, useCallback } from "react"; // Ensure these are imported
-
+import { useRouter, useSearchParams } from "next/navigation";
 const colorPalettesData = [
   {
     paletteImageSrc: "color-palette-1.jpg",
@@ -632,8 +644,9 @@ export default function NatureColorPaletteClient() {
   const [openModal, setOpenModal] = useState(false);
   const [copiedColor, setCopiedColor] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
-
-  // ... existing state ...
+  const [anchorElShare, setAnchorElShare] = useState(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const theme = useTheme();
   // Adjust breakpoint as needed. 'mob' is your smallest.
   const isMobile = useMediaQuery(theme.breakpoints.down("xs")); // true for screens smaller than 640px
@@ -685,12 +698,117 @@ export default function NatureColorPaletteClient() {
   const handleOpenModal = (palette) => {
     setSelectedPalette(palette);
     setOpenModal(true);
+    router.push(
+      `?palette=${encodeURIComponent(palette.paletteName)}`,
+      undefined,
+      { shallow: true }
+    );
   };
 
   const handleCloseModal = () => {
-    setOpenModal(false);
+    router.push(window.location.pathname, { scroll: false });
     setCopiedColor(null);
   };
+  // --- Share Menu Handlers ---
+  const handleShareClick = (event) => {
+    setAnchorElShare(event.currentTarget);
+  };
+
+  const handleShareClose = () => {
+    setAnchorElShare(null);
+  };
+
+  // --- URL Generation for Sharing ---
+  const generateShareLink = (paletteName) => {
+    // Ensure the base URL is correct. You might need to configure this based on your deployment.
+    // For local development, this will use localhost. For production, it will use your domain.
+    const baseUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/tools/nature-color-palette`
+        : "https://www.toolshub.kivyx.com/tools/nature-color-palette";
+    return `${baseUrl}?palette=${encodeURIComponent(paletteName)}`;
+  };
+
+  const handleSharePlatform = (platform) => {
+    if (!selectedPalette) return;
+
+    const shareUrl = generateShareLink(selectedPalette.paletteName);
+    const shareText = `Check out this amazing nature color palette: ${selectedPalette.paletteName} from ToolsHub!`;
+
+    switch (platform) {
+      case "twitter":
+        window.open(
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+            shareUrl
+          )}&text=${encodeURIComponent(shareText)}`,
+          "_blank"
+        );
+        break;
+      case "facebook":
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+            shareUrl
+          )}`,
+          "_blank"
+        );
+        break;
+      case "whatsapp":
+        // WhatsApp Web/App sharing URL
+        window.open(
+          `https://api.whatsapp.com/send?text=${encodeURIComponent(
+            shareText + " " + shareUrl
+          )}`,
+          "_blank"
+        );
+        break;
+      case "copy_link":
+        navigator.clipboard.writeText(shareUrl);
+        setSnackbar({ open: true, message: "Share link copied to clipboard!" });
+        break;
+      case "native_share":
+        if (navigator.share) {
+          navigator
+            .share({
+              title: "Share Color Palette",
+              text: shareText,
+              url: shareUrl,
+            })
+            .catch((error) => console.error("Error sharing:", error));
+        } else {
+          setSnackbar({
+            open: true,
+            message: "Native share not supported on this device.",
+          });
+        }
+        break;
+      default:
+        break;
+    }
+    handleShareClose();
+  };
+
+  // --- Effect to check URL for shared palette on initial load and keep modal state in sync ---
+  useEffect(() => {
+    const paletteNameFromUrl = searchParams.get("palette");
+    if (paletteNameFromUrl) {
+      const decodedPaletteName = decodeURIComponent(paletteNameFromUrl);
+      const paletteToOpen = colorPalettesData.find(
+        (p) => p.paletteName === decodedPaletteName
+      );
+      if (paletteToOpen) {
+        // If palette found in URL, set it and open modal
+        setSelectedPalette(paletteToOpen);
+        setOpenModal(true);
+      } else {
+        setOpenModal(false);
+        setSelectedPalette(null);
+        router.replace(window.location.pathname, { scroll: false }); // Use replace to avoid extra history entry
+      }
+    } else {
+      setOpenModal(false);
+      setSelectedPalette(null);
+    }
+  }, [searchParams, router]); // Depend on searchParams and router
 
   const handleCopyColor = (color) => {
     navigator.clipboard.writeText(color);
@@ -787,49 +905,261 @@ export default function NatureColorPaletteClient() {
     return buffer.slice(0, offset);
   };
 
-  const handleDownloadPNG = () => {
+  const handleDownloadPNG = async () => {
     if (!selectedPalette) return;
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const colors = selectedPalette.colorPalette;
-    const swatchHeight = 80;
-    const padding = 20;
-    const textHeight = 40;
-    canvas.width = 600;
-    canvas.height = swatchHeight + padding * 2 + textHeight;
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // 1. Load the palette image
+    const img = new window.Image();
+    img.src = `/images/ColorPaletteImages/${selectedPalette.paletteImageSrc}`;
+    img.crossOrigin = "anonymous"; // Essential for drawing images from different origins (if applicable)
 
-    const swatchWidth = (canvas.width - padding * 2) / colors.length;
-    colors.forEach((color, i) => {
-      ctx.fillStyle = color;
-      ctx.fillRect(
-        padding + i * swatchWidth,
-        padding,
-        swatchWidth,
-        swatchHeight
-      );
-      ctx.strokeStyle = "#ddd";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        padding + i * swatchWidth,
-        padding,
-        swatchWidth,
-        swatchHeight
-      );
+    await new Promise((resolve) => {
+      img.onload = resolve;
+      img.onerror = () => {
+        console.error("Failed to load image:", img.src);
+        setSnackbar({
+          open: true,
+          message: "Failed to load image for download.",
+        });
+        resolve(); // Resolve even on error to prevent infinite loading
+      };
     });
 
-    ctx.font = "14px Arial";
-    ctx.fillStyle = "#333";
-    ctx.textAlign = "center";
-    colors.forEach((color, i) => {
-      const x = padding + i * swatchWidth + swatchWidth / 2;
-      const y = padding + swatchHeight + 25;
-      ctx.fillText(color.toUpperCase(), x, y);
-    });
+    // --- Define Card Dimensions and Styling Parameters based on your CSS ---
+    const cardOuterWidth = 300; // Fixed width for the entire card
+    const cardOuterPadding = 12; // Matches your Card 'p: "12px"'
+    const cardOuterBorderRadius = 12; // Matches your Card 'borderRadius: "12px"'
 
+    // Image Box Dimensions and Styling (inside the card)
+    const imageBoxHeight = 160; // Desired fixed height for the image container
+    const imageBoxBorderRadius = 12; // Matches your Image Box 'borderRadius: "12px"'
+    const imageInnerPadding = 0; // The Image component itself has no inner padding in its box, it fills.
+
+    // Calculate actual image drawing dimensions, maintaining aspect ratio
+    const imgNaturalAspectRatio = img.naturalWidth / img.naturalHeight;
+    let imgDrawWidth = imageBoxHeight * imgNaturalAspectRatio;
+    let imgDrawHeight = imageBoxHeight;
+
+    // If image width exceeds the container, scale by width
+    if (imgDrawWidth < cardOuterWidth - 2 * cardOuterPadding) {
+      // The Image's container is ImageBox, but for drawing it fills the whole width
+      imgDrawWidth = cardOuterWidth - 2 * cardOuterPadding;
+      imgDrawHeight = imgDrawWidth / imgNaturalAspectRatio;
+    }
+
+    // Text and Swatch dimensions
+    const titleFontSize = 20;
+    const titleLineHeight = titleFontSize * 1.2;
+    const titleTopPadding = 16; // Based on your Box 'pt: 2' (16px)
+
+    const swatchHeight = 40;
+    const swatchGap = 4; // Gap between color swatches
+    const swatchBorderRadius = 4; // Matches your color Box 'borderRadius: "4px"'
+    const swatchTopPadding = 12; // Based on your Box 'mb: 1.5'
+
+    const hexTextFontSize = 9;
+    const hexTextLineHeight = hexTextFontSize * 1.5;
+
+    const watermarkFontSize = 10;
+    const watermarkLineHeight = watermarkFontSize * 1.2;
+    const watermarkBottomPadding = 12; // Adjusted for cleaner look
+
+    // --- Calculate total canvas height dynamically ---
+    let calculatedContentHeight = 0;
+
+    // Section: Image Box
+    calculatedContentHeight += imageBoxHeight;
+
+    // Section: Title and its padding
+    calculatedContentHeight += titleTopPadding;
+    calculatedContentHeight += titleLineHeight;
+    calculatedContentHeight += swatchTopPadding; // This is actually the mb for the title, becoming space before swatches
+
+    // Section: Color Swatches
+    calculatedContentHeight += swatchHeight;
+    calculatedContentHeight += cardOuterPadding; // Space between swatches and hex codes
+
+    // Section: Hex Color Codes
+    calculatedContentHeight += hexTextLineHeight;
+    calculatedContentHeight += cardOuterPadding; // Space before watermark
+
+    // Section: Watermark
+    calculatedContentHeight += watermarkLineHeight;
+
+    canvas.width = cardOuterWidth;
+    canvas.height =
+      calculatedContentHeight + 2 * cardOuterPadding + watermarkBottomPadding; // Total canvas height
+
+    // --- Helper function to draw rounded rectangles ---
+    const drawRoundedRect = (
+      x,
+      y,
+      width,
+      height,
+      radius,
+      fillColor,
+      strokeColor = null
+    ) => {
+      ctx.fillStyle = fillColor;
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.arcTo(x + width, y, x + width, y + radius, radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+      ctx.lineTo(x + radius, y + height);
+      ctx.arcTo(x, y + height, x, y + height - radius, radius);
+      ctx.lineTo(x, y + radius);
+      ctx.arcTo(x, y, x + radius, y, radius);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeColor) {
+        ctx.strokeStyle = strokeColor;
+        ctx.stroke();
+      }
+    };
+
+    // --- Start Drawing ---
+
+    // 2. Draw the main card background with rounded corners
+    drawRoundedRect(
+      0,
+      0,
+      cardOuterWidth,
+      canvas.height,
+      cardOuterBorderRadius,
+      "#ffffff" // Main card background
+    );
+
+    let currentY = cardOuterPadding; // Start drawing content from inside the card's top padding
+
+    // 3. Draw the Image Container with Rounded Corners and Image
+    const imageBoxX = cardOuterPadding;
+    const imageBoxY = currentY;
+    const imageBoxDrawWidth = cardOuterWidth - 2 * cardOuterPadding;
+
+    // Clip to rounded rectangle for the image container
+    ctx.save(); // Save context state
+    ctx.beginPath();
+    ctx.moveTo(imageBoxX + imageBoxBorderRadius, imageBoxY);
+    ctx.lineTo(imageBoxX + imageBoxDrawWidth - imageBoxBorderRadius, imageBoxY);
+    ctx.arcTo(
+      imageBoxX + imageBoxDrawWidth,
+      imageBoxY,
+      imageBoxX + imageBoxDrawWidth,
+      imageBoxY + imageBoxBorderRadius,
+      imageBoxBorderRadius
+    );
+    ctx.lineTo(
+      imageBoxX + imageBoxDrawWidth,
+      imageBoxY + imageBoxHeight - imageBoxBorderRadius
+    );
+    ctx.arcTo(
+      imageBoxX + imageBoxDrawWidth,
+      imageBoxY + imageBoxHeight,
+      imageBoxX + imageBoxDrawWidth - imageBoxBorderRadius,
+      imageBoxY + imageBoxHeight,
+      imageBoxBorderRadius
+    );
+    ctx.lineTo(imageBoxX + imageBoxBorderRadius, imageBoxY + imageBoxHeight);
+    ctx.arcTo(
+      imageBoxX,
+      imageBoxY + imageBoxHeight,
+      imageBoxX,
+      imageBoxY + imageBoxHeight - imageBoxBorderRadius,
+      imageBoxBorderRadius
+    );
+    ctx.lineTo(imageBoxX, imageBoxY + imageBoxBorderRadius);
+    ctx.arcTo(
+      imageBoxX,
+      imageBoxY,
+      imageBoxX + imageBoxBorderRadius,
+      imageBoxY,
+      imageBoxBorderRadius
+    );
+    ctx.closePath();
+    ctx.clip(); // Clip everything outside this path
+
+    if (img.complete && img.naturalWidth > 0) {
+      // Calculate position to center the image within its box, mimicking object-fit: cover
+      const imgX = imageBoxX + (imageBoxDrawWidth - imgDrawWidth) / 2;
+      const imgY = imageBoxY + (imageBoxHeight - imgDrawHeight) / 2;
+      ctx.drawImage(img, imgX, imgY, imgDrawWidth, imgDrawHeight);
+    } else {
+      // Draw a placeholder if image failed to load
+      ctx.fillStyle = "#e0e0e0";
+      ctx.fillRect(imageBoxX, imageBoxY, imageBoxDrawWidth, imageBoxHeight);
+      ctx.fillStyle = "#666666";
+      ctx.textAlign = "center";
+      ctx.font = "14px Arial";
+      ctx.fillText(
+        "Image Not Available",
+        imageBoxX + imageBoxDrawWidth / 2,
+        imageBoxY + imageBoxHeight / 2 + 7
+      ); // +7 for vertical centering
+    }
+    ctx.restore(); // Restore context to remove clipping path
+
+    currentY += imageBoxHeight; // Move Y below the image container
+
+    // --- Drawing the Title ---
+    currentY += titleTopPadding; // Apply padding from image to title
+    ctx.font = `bold ${titleFontSize}px Arial`;
+    ctx.fillStyle = "#1a1a1a"; // Matches card title color
+    ctx.textAlign = "left";
+    ctx.fillText(
+      selectedPalette.paletteName,
+      cardOuterPadding, // Align to left card padding
+      currentY + titleLineHeight / 2
+    );
+    currentY += titleLineHeight;
+
+    // --- Drawing Color Swatches ---
+    currentY += swatchTopPadding; // Apply padding from title to swatches
+    const totalSwatchSpace = cardOuterWidth - 2 * cardOuterPadding;
+    const singleSwatchWidth =
+      (totalSwatchSpace - (colors.length - 1) * swatchGap) / colors.length;
+
+    colors.forEach((color, i) => {
+      drawRoundedRect(
+        cardOuterPadding + i * (singleSwatchWidth + swatchGap),
+        currentY,
+        singleSwatchWidth,
+        swatchHeight,
+        swatchBorderRadius,
+        color // Fill color of swatch
+      );
+    });
+    currentY += swatchHeight + cardOuterPadding; // Move Y below swatches + padding
+
+    // --- Drawing Hex Color Codes ---
+    ctx.font = `${hexTextFontSize}px Arial`;
+    ctx.fillStyle = theme.palette.primary.main;
+    ctx.textAlign = "center"; // Center for each color code
+    colors.forEach((color, i) => {
+      const x =
+        cardOuterPadding +
+        i * (singleSwatchWidth + swatchGap) +
+        singleSwatchWidth / 2;
+      ctx.fillText(color.toUpperCase(), x, currentY + hexTextLineHeight / 2);
+    });
+    currentY += hexTextLineHeight + cardOuterPadding;
+
+    // --- Drawing Watermark ---
+    ctx.font = `${watermarkFontSize}px Arial`;
+    ctx.fillStyle = theme.palette.secondary.thirdMain;
+    ctx.textAlign = "right";
+    ctx.fillText(
+      "created by @toolshub.kivyx.com",
+      cardOuterWidth - cardOuterPadding, // Align to right card padding
+      canvas.height - cardOuterPadding - watermarkLineHeight / 2 // Position from bottom padding
+    );
+
+    // --- Final download logic ---
     canvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -1088,7 +1418,43 @@ export default function NatureColorPaletteClient() {
               >
                 <Close />
               </IconButton>
-
+              <Menu
+                anchorEl={anchorElShare}
+                open={Boolean(anchorElShare)}
+                onClose={handleShareClose}
+                PaperProps={{
+                  sx: {
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                  },
+                }}
+              >
+                <MenuItem onClick={() => handleSharePlatform("twitter")}>
+                  <Twitter sx={{ mr: 1, color: "#1DA1F2" }} /> Share on Twitter
+                </MenuItem>
+                <MenuItem onClick={() => handleSharePlatform("facebook")}>
+                  <Facebook sx={{ mr: 1, color: "#1877F2" }} /> Share on
+                  Facebook
+                </MenuItem>
+                {/* New: WhatsApp Share */}
+                <MenuItem onClick={() => handleSharePlatform("whatsapp")}>
+                  <WhatsApp sx={{ mr: 1, color: "#25D366" }} /> Share on
+                  WhatsApp
+                </MenuItem>
+                {/* New: Native Share (More Options) */}
+                <MenuItem onClick={() => handleSharePlatform("native_share")}>
+                  <MoreHoriz
+                    sx={{ mr: 1, color: theme.palette.primary.main }}
+                  />{" "}
+                  More Options
+                </MenuItem>
+                <MenuItem onClick={() => handleSharePlatform("copy_link")}>
+                  <LinkOutlined
+                    sx={{ mr: 1, color: theme.palette.primary.main }}
+                  />{" "}
+                  Copy Share Link
+                </MenuItem>
+              </Menu>
               <Box
                 sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}
               >
@@ -1326,7 +1692,7 @@ export default function NatureColorPaletteClient() {
                 <Button
                   fullWidth
                   variant="outlined"
-                  onClick={handleCloseModal}
+                  onClick={handleShareClick}
                   sx={{
                     borderColor: theme.palette.primary.main,
                     color: theme.palette.primary.main,
@@ -1339,9 +1705,12 @@ export default function NatureColorPaletteClient() {
                       borderColor: theme.palette.primary.main,
                       background: "#f5f5f5",
                     },
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "10px",
                   }}
                 >
-                  Back to All Palettes
+                  <Share sx={{ fontSize: 24 }} /> Share This Palette
                 </Button>
               </Box>
             </Box>

@@ -101,6 +101,9 @@ export const metadata = {
     "PDF Split Tools",
     "Only PDF Tools",
   ],
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "ToolsHub | Your Essential Online Toolkit for Everyday Tasks",
     description:
@@ -129,13 +132,13 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite", // Use WebSite for a general collection/homepage
-              name: "ToolsHub by Kivyx Technologies",
+              name: "ToolsHub",
               url: TOOLSHUB_BASE_URL,
               description:
                 "ToolsHub offers a comprehensive suite of free online tools for everyday digital tasks, enhancing productivity and simplifying workflows. Explore password, QR code, PDF, unit conversion, and color palette tools.",
               publisher: {
                 "@type": "Organization",
-                name: "Kivyx Technologies",
+                name: "Toolshub",
                 url: KIVYX_MAIN_URL,
                 logo: {
                   "@type": "ImageObject",

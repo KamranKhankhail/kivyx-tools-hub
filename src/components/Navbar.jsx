@@ -314,7 +314,7 @@ import SearchIcon from "@/app/_components/icons/SearchIcon";
 const navItems = [
   { title: "Home", href: "/" },
   { title: "Tools", href: "/tools" },
-  { title: "What's New", href: "/whats-new" },
+  // { title: "What's New", href: "/whats-new" },
 ];
 
 const scrollSections = ["products", "team", "locations", "contact"];

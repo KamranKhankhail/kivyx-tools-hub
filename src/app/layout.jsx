@@ -176,6 +176,7 @@ export default function RootLayout({ children }) {
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-xxxxxxxxxxxx"
           crossOrigin="anonymous"
         />
+        <meta name="google-site-verification" content="YOUR_CODE" />
       </Head>
       <body
         className={`${chakraPetch.className} ${inter.variable} ${jaro.variable} ${geistSans.variable} ${geistMono.variable} antialiased ${roboto.variable} ${bebasNeue.variable} ${mulish.variable} `} // Add notoNastaliqUrdu.variable

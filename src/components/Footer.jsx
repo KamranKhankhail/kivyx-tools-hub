@@ -34,7 +34,7 @@ const companyLinksData = [
     linksTitle: [
       { title: "Home", href: "/" },
       { title: "tools", href: "/tools" },
-      { title: "What's New ", href: "/whats-new" },
+      // { title: "What's New ", href: "/whats-new" },
     ],
   },
 
@@ -43,13 +43,13 @@ const companyLinksData = [
     title: "",
     linksTitle: [
       {
-        title: "FAQs",
-        href: "/faqs",
+        title: "Nature Color Palette",
+        href: "/tools/nature-color-palette",
       },
-      {
-        title: "Disclaimer",
-        href: "/disclaimer",
-      },
+      // {
+      //   title: "Disclaimer",
+      //   href: "/disclaimer",
+      // },
     ],
   },
   {
@@ -402,7 +402,7 @@ export default function Footer() {
             },
           }}
         >
-          2024 Kivyx Technologies. All rights reserved
+          2025 Kivyx Technologies. All rights reserved
         </Typography>
         <Typography
           variant="body2"

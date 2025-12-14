@@ -645,6 +645,7 @@ export default function NatureColorPaletteClient() {
   const [copiedColor, setCopiedColor] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [anchorElShare, setAnchorElShare] = useState(null);
+  const [scrollPosition, setScrollPosition] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const theme = useTheme();
@@ -695,19 +696,26 @@ export default function NatureColorPaletteClient() {
       });
     };
   }, [isMobile, handleIntersect]);
+
   const handleOpenModal = (palette) => {
+    setScrollPosition(window.scrollY);
     setSelectedPalette(palette);
     setOpenModal(true);
     router.push(
       `?palette=${encodeURIComponent(palette.paletteName)}`,
-      undefined,
-      { shallow: true }
+      // Important: Add { scroll: false } to prevent the page from jumping when the URL updates
+      { scroll: false }
     );
   };
 
   const handleCloseModal = () => {
+    setOpenModal(false);
     router.push(window.location.pathname, { scroll: false });
     setCopiedColor(null);
+    // Restore scroll position after the modal has had a moment to unmount
+    setTimeout(() => {
+      window.scrollTo(0, scrollPosition);
+    }, 100); // A small delay can help ensure the page is ready to receive the scroll position
   };
   // --- Share Menu Handlers ---
   const handleShareClick = (event) => {
@@ -1362,12 +1370,12 @@ export default function NatureColorPaletteClient() {
                           sx={{
                             flex: 1,
                             height: 44,
-                            background: color,
                             borderRadius: "4px",
                             cursor: "pointer",
                             transition: "all 0.2s",
                             "&:hover": { transform: "scale(1.05)" },
                           }}
+                          style={{ background: color }}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenModal(palette);
@@ -1383,338 +1391,330 @@ export default function NatureColorPaletteClient() {
         </Box>
 
         {/* Modal with Fade */}
-        <Modal open={openModal} onClose={handleCloseModal} closeAfterTransition>
-          <Fade in={openModal} timeout={300}>
-            <Box
+        <Modal open={openModal} onClose={handleCloseModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "56%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              background: "#fff",
+              borderRadius: "16px",
+              px: { lg: 4, md: 4, sm: 4, xs: 4, mob: 2 },
+              py: 4,
+              maxWidth: { lg: 600, md: 600, sm: 600, xs: 600, mob: "100%" },
+              width: {
+                lg: "90%",
+                md: "90%",
+                sm: "90%",
+                xs: "90%",
+                mob: "98%",
+              },
+              boxShadow: "0 20px 80px rgba(0, 0, 0, 0.3)",
+            }}
+          >
+            <IconButton
+              onClick={handleCloseModal}
               sx={{
                 position: "absolute",
-                top: "56%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                background: "#fff",
-                borderRadius: "16px",
-                px: { lg: 4, md: 4, sm: 4, xs: 4, mob: 2 },
-                py: 4,
-                maxWidth: { lg: 600, md: 600, sm: 600, xs: 600, mob: "100%" },
-                width: {
-                  lg: "90%",
-                  md: "90%",
-                  sm: "90%",
-                  xs: "90%",
-                  mob: "98%",
-                },
-                boxShadow: "0 20px 80px rgba(0, 0, 0, 0.3)",
+                right: 16,
+                top: 16,
+                color: "#666",
+                "&:hover": { color: "#1a1a1a" },
               }}
             >
-              <IconButton
-                onClick={handleCloseModal}
-                sx={{
-                  position: "absolute",
-                  right: 16,
-                  top: 16,
-                  color: "#666",
-                  "&:hover": { color: "#1a1a1a" },
-                }}
-              >
-                <Close />
-              </IconButton>
-              <Menu
-                anchorEl={anchorElShare}
-                open={Boolean(anchorElShare)}
-                onClose={handleShareClose}
-                PaperProps={{
-                  sx: {
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                  },
-                }}
-              >
-                <MenuItem onClick={() => handleSharePlatform("twitter")}>
-                  <Twitter sx={{ mr: 1, color: "#1DA1F2" }} /> Share on Twitter
-                </MenuItem>
-                <MenuItem onClick={() => handleSharePlatform("facebook")}>
-                  <Facebook sx={{ mr: 1, color: "#1877F2" }} /> Share on
-                  Facebook
-                </MenuItem>
-                {/* New: WhatsApp Share */}
-                <MenuItem onClick={() => handleSharePlatform("whatsapp")}>
-                  <WhatsApp sx={{ mr: 1, color: "#25D366" }} /> Share on
-                  WhatsApp
-                </MenuItem>
-                {/* New: Native Share (More Options) */}
-                <MenuItem onClick={() => handleSharePlatform("native_share")}>
-                  <MoreHoriz
-                    sx={{ mr: 1, color: theme.palette.primary.main }}
-                  />{" "}
-                  More Options
-                </MenuItem>
-                <MenuItem onClick={() => handleSharePlatform("copy_link")}>
-                  <LinkOutlined
-                    sx={{ mr: 1, color: theme.palette.primary.main }}
-                  />{" "}
-                  Copy Share Link
-                </MenuItem>
-              </Menu>
-              <Box
-                sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}
-              >
-                {selectedPalette && (
-                  <Box
-                    sx={{
-                      width: 150,
-                      height: 100,
-                      borderRadius: "12px",
-                      overflow: "hidden",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Image
-                      src={`/images/ColorPaletteImages/${selectedPalette.paletteImageSrc}`}
-                      alt={selectedPalette.paletteName}
-                      width={150}
-                      height={100}
-                      style={{ objectFit: "cover" }}
-                      priority={true} // ← Instant load
-                    />
-                  </Box>
-                )}
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "#1a1a1a" }}
-                  >
-                    {selectedPalette?.paletteName}
-                  </Typography>
+              <Close />
+            </IconButton>
+            <Menu
+              anchorEl={anchorElShare}
+              open={Boolean(anchorElShare)}
+              onClose={handleShareClose}
+              PaperProps={{
+                sx: {
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                },
+              }}
+            >
+              <MenuItem onClick={() => handleSharePlatform("twitter")}>
+                <Twitter sx={{ mr: 1, color: "#1DA1F2" }} /> Share on Twitter
+              </MenuItem>
+              <MenuItem onClick={() => handleSharePlatform("facebook")}>
+                <Facebook sx={{ mr: 1, color: "#1877F2" }} /> Share on Facebook
+              </MenuItem>
+              {/* New: WhatsApp Share */}
+              <MenuItem onClick={() => handleSharePlatform("whatsapp")}>
+                <WhatsApp sx={{ mr: 1, color: "#25D366" }} /> Share on WhatsApp
+              </MenuItem>
+              {/* New: Native Share (More Options) */}
+              <MenuItem onClick={() => handleSharePlatform("native_share")}>
+                <MoreHoriz sx={{ mr: 1, color: theme.palette.primary.main }} />{" "}
+                More Options
+              </MenuItem>
+              <MenuItem onClick={() => handleSharePlatform("copy_link")}>
+                <LinkOutlined
+                  sx={{ mr: 1, color: theme.palette.primary.main }}
+                />{" "}
+                Copy Share Link
+              </MenuItem>
+            </Menu>
+            <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
+              {selectedPalette && (
+                <Box
+                  sx={{
+                    width: 150,
+                    height: 100,
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Image
+                    src={`/images/ColorPaletteImages/${selectedPalette.paletteImageSrc}`}
+                    alt={selectedPalette.paletteName}
+                    width={150}
+                    height={100}
+                    style={{ objectFit: "cover" }}
+                    priority={true} // ← Instant load
+                  />
                 </Box>
-              </Box>
-
-              <Typography
-                variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  color: theme.palette.primary.main,
-                  mb: 1.8,
-                  textTransform: "uppercase",
-                  fontSize: "14px",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Color Palette
-              </Typography>
-
-              <Stack
-                direction="row"
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  mb: 3,
-                }}
-              >
-                {selectedPalette?.colorPalette.map((color, idx) => (
-                  <Stack
-                    direction="column"
-                    key={idx}
-                    sx={{ gap: "12px", flex: "1 1 auto", minWidth: 30 }}
-                  >
-                    <Box
-                      sx={{
-                        height: "60px",
-                        background: color,
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        position: "relative", // Changed to relative for absolute positioning of children
-                        transition: "all 0.2s",
-
-                        display: "flex", // Added to center the copied message
-                        alignItems: "center", // Added to center the copied message
-                        justifyContent: "center", // Added to center the copied message
-                      }}
-                      onClick={() => handleCopyColor(color)}
-                    >
-                      {/* Moved Copied! message inside the color box */}
-                      {copiedColor === color && (
-                        <Box
-                          sx={{
-                            borderRadius: "50px",
-                            p: "1px",
-
-                            background: theme.palette.primary.fourthMain, // Slightly transparent background
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#fff",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            position: "absolute", // Position absolutely within the parent Box
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)", // Center the message
-                          }}
-                        >
-                          <Image
-                            src={copiedGif}
-                            alt="Copied"
-                            width={50} // Adjust width as needed
-                            height={50} // Adjust height as needed
-                            unoptimized // GIFs are not optimized by Next.js Image component
-                          />
-                        </Box>
-                      )}
-                    </Box>
-                    <Box
-                      sx={{
-                        px: { lg: 1, md: 1, sm: 1, xs: 1, mob: 0 },
-                        py: 0.3,
-                        borderRadius: "20px",
-                        background: "#fff",
-                        fontSize: { lg: 16, md: 16, sm: 16, xs: 16, mob: 12 },
-                        textAlign: "center",
-                        fontWeight: 600,
-                        color: theme.palette.primary.main,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        "&:hover": { background: "#E0F2F1" },
-                      }}
-                      onClick={() => handleCopyColor(color)}
-                    >
-                      {color}
-                    </Box>
-                    {/* Removed the old copied message block */}
-                  </Stack>
-                ))}
-              </Stack>
-
-              {/* Action Buttons */}
-              <Box sx={{ display: "flex", gap: 2, mt: 4, flexWrap: "wrap" }}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={handleDownloadPalette}
-                  sx={{
-                    borderColor: "#00BCD4",
-                    color: "#00BCD4",
-                    fontWeight: 600,
-                    py: 1.2,
-                    textTransform: "none",
-                    borderRadius: "8px",
-                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
-                    "&:hover": {
-                      borderColor: "#0097A7",
-                      background: "rgba(0, 188, 212, 0.05)",
-                    },
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "6px",
-                  }}
+              )}
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "#1a1a1a" }}
                 >
-                  <svg
-                    className="w-7 h-7"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  Download Palette .ASE
-                </Button>
-
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<ContentCopy fontSize="24px" />}
-                  onClick={() => {
-                    const allColors = selectedPalette.colorPalette.join(", ");
-                    navigator.clipboard.writeText(allColors);
-                    setSnackbar({ open: true, message: "All colors copied!" });
-                  }}
-                  sx={{
-                    borderColor: "#4CAF50",
-                    color: "#4CAF50",
-                    fontWeight: 600,
-                    py: 1.2,
-                    textTransform: "none",
-                    borderRadius: "8px",
-                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
-                    "&:hover": {
-                      borderColor: "#388E3C",
-                      background: "rgba(76, 175, 80, 0.05)",
-                    },
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "2px",
-                  }}
-                >
-                  Copy All Colors
-                </Button>
-
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={handleDownloadPNG}
-                  sx={{
-                    borderColor: "#FF9800",
-                    color: "#FF9800",
-                    fontWeight: 600,
-                    py: 1.2,
-                    textTransform: "none",
-                    borderRadius: "8px",
-                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
-                    "&:hover": {
-                      borderColor: "#F57C00",
-                      background: "rgba(255, 152, 0, 0.05)",
-                    },
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "6px",
-                  }}
-                >
-                  <svg
-                    className="w-7 h-7"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
-                  Download PNG
-                </Button>
-
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={handleShareClick}
-                  sx={{
-                    borderColor: theme.palette.primary.main,
-                    color: theme.palette.primary.main,
-                    fontWeight: 600,
-                    py: 1.2,
-                    textTransform: "none",
-                    borderRadius: "8px",
-                    fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
-                    "&:hover": {
-                      borderColor: theme.palette.primary.main,
-                      background: "#f5f5f5",
-                    },
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "10px",
-                  }}
-                >
-                  <Share sx={{ fontSize: 24 }} /> Share This Palette
-                </Button>
+                  {selectedPalette?.paletteName}
+                </Typography>
               </Box>
             </Box>
-          </Fade>
+
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: theme.palette.primary.main,
+                mb: 1.8,
+                textTransform: "uppercase",
+                fontSize: "14px",
+                letterSpacing: "0.5px",
+              }}
+            >
+              Color Palette
+            </Typography>
+
+            <Stack
+              direction="row"
+              sx={{
+                display: "flex",
+                gap: 1,
+                mb: 3,
+              }}
+            >
+              {selectedPalette?.colorPalette.map((color, idx) => (
+                <Stack
+                  direction="column"
+                  key={idx}
+                  sx={{ gap: "12px", flex: "1 1 auto", minWidth: 30 }}
+                >
+                  <Box
+                    sx={{
+                      height: "60px",
+                      background: color,
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      position: "relative", // Changed to relative for absolute positioning of children
+                      transition: "all 0.2s",
+
+                      display: "flex", // Added to center the copied message
+                      alignItems: "center", // Added to center the copied message
+                      justifyContent: "center", // Added to center the copied message
+                    }}
+                    onClick={() => handleCopyColor(color)}
+                  >
+                    {/* Moved Copied! message inside the color box */}
+                    {copiedColor === color && (
+                      <Box
+                        sx={{
+                          borderRadius: "50px",
+                          p: "1px",
+
+                          background: theme.palette.primary.fourthMain, // Slightly transparent background
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#fff",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          position: "absolute", // Position absolutely within the parent Box
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)", // Center the message
+                        }}
+                      >
+                        <Image
+                          src={copiedGif}
+                          alt="Copied"
+                          width={50} // Adjust width as needed
+                          height={50} // Adjust height as needed
+                          unoptimized // GIFs are not optimized by Next.js Image component
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                  <Box
+                    sx={{
+                      px: { lg: 1, md: 1, sm: 1, xs: 1, mob: 0 },
+                      py: 0.3,
+                      borderRadius: "20px",
+                      background: "#fff",
+                      fontSize: { lg: 16, md: 16, sm: 16, xs: 16, mob: 12 },
+                      textAlign: "center",
+                      fontWeight: 600,
+                      color: theme.palette.primary.main,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": { background: "#E0F2F1" },
+                    }}
+                    onClick={() => handleCopyColor(color)}
+                  >
+                    {color}
+                  </Box>
+                  {/* Removed the old copied message block */}
+                </Stack>
+              ))}
+            </Stack>
+
+            {/* Action Buttons */}
+            <Box sx={{ display: "flex", gap: 2, mt: 4, flexWrap: "wrap" }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleDownloadPalette}
+                sx={{
+                  borderColor: "#00BCD4",
+                  color: "#00BCD4",
+                  fontWeight: 600,
+                  py: 1.2,
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
+                  "&:hover": {
+                    borderColor: "#0097A7",
+                    background: "rgba(0, 188, 212, 0.05)",
+                  },
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "6px",
+                }}
+              >
+                <svg
+                  className="w-7 h-7"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Download Palette .ASE
+              </Button>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<ContentCopy fontSize="24px" />}
+                onClick={() => {
+                  const allColors = selectedPalette.colorPalette.join(", ");
+                  navigator.clipboard.writeText(allColors);
+                  setSnackbar({ open: true, message: "All colors copied!" });
+                }}
+                sx={{
+                  borderColor: "#4CAF50",
+                  color: "#4CAF50",
+                  fontWeight: 600,
+                  py: 1.2,
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
+                  "&:hover": {
+                    borderColor: "#388E3C",
+                    background: "rgba(76, 175, 80, 0.05)",
+                  },
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "2px",
+                }}
+              >
+                Copy All Colors
+              </Button>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleDownloadPNG}
+                sx={{
+                  borderColor: "#FF9800",
+                  color: "#FF9800",
+                  fontWeight: 600,
+                  py: 1.2,
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
+                  "&:hover": {
+                    borderColor: "#F57C00",
+                    background: "rgba(255, 152, 0, 0.05)",
+                  },
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "6px",
+                }}
+              >
+                <svg
+                  className="w-7 h-7"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Download PNG
+              </Button>
+
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleShareClick}
+                sx={{
+                  borderColor: theme.palette.primary.main,
+                  color: theme.palette.primary.main,
+                  fontWeight: 600,
+                  py: 1.2,
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  fontSize: { lg: 18, md: 18, sm: 18, xs: 18, mob: 16 },
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    background: "#f5f5f5",
+                  },
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "10px",
+                }}
+              >
+                <Share sx={{ fontSize: 24 }} /> Share This Palette
+              </Button>
+            </Box>
+          </Box>
         </Modal>
 
         <Snackbar

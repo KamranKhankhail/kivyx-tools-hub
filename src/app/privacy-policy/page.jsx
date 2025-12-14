@@ -39,9 +39,9 @@ export default function PrivacyPolicyPage() {
       <Typography variant="body1" paragraph>
         Welcome to Toolshub (https://toolshub.kivyx.com/). We respect your
         privacy and are committed to protecting your personal information. This
-        Privacy Policy explains how Kivyx Technologies ("we," "us," or "our")
-        collects, uses, discloses, and safeguards your information when you
-        visit our website and use our tools.
+        Privacy Policy explains how Kivyx Technologies collects, uses,
+        discloses, and safeguards your information when you visit our website
+        and use our tools.
       </Typography>
       <Typography variant="body1" paragraph>
         Please read this Privacy Policy carefully. If you do not agree with the

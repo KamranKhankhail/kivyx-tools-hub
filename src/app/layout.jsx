@@ -22,6 +22,7 @@ import {
   speakableAEOToolshubHome,
 } from "@/app/toolshubSEO"; // Adjust path if needed
 import Head from "next/head";
+
 const chakraPetch = Chakra_Petch({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -112,7 +113,7 @@ export const metadata = {
     siteName: "Toolshub | Kivyx Technologies",
     images: [
       {
-        url: `${TOOLSHUB_BASE_URL}/images/toolshub-banner.png`, // TODO: Replace with a compelling banner image for the ToolsHub homepage
+        url: `${TOOLSHUB_BASE_URL}/images/toolshub-banner.png`,
         width: 1200,
         height: 630,
         alt: "ToolsHub - Free Online Tools Collection",
@@ -183,21 +184,20 @@ export default function RootLayout({ children }) {
       >
         <ThemeRegistry>
           <PageLoader />
-
-          <NavigationWrapper>
-            <Stack
-              sx={{
-                background:
-                  "radial-gradient(425.23% 208% at -81.08% -22.7%, rgba(255, 255, 255, 0.870588) 0%, rgba(175, 236, 255, 0.785294) 65.51%, rgba(204, 230, 230, 0.93) 100%)",
-              }}
-            >
-              <Suspense>
+          <Suspense fallback={<PageLoader />}>
+            <NavigationWrapper>
+              <Stack
+                sx={{
+                  background:
+                    "radial-gradient(425.23% 208% at -81.08% -22.7%, rgba(255, 255, 255, 0.870588) 0%, rgba(175, 236, 255, 0.785294) 65.51%, rgba(204, 230, 230, 0.93) 100%)",
+                }}
+              >
                 {" "}
                 <NavbarWrapper />
                 {children}
-              </Suspense>
-            </Stack>
-          </NavigationWrapper>
+              </Stack>
+            </NavigationWrapper>
+          </Suspense>
         </ThemeRegistry>
       </body>
     </html>

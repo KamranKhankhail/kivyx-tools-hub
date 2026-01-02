@@ -329,6 +329,11 @@ export default function QrCodeGeneratorClient() {
           color: dotColor,
         },
         image: qrLogo,
+        imageOptions: {
+          crossOrigin: "anonymous",
+          margin: 0,
+          imageSize: 0.4,
+        },
       });
     }
   }, [
@@ -340,7 +345,6 @@ export default function QrCodeGeneratorClient() {
     qrLogo,
     qrCodeDisplaySize,
   ]); // Add qrCodeDisplaySize to dependency array
-
   useEffect(() => {
     // Reset activeValue when ActiveComponent changes
     setActiveValue("");
@@ -364,31 +368,45 @@ export default function QrCodeGeneratorClient() {
     setToast({ open: true, message: "QR generated!", severity: "success" });
   };
 
-  const handleDownloadJpg = useCallback(async () => {
-    if (!frameRef.current) {
-      setToast({
-        open: true,
-        message: "QR code not rendered for download.",
-        severity: "error",
-      });
-      return;
-    }
+  const DOWNLOAD_RESOLUTION = 1200; // Hardcoded high resolution for downloads
 
+  const createDownloadQrCode = useCallback(() => {
+    return new QRCodeStyling({
+      width: DOWNLOAD_RESOLUTION, // Use hardcoded high resolution
+      height: DOWNLOAD_RESOLUTION, // Use hardcoded high resolution
+      data: qrValue,
+      dotsOptions: {
+        color: dotColor,
+        type: dotType,
+      },
+      cornersSquareOptions: {
+        type: cornerSquareType,
+        color: dotColor,
+      },
+      cornersDotOptions: {
+        type: cornerDotType,
+        color: dotColor,
+      },
+      image: qrLogo,
+      imageOptions: {
+        crossOrigin: "anonymous",
+        margin: 20, // Add 20 pixels of white margin around the entire QR code in the downloaded image
+      },
+      backgroundOptions: {
+        // Explicitly set white background for downloaded QR code
+        color: "#ffffff",
+      },
+      margin: 40,
+    });
+  }, [qrValue, dotColor, dotType, cornerSquareType, cornerDotType, qrLogo]);
+
+  const handleDownloadJpg = useCallback(() => {
     try {
-      const backgroundColor =
-        currentFrame.containerStyles?.backgroundColor || "#ffffff"; // Use frame background or default white
-
-      const canvas = await html2canvas(frameRef.current, {
-        useCORS: true,
-        backgroundColor: backgroundColor,
+      const tempQrCode = createDownloadQrCode();
+      tempQrCode.download({
+        extension: "jpg",
+        name: "qrcode",
       });
-      const image = canvas.toDataURL("image/jpeg", 1.0); // 1.0 for best quality JPG
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = "qrcode.jpg";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
       setToast({ open: true, message: "JPG downloaded!", severity: "success" });
     } catch (error) {
       console.error("Error generating JPG:", error);
@@ -398,8 +416,25 @@ export default function QrCodeGeneratorClient() {
         severity: "error",
       });
     }
-  }, [selectedFrame, currentFrame]); // Add currentFrame to dependency array
+  }, [createDownloadQrCode]);
 
+  const handleDownloadPng = useCallback(() => {
+    try {
+      const tempQrCode = createDownloadQrCode();
+      tempQrCode.download({
+        extension: "png",
+        name: "qrcode",
+      });
+      setToast({ open: true, message: "PNG downloaded!", severity: "success" });
+    } catch (error) {
+      console.error("Error generating PNG:", error);
+      setToast({
+        open: true,
+        message: "Failed to download PNG.",
+        severity: "error",
+      });
+    }
+  }, [createDownloadQrCode]);
   const handleDownloadSvg = useCallback(() => {
     if (qrCodeRef.current) {
       qrCodeRef.current.download({
@@ -414,9 +449,6 @@ export default function QrCodeGeneratorClient() {
         severity: "error",
       });
     }
-    // IMPORTANT NOTE: The SVG download from qr-code-styling will ONLY include the QR code
-    // (dots, corners, and embedded logo). It WILL NOT include the external HTML frame
-    // because the frame is a CSS-styled div, not part of the QR code SVG data.
   }, []);
 
   // Calculate dynamic dimensions for the frame container based on qrCodeDisplaySize
@@ -721,7 +753,7 @@ export default function QrCodeGeneratorClient() {
           </Box>
 
           {/* Moved QR Code Size input here */}
-          <Box
+          {/* <Box
             sx={{
               mt: "10px",
               mb: "6px",
@@ -778,12 +810,12 @@ export default function QrCodeGeneratorClient() {
                 },
               }}
             />
-          </Box>
+          </Box> */}
 
-          <FramePart
+          {/* <FramePart
             selectedFrame={selectedFrame}
             setSelectedFrame={setSelectedFrame}
-          />
+          /> */}
           <ShapeAndColor
             dotType={dotType}
             setDotType={setDotType}
@@ -809,6 +841,7 @@ export default function QrCodeGeneratorClient() {
             sx={{ pt: "20px" }}
           >
             {/* Download JPG/PNG Button */}
+            {/* Download JPG Button */}
             <Button
               variant="contained"
               onClick={handleDownloadJpg}
@@ -843,6 +876,43 @@ export default function QrCodeGeneratorClient() {
                   DOWNLOAD
                 </Typography>
                 <Typography sx={{ fontSize: 10 }}>JPG</Typography>
+              </Box>
+            </Button>
+            {/* Download PNG Button (New) */}
+            <Button
+              variant="contained"
+              onClick={handleDownloadPng} // Use new PNG download handler
+              sx={{
+                bgcolor: theme.palette.primary.main, // green
+                color: "#fff",
+                maxHeight: "max-content",
+                textTransform: "none",
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: theme.palette.secondary.thirdMain,
+                  boxShadow: "none",
+                },
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "4px",
+                px: "10px",
+                borderRadius: "4px",
+                flex: "1",
+              }}
+            >
+              <DownloadIcon sx={{ fontSize: 24 }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Typography sx={{ fontWeight: 700, fontSize: "12px" }}>
+                  DOWNLOAD
+                </Typography>
+                <Typography sx={{ fontSize: 10 }}>PNG</Typography>
               </Box>
             </Button>
             {/* Download SVG/EPS Button */}
@@ -1317,8 +1387,8 @@ function ShapeAndColor({
 // LogoPart Component
 function LogoPart({ qrLogo, setQrLogo }) {
   const [openLogo, setOpenLogo] = useState(false);
-  const [customLogoFile, setCustomLogoFile] = useState(null); // New state for uploaded file
-
+  const [customLogoFile, setCustomLogoFile] = useState(null);
+  const fileInputRef = useRef(null);
   const sampleLogos = [
     "/images/socialPngs/google.png",
     "/images/socialPngs/facebook.png",
@@ -1477,6 +1547,7 @@ function LogoPart({ qrLogo, setQrLogo }) {
               type="file"
               accept="image/*"
               id="custom-logo-upload"
+              ref={fileInputRef} // Attach the ref here
               style={{ display: "none" }}
               onChange={handleCustomLogoUpload}
             />

@@ -827,7 +827,6 @@ export default function QrCodeGeneratorClient() {
             setDotColor={setDotColor}
           />
           <LogoPart qrLogo={qrLogo} setQrLogo={setQrLogo} />
-
           <Stack
             // direction={{
             //   lg: "row",
@@ -851,10 +850,7 @@ export default function QrCodeGeneratorClient() {
                 maxHeight: "max-content",
                 textTransform: "none",
                 boxShadow: "none",
-                "&:hover": {
-                  bgcolor: theme.palette.secondary.thirdMain,
-                  boxShadow: "none",
-                },
+
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
@@ -888,10 +884,7 @@ export default function QrCodeGeneratorClient() {
                 maxHeight: "max-content",
                 textTransform: "none",
                 boxShadow: "none",
-                "&:hover": {
-                  bgcolor: theme.palette.secondary.thirdMain,
-                  boxShadow: "none",
-                },
+
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",

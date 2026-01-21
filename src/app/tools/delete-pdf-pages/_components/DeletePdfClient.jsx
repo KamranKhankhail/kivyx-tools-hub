@@ -24,10 +24,9 @@ export default function DeletePdfClient() {
   const [globalRotation, setGlobalRotation] = useState(0); // Global rotation for the file
   const [selectedPages, setSelectedPages] = useState(new Set()); // For pages to delete
   const [loadingFile, setLoadingFile] = useState(false); // Loading state for file upload
+  const [loadingProgress, setLoadingProgress] = useState(0); // Loading progress percentage
   const [processingPdf, setProcessingPdf] = useState(false); // Loading state for download/processing
   const [error, setError] = useState(null);
-  const [downloadUrl, setDownloadUrl] = useState(null);
-  const [downloadFileName, setDownloadFileName] = useState("");
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPageIndex, setPreviewPageIndex] = useState(0); // 0-based index in 'pages'
@@ -79,9 +78,10 @@ export default function DeletePdfClient() {
     }
 
     setLoadingFile(true); // Start loading for file upload
+    setLoadingProgress(0);
+    setLoadingFile(true); // Start loading for file upload
+    setLoadingProgress(0);
     setError(null);
-    setDownloadUrl(null);
-    setDownloadFileName("");
     setFile(null); // Clear previous file state
     setPages([]);
     setPageRotations({});
@@ -89,9 +89,16 @@ export default function DeletePdfClient() {
     setSelectedPages(new Set());
 
     try {
+      // Load PDF.js library
+      setLoadingProgress(10);
       await loadPdfJs();
+      
+      // Read file as ArrayBuffer
+      setLoadingProgress(30);
       const arrayBuffer = await selectedFile.arrayBuffer();
-      // Use pdfjsLib for rendering/thumbnail generation
+      
+      // Load PDF document
+      setLoadingProgress(50);
       const pdfjsDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer })
         .promise;
 
@@ -102,14 +109,23 @@ export default function DeletePdfClient() {
       }));
 
       // Generate thumbnails for all pages (initially unrotated)
+      setLoadingProgress(70);
       const initialThumbnails = {};
-      for (const page of newPages) {
+      for (let i = 0; i < newPages.length; i++) {
+        const page = newPages[i];
         initialThumbnails[page.globalId] = await generatePageThumbnail(
           pdfjsDoc,
           page.pageNum,
           0 // Generate unrotated thumbnail
         );
+        
+        // Update progress incrementally (70% to 95%)
+        const pageProgress = 70 + Math.floor(((i + 1) / newPages.length) * 25);
+        setLoadingProgress(pageProgress);
       }
+      
+      // Final update
+      setLoadingProgress(100);
 
       setFile({
         rawFile: selectedFile,
@@ -123,6 +139,7 @@ export default function DeletePdfClient() {
       setError("Failed to load PDF. Please try again.");
     } finally {
       setLoadingFile(false); // End loading for file upload
+      setLoadingProgress(0);
     }
   };
 
@@ -135,8 +152,6 @@ export default function DeletePdfClient() {
     setLoadingFile(false);
     setProcessingPdf(false);
     setError(null);
-    setDownloadUrl(null);
-    setDownloadFileName("");
     closePreview();
   };
 
@@ -145,8 +160,6 @@ export default function DeletePdfClient() {
   const rotateCounterClockwise = (current) => (current - 90 + 360) % 360;
 
   const applyGlobalRotation = (direction) => {
-    setDownloadUrl(null); // Invalidate download URL on rotation change
-    setDownloadFileName("");
     setGlobalRotation((prev) =>
       direction === "left"
         ? rotateCounterClockwise(prev)
@@ -157,8 +170,6 @@ export default function DeletePdfClient() {
   };
 
   const rotatePage = (globalId, direction) => {
-    setDownloadUrl(null); // Invalidate download URL on rotation change
-    setDownloadFileName("");
     setPageRotations((prev) => {
       const current = prev[globalId] || 0;
       return {
@@ -172,16 +183,12 @@ export default function DeletePdfClient() {
   };
 
   const resetAllRotations = () => {
-    setDownloadUrl(null); // Invalidate download URL on rotation change
-    setDownloadFileName("");
     setGlobalRotation(0);
     setPageRotations({});
   };
 
   // --------------------------- PAGE SELECTION / DELETION ---------------------------
   const togglePageSelection = (globalId) => {
-    setDownloadUrl(null); // Invalidate download URL on selection change
-    setDownloadFileName("");
     setSelectedPages((prev) => {
       const newSelection = new Set(prev);
       if (newSelection.has(globalId)) {
@@ -202,8 +209,6 @@ export default function DeletePdfClient() {
       setError("Cannot delete all pages. At least one page must remain.");
       return;
     }
-    setDownloadUrl(null); // Invalidate download URL on deletion
-    setDownloadFileName("");
     setPages((prev) =>
       prev.filter((page) => !selectedPages.has(page.globalId))
     );
@@ -224,8 +229,6 @@ export default function DeletePdfClient() {
       setError("Cannot delete all pages. At least one page must remain.");
       return;
     }
-    setDownloadUrl(null); // Invalidate download URL on deletion
-    setDownloadFileName("");
     setPages((prev) => prev.filter((page) => page.globalId !== globalId));
     setPageRotations((prev) => {
       const newRotations = { ...prev };
@@ -357,8 +360,6 @@ export default function DeletePdfClient() {
     }
     setProcessingPdf(true); // Start loading for processing/download
     setError(null);
-    setDownloadUrl(null);
-    setDownloadFileName("");
     try {
       await loadPdfJs(); // Ensure pdf.js is loaded (should be already for previews)
 
@@ -385,8 +386,17 @@ export default function DeletePdfClient() {
 
       const pdfBytes = await newPdfDoc.save();
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      setDownloadUrl(URL.createObjectURL(blob));
-      setDownloadFileName(`modified_${file.name}`);
+      const url = URL.createObjectURL(blob);
+      const filename = `modified_${file.name}`;
+      
+      // Auto-download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (e) {
       console.error("Error during PDF processing:", e);
       setError("Failed to process and download PDF. Please try again.");
@@ -406,26 +416,61 @@ export default function DeletePdfClient() {
       // Use loadingFile for initial file load
       return (
         <div className="w-full flex flex-col items-center justify-center py-16">
-          <svg
-            className="animate-spin h-12 w-12 text-blue-600 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
+          <div className="relative mb-4">
+            <svg
+              className="animate-spin h-20 w-20"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-20"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{ color: theme.palette.primary.main }}
+              ></circle>
+              <circle
+                className="opacity-75"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray="63"
+                strokeDashoffset="47"
+                strokeLinecap="round"
+                style={{ color: theme.palette.primary.main }}
+              ></circle>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="text-[16px] font-bold"
+                style={{ color: theme.palette.primary.main }}
+              >
+                {loadingProgress || 0}%
+              </span>
+            </div>
+          </div>
+          <p
+            style={{
+              color: theme.palette.primary.main,
+              fontWeight: "bold",
+            }}
+            className="text-[18px] font-medium mb-3"
           >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <p className="text-xl text-[#61698b] font-medium">Loading PDF...</p>
+            Uploading
+          </p>
+          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${loadingProgress || 0}%`,
+                backgroundColor: theme.palette.primary.main,
+              }}
+            ></div>
+          </div>
         </div>
       );
     }
@@ -841,69 +886,11 @@ export default function DeletePdfClient() {
           )}
         </Stack>
 
-        {downloadUrl && (
-          <div
-            style={{
-              color: theme.palette.primary.main,
-              borderColor: theme.palette.secondary.secondMain,
-            }}
-            className="mt-[10px] bg-green-50 border px-4 py-[8px] rounded flex items-center justify-between"
-          >
-            <span>Your modified PDF is ready!</span>
-            <Stack direction="row" sx={{ gap: "20px" }}>
-              <a
-                href={downloadUrl}
-                download={downloadFileName}
-                style={{
-                  background: theme.palette.primary.main,
-                  color: theme.palette.secondary.secondMain,
-                }}
-                className="px-4 py-2 rounded flex items-center gap-2"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Download
-              </a>
-              <button
-                onClick={() => setDownloadUrl(null)}
-                style={{ color: theme.palette.primary.main }}
-                className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-                aria-label="Close download notification"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </Stack>
-          </div>
-        )}
+
       </div>
 
       <div
-        className={`max-w-8xl mx-auto p-2 ${
-          downloadUrl ? "mt-[150px]" : "mt-[80px]"
-        }`}
+        className={`max-w-8xl mx-auto p-2 mt-[80px]`}
       >
         <div className="border-2 border-dashed border-[#1fd5e9] rounded-[22px] min-h-[100vh] bg-white p-6 flex flex-wrap gap-8 items-start">
           {renderMainContent()}

@@ -19,6 +19,7 @@ export default function SplitPdfsClient() {
   const [pages, setPages] = useState([]);
   const [pageThumbnails, setPageThumbnails] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
   const [splitMode, setSplitMode] = useState("range");
   const [rangeType, setRangeType] = useState("custom");
@@ -106,6 +107,7 @@ export default function SplitPdfsClient() {
       return;
     }
     setLoading(true);
+    setLoadingProgress(0);
     setError(null);
     setFile(null);
     setPages([]);
@@ -115,16 +117,38 @@ export default function SplitPdfsClient() {
     setDownloadUrls([]);
     setPageRotations({});
     try {
+      // Load PDF.js library
+      setLoadingProgress(10);
       await loadPdfJs();
+      
+      // Read file as ArrayBuffer
+      setLoadingProgress(30);
       const arrayBuffer = await selectedFile.arrayBuffer();
+      
+      // Load PDF document
+      setLoadingProgress(50);
       const pdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer })
         .promise;
+      
       const pageCount = pdfDoc.numPages;
       const pagesArray = Array.from({ length: pageCount }, (_, i) => i + 1);
+      
+      // Generate first page thumbnail
+      setLoadingProgress(70);
       const thumbs = {};
+      
+      // Generate all page thumbnails with progress updates
       for (let i = 1; i <= pageCount; i++) {
         thumbs[i] = await generatePageThumbnail(pdfDoc, i);
+        
+        // Update progress incrementally (70% to 95%)
+        const pageProgress = 70 + Math.floor((i / pageCount) * 25);
+        setLoadingProgress(pageProgress);
       }
+      
+      // Final update
+      setLoadingProgress(100);
+      
       setFile({
         file: selectedFile,
         name: selectedFile.name,
@@ -139,6 +163,7 @@ export default function SplitPdfsClient() {
       setError("Failed to load PDF file");
     } finally {
       setLoading(false);
+      setLoadingProgress(0);
     }
   };
 
@@ -1127,27 +1152,61 @@ export default function SplitPdfsClient() {
           >
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <svg
-                  className="animate-spin h-16 w-16 mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  style={{ color: theme.palette.primary.main }}
+                <div className="relative mb-4">
+                  <svg
+                    className="animate-spin h-20 w-20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-20"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      style={{ color: theme.palette.primary.main }}
+                    ></circle>
+                    <circle
+                      className="opacity-75"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeDasharray="63"
+                      strokeDashoffset="47"
+                      strokeLinecap="round"
+                      style={{ color: theme.palette.primary.main }}
+                    ></circle>
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span
+                      className="text-[16px] font-bold"
+                      style={{ color: theme.palette.primary.main }}
+                    >
+                      {loadingProgress || 0}%
+                    </span>
+                  </div>
+                </div>
+                <p
+                  style={{
+                    color: theme.palette.primary.main,
+                    fontWeight: "bold",
+                  }}
+                  className="text-[18px] font-medium mb-3"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                <p className="text-gray-600">Loading PDF...</p>
+                  Uploading
+                </p>
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full transition-all duration-300"
+                    style={{
+                      width: `${loadingProgress || 0}%`,
+                      backgroundColor: theme.palette.primary.main,
+                    }}
+                  ></div>
+                </div>
               </div>
             ) : (
               <>

@@ -188,6 +188,14 @@ export default function SplitPdfsClient() {
     setPageRotations({});
   };
 
+  const resetPageRotation = (pageNum) => {
+    setPageRotations((prev) => {
+      const newState = { ...prev };
+      delete newState[pageNum];
+      return newState;
+    });
+  };
+
   const openPreview = (pageIndex) => {
     setPreviewPageIndex(pageIndex);
     setPreviewOpen(true);
@@ -436,11 +444,16 @@ export default function SplitPdfsClient() {
           }
         }
       }
-      const urls = results.map((r) => ({
-        url: URL.createObjectURL(r.blob),
-        name: r.name,
-      }));
-      setDownloadUrls(urls);
+      if (results.length === 1) {
+        downloadPdf(results[0].blob, results[0].name);
+        setDownloadUrls([]);
+      } else {
+        const urls = results.map((r) => ({
+          url: URL.createObjectURL(r.blob),
+          name: r.name,
+        }));
+        setDownloadUrls(urls);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to split PDF");
@@ -2152,10 +2165,10 @@ export default function SplitPdfsClient() {
               <button
                 onClick={handlePrevPage}
                 style={{
+                  color: theme.palette.secondary.secondMain,
                   background: theme.palette.primary.main,
-                  color: "#fff",
                 }}
-                className="p-3 rounded cursor-pointer hover:opacity-90"
+                className="p-3 rounded cursor-pointer"
               >
                 <svg
                   className="w-5 h-5"
@@ -2180,10 +2193,10 @@ export default function SplitPdfsClient() {
               <button
                 onClick={handleNextPage}
                 style={{
+                  color: theme.palette.secondary.secondMain,
                   background: theme.palette.primary.main,
-                  color: "#fff",
                 }}
-                className="p-3 rounded cursor-pointer hover:opacity-90"
+                className="p-3 rounded cursor-pointer"
               >
                 <svg
                   className="w-5 h-5"
@@ -2196,6 +2209,49 @@ export default function SplitPdfsClient() {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => rotatePage(pages[previewPageIndex], "left")}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="py-[10px] px-[11px] rounded cursor-pointer"
+              >
+                <RotateLeftIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => rotatePage(pages[previewPageIndex], "right")}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="py-[10px] px-[11px] rounded cursor-pointer"
+              >
+                <RotateRightIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => resetPageRotation(pages[previewPageIndex])}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="p-3 rounded cursor-pointer"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
               </button>

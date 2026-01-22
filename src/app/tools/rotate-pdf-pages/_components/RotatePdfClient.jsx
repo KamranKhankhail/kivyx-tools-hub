@@ -1,4 +1,3 @@
-// src/app/tools/rotate-pdfs/_components/RotatePdfClient.jsx
 "use client";
 import ToolsHubsIcon from "@/icons/ToolsHubsIcon";
 import theme from "@/styles/theme";
@@ -182,9 +181,16 @@ export default function RotatePdfClient() {
   };
 
   const resetAllRotations = () => {
-
     setGlobalRotation(0);
     setPageRotations({});
+  };
+
+  const resetPageRotation = (globalId) => {
+    setPageRotations((prev) => {
+      const newState = { ...prev };
+      delete newState[globalId];
+      return newState;
+    });
   };
 
   // --------------------------- PREVIEW LOGIC ---------------------------
@@ -945,7 +951,27 @@ export default function RotatePdfClient() {
                 </svg>
               </button>
               <button
-                onClick={closePreview}
+                onClick={() => rotatePage(pages[previewPageIndex].globalId, "left")}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="py-[10px] px-[11px] rounded cursor-pointer"
+              >
+                <RotateLeftIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => rotatePage(pages[previewPageIndex].globalId, "right")}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="py-[10px] px-[11px] rounded cursor-pointer"
+              >
+                <RotateRightIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => resetPageRotation(pages[previewPageIndex].globalId)}
                 style={{
                   color: theme.palette.secondary.secondMain,
                   background: theme.palette.primary.main,
@@ -963,28 +989,6 @@ export default function RotatePdfClient() {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={deleteFile} // This will delete the entire file in this context
-                style={{
-                  background: theme.palette.ui.delete,
-                  color: theme.palette.primary.fourthMain,
-                }}
-                className="p-3 rounded cursor-pointer"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
               </button>

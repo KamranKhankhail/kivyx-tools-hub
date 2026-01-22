@@ -187,6 +187,14 @@ export default function DeletePdfClient() {
     setPageRotations({});
   };
 
+  const resetPageRotation = (globalId) => {
+    setPageRotations((prev) => {
+      const newState = { ...prev };
+      delete newState[globalId];
+      return newState;
+    });
+  };
+
   // --------------------------- PAGE SELECTION / DELETION ---------------------------
   const togglePageSelection = (globalId) => {
     setSelectedPages((prev) => {
@@ -1018,7 +1026,27 @@ export default function DeletePdfClient() {
                 </svg>
               </button>
               <button
-                onClick={closePreview}
+                onClick={() => rotatePage(pages[previewPageIndex].globalId, "left")}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="py-[10px] px-[11px] rounded cursor-pointer"
+              >
+                <RotateLeftIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => rotatePage(pages[previewPageIndex].globalId, "right")}
+                style={{
+                  color: theme.palette.secondary.secondMain,
+                  background: theme.palette.primary.main,
+                }}
+                className="py-[10px] px-[11px] rounded cursor-pointer"
+              >
+                <RotateRightIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => resetPageRotation(pages[previewPageIndex].globalId)}
                 style={{
                   color: theme.palette.secondary.secondMain,
                   background: theme.palette.primary.main,
